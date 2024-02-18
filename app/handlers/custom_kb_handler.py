@@ -9,7 +9,7 @@ from lexicon.lexicon_buttons import BUTTONS
 
 kb_router = Router()
 
-@kb_router.message(Command('book'))
+@kb_router.message(Command('book2'))
 async def process_command_1(message: Message, session: AsyncSession):
     
     keyboard = create_inline_kb(4, last_btn='Cancel', **BUTTONS) # Customize the width of the keyboard and the buttons

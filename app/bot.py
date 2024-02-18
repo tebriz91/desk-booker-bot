@@ -15,6 +15,7 @@ from database.engine import create_db, session_maker
 from utils.logger import Logger
 
 from handlers.custom_kb_handler import kb_router
+from handlers.inline_kb_handler import inline_router
 from handlers.admin.user_management import user_management_router
 from handlers.admin.room_management import room_management_router
 from handlers.admin.desk_management import desk_management_router
@@ -27,6 +28,7 @@ bot = Bot(token=config.bot.token, parse_mode=ParseMode.HTML)
 
 dp = Dispatcher()
 dp.include_router(kb_router)
+dp.include_router(inline_router)
 dp.include_router(user_management_router)
 dp.include_router(room_management_router)
 dp.include_router(desk_management_router)
