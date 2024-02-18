@@ -18,6 +18,7 @@ from handlers.custom_kb_handler import kb_router
 from handlers.admin.user_management import user_management_router
 from handlers.admin.room_management import room_management_router
 from handlers.admin.desk_management import desk_management_router
+from handlers.user.booking_management import booking_management_router
 
 logger = Logger()
 
@@ -29,6 +30,7 @@ dp.include_router(kb_router)
 dp.include_router(user_management_router)
 dp.include_router(room_management_router)
 dp.include_router(desk_management_router)
+dp.include_router(booking_management_router)
 
 async def on_startup(bot):
     await create_db()

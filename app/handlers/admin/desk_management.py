@@ -21,17 +21,14 @@ async def command_get_desks_by_room_id_handler(message: Message, session: AsyncS
 
 @desk_management_router.message(F.text.startswith("/add_desk"))
 async def command_add_desk_handler(message: Message, session: AsyncSession):
-    if message.text is not None:
-        command_name, room_id, desk_name = message.text.split(sep=" ")
-        logger.info(f"room_id: {room_id}, desk_name: {desk_name}")
-        try:
-            await orm_insert_desk(session, {
-                "room_id": room_id,
-                "name": desk_name
-                })
-            await message.answer(f"Desk with name: {desk_name} in room with id: {room_id} added to database")
-        except Exception as e:
-            logger.error(e)
-            await message.answer(f"Desk with name: {desk_name} already exists in database")
-    else:
-        await message.answer("Correct usage: /add_desk <room_id> <desk_name>")
+    command_name, room_id, desk_name = message.text.split(sep=" ")
+    logger.info(f"room_id: {room_id}, desk_name: {desk_name}")
+    try:
+        await orm_insert_desk(session, {
+            "room_id": room_id,
+            "name": desk_name
+            })
+        await message.answer(f"Desk with name: {desk_name} in room with id: {room_id} added to database")
+    except Exception as e:
+        logger.error(e)
+        await message.answer(f"Desk with name: {desk_name} already exists in database")

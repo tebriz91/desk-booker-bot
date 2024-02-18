@@ -45,15 +45,15 @@ async def orm_select_desks_by_room_id(session: AsyncSession, room_id: int):
 #* Booking's ORM queries
 async def orm_insert_booking(session: AsyncSession, data: dict):
     object = Booking(
-        user_id=data["user_id"],
+        telegram_id=data["telegram_id"],
         desk_id=data["desk_id"],
         date=data["date"]
     )
     session.add(object)
     await session.commit()
 
-async def orm_select_bookings_by_user_id(session: AsyncSession, user_id: int):
-    query = select(Booking).where(Booking.user_id == user_id)
+async def orm_select_bookings_by_user_id(session: AsyncSession, telegram_id: int):
+    query = select(Booking).where(Booking.telegram_id == telegram_id)
     result = await session.execute(query)
     return result.scalars().all()
 

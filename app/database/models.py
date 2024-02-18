@@ -1,4 +1,4 @@
-from sqlalchemy import DateTime, ForeignKey, func
+from sqlalchemy import Date, DateTime, ForeignKey, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 class Base(DeclarativeBase):
@@ -21,8 +21,8 @@ class Base(DeclarativeBase):
 class User(Base):
     __tablename__ = 'users'
     
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    telegram_id: Mapped[int] = mapped_column(unique=True)
+    # id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    telegram_id: Mapped[int] = mapped_column(primary_key=True, unique=True)
     telegram_name: Mapped[str] = mapped_column(unique=True)
     is_admin: Mapped[bool] = mapped_column(default=False)
     is_banned: Mapped[bool] = mapped_column(default=False)
@@ -50,6 +50,6 @@ class Booking(Base):
     __tablename__ = 'bookings'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    telegram_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'))
     desk_id: Mapped[int] = mapped_column(ForeignKey('desks.id'))
-    date: Mapped[DateTime]= mapped_column(DateTime)
+    date: Mapped[Date]= mapped_column(Date) # format: "YYYY-MM-DD"

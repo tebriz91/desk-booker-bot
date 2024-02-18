@@ -20,14 +20,11 @@ async def command_get_rooms_handler(message: Message, session: AsyncSession):
 
 @room_management_router.message(F.text.startswith("/add_room"))
 async def command_add_room_handler(message: Message, session: AsyncSession):
-    if message.text is not None:
-        command_name, room_name = message.text.split(sep=" ")
-        logger.info(f"room_name: {room_name}")
-        try:
-            await orm_insert_room(session, {"name": room_name})
-            await message.answer(f"Room with name: {room_name} added to database")
-        except Exception as e:
-            logger.error(e)
-            await message.answer(f"Room with name: {room_name} already exists in database")
-    else:
-        await message.answer("Correct usage: /add_room <room_name>")
+    command_name, room_name = message.text.split(sep=" ")
+    logger.info(f"room_name: {room_name}")
+    try:
+        await orm_insert_room(session, {"name": room_name})
+        await message.answer(f"Room with name: {room_name} added to database")
+    except Exception as e:
+        logger.error(e)
+        await message.answer(f"Room with name: {room_name} already exists in database")
