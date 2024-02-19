@@ -43,7 +43,11 @@ class DBConfig:
 class BotConfig:
     token: str
     admins: List[int]
-
+    num_days: Optional[int] = field(default=5)
+    exclude_weekends: Optional[bool] = field(default=True)
+    timezone: Optional[str] = field(default="UTC")
+    country_code: Optional[str] = field(default=None)
+    
 
 @dataclass(frozen=True, slots=True)
 class RedisConfig:
@@ -86,7 +90,14 @@ def load_config() -> Config:
             user=get_env("DB_USER"),
             password=get_env("DB_PASSWORD"),
         ),
-        bot=BotConfig(token=get_env("BOT_TOKEN"), admins=get_env("BOT_ADMINS", True)),
+        bot=BotConfig(
+            token=get_env("BOT_TOKEN"),
+            admins=get_env("BOT_ADMINS", True),
+            num_days=get_env("NUM_DAYS"),
+            exclude_weekends=get_env("EXCLUDE_WEEKENDS"),
+            timezone=get_env("TIMEZONE"),
+            country_code=get_env("COUNTRY_CODE"),
+        ),
         redis=RedisConfig(
             host=get_env("REDIS_HOST"),
             port=get_env("REDIS_PORT"),

@@ -24,6 +24,7 @@ from handlers.user.booking_management import booking_management_router
 logger = Logger()
 
 config = load_config()
+
 bot = Bot(token=config.bot.token, parse_mode=ParseMode.HTML)
 
 dp = Dispatcher()
@@ -33,6 +34,13 @@ dp.include_router(user_management_router)
 dp.include_router(room_management_router)
 dp.include_router(desk_management_router)
 dp.include_router(booking_management_router)
+
+dp.workflow_data.update({
+    'num_days': config.bot.num_days,
+    'exclude_weekends': config.bot.exclude_weekends,
+    'timezone': config.bot.timezone,
+    'country_code': config.bot.country_code
+    })
 
 async def on_startup(bot):
     await create_db()
