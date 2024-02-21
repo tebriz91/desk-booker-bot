@@ -5,6 +5,7 @@ from datetime import datetime
 
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
+from aiogram.fsm.storage.memory import MemoryStorage
 
 from config_data.config import load_config
 from keyboards.set_menu import set_main_menu
@@ -14,7 +15,7 @@ from database.engine import create_db, session_maker
 
 from utils.logger import Logger
 
-from handlers.custom_kb_handler import kb_router
+# from handlers.custom_kb_handler import kb_router
 from handlers.inline_kb_handler import inline_router
 from handlers.admin.user_management import user_management_router
 from handlers.admin.room_management import room_management_router
@@ -25,16 +26,19 @@ logger = Logger()
 
 config = load_config()
 
+storage = MemoryStorage()
+
 bot = Bot(token=config.bot.token, parse_mode=ParseMode.HTML)
 
 dp = Dispatcher()
-dp.include_router(kb_router)
+# dp.include_router(kb_router)
 dp.include_router(inline_router)
 dp.include_router(user_management_router)
 dp.include_router(room_management_router)
 dp.include_router(desk_management_router)
 dp.include_router(booking_management_router)
 
+# Workflow data available in all handlers and middlewares
 dp.workflow_data.update({
     'num_days': config.bot.num_days,
     'exclude_weekends': config.bot.exclude_weekends,

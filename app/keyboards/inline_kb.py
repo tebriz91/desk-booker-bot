@@ -5,6 +5,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from services.dates_generator import generate_dates
 
+#* Date's inline keyboard
 def create_inline_kb(
     num_days: int,
     exclude_weekends: bool,
@@ -47,6 +48,7 @@ def create_inline_kb(
     # Return the keyboard as an object of class InlineKeyboardMarkup
     return kb_builder.as_markup()
 
+#* Room's inline keyboard
 def create_inline_kb_2(
     rooms: list,
     width: int, # Width of the keyboard
@@ -61,6 +63,33 @@ def create_inline_kb_2(
         buttons.append(InlineKeyboardButton(
             text=room,
             callback_data=room
+        ))
+    
+    kb_builder.row(*buttons, width=width)
+    
+    if last_btn:
+        kb_builder.row(InlineKeyboardButton(
+            text=last_btn,
+            callback_data='last_btn'
+        ))
+
+    return kb_builder.as_markup()
+
+#* Desk's inline keyboard
+def create_inline_kb_3(
+    desks: list,
+    width: int, # Width of the keyboard
+    last_btn: str | None = None, # Last button of the keyboard
+    ) -> InlineKeyboardMarkup:
+
+    kb_builder = InlineKeyboardBuilder()
+
+    buttons: list[InlineKeyboardButton] = []
+    
+    for desk in desks:
+        buttons.append(InlineKeyboardButton(
+            text=desk,
+            callback_data=desk
         ))
     
     kb_builder.row(*buttons, width=width)
