@@ -62,10 +62,15 @@ async def orm_insert_booking(session: AsyncSession, data: dict):
     session.add(object)
     await session.commit()
 
-async def orm_select_bookings_by_user_id(session: AsyncSession, telegram_id: int):
+async def orm_select_bookings_by_telegram_id(session: AsyncSession, telegram_id: int):
     query = select(Booking).where(Booking.telegram_id == telegram_id)
     result = await session.execute(query)
     return result.scalars().all()
+
+async def orm_select_booking_by_telegram_id_and_date(session: AsyncSession, telegram_id: int, date: str): #? check date type annotation
+    query = select(Booking).where(Booking.telegram_id == telegram_id, Booking.date == date)
+    result = await session.execute(query)
+    return result.scalar()
 
 async def orm_select_bookings_by_desk_id(session: AsyncSession, desk_id: int):
     query = select(Booking).where(Booking.desk_id == desk_id)

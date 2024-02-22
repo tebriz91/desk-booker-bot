@@ -6,7 +6,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from services.dates_generator import generate_dates
 
 #* Date's inline keyboard
-def create_inline_kb(
+def create_kb_with_dates(
     num_days: int,
     exclude_weekends: bool,
     timezone: str,
@@ -49,7 +49,7 @@ def create_inline_kb(
     return kb_builder.as_markup()
 
 #* Room's inline keyboard
-def create_inline_kb_2(
+def create_kb_with_room_names(
     rooms: list,
     width: int, # Width of the keyboard
     last_btn: str | None = None, # Last button of the keyboard
@@ -76,7 +76,7 @@ def create_inline_kb_2(
     return kb_builder.as_markup()
 
 #* Desk's inline keyboard
-def create_inline_kb_3(
+def create_kb_with_desk_names(
     desks: list,
     width: int, # Width of the keyboard
     last_btn: str | None = None, # Last button of the keyboard
