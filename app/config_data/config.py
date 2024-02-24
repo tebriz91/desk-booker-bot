@@ -47,7 +47,8 @@ class BotConfig:
     exclude_weekends: Optional[bool] = field(default=True)
     timezone: Optional[str] = field(default="UTC")
     country_code: Optional[str] = field(default=None)
-    
+    date_format: Optional[str] = field(default="%d.%m.%Y (%a)")
+    date_format_short: Optional[str] = field(default="%d.%m.%Y")
 
 @dataclass(frozen=True, slots=True)
 class RedisConfig:
@@ -88,7 +89,7 @@ def load_config() -> Config:
             host=get_env("DB_HOST"),
             port=get_env("DB_PORT", True),
             user=get_env("DB_USER"),
-            password=get_env("DB_PASSWORD"),
+            password=get_env("DB_PASSWORD")
         ),
         bot=BotConfig(
             token=get_env("BOT_TOKEN"),
@@ -97,9 +98,11 @@ def load_config() -> Config:
             exclude_weekends=get_env("EXCLUDE_WEEKENDS"),
             timezone=get_env("TIMEZONE"),
             country_code=get_env("COUNTRY_CODE"),
+            date_format=get_env("DATE_FORMAT"),
+            date_format_short=get_env("DATE_FORMAT_SHORT")
         ),
         redis=RedisConfig(
             host=get_env("REDIS_HOST"),
-            port=get_env("REDIS_PORT"),
+            port=get_env("REDIS_PORT")
         ),
     )

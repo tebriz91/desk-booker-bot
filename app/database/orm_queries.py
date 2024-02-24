@@ -108,6 +108,12 @@ async def orm_select_bookings_by_telegram_id_joined(session: AsyncSession, teleg
     result = await session.execute(query)
     return result.scalars().all()
 
+# Returns bookings from today onwards joined with desk and room data
+async def orm_select_bookings_by_telegram_id_joined_from_today(session: AsyncSession, telegram_id: int):
+    query = select(Booking).filter(Booking.telegram_id == telegram_id, Booking.date >= date.today()).options(joinedload(Booking.desk).joinedload(Desk.room)).order_by(Booking.date)
+    result = await session.execute(query)
+    return result.scalars().all()
+
 async def orm_select_bookings_by_telegram_id(session: AsyncSession, telegram_id: int):
     query = select(Booking).where(Booking.telegram_id == telegram_id).order_by(Booking.date)
     result = await session.execute(query)
