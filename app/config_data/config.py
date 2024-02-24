@@ -25,6 +25,7 @@ def get_env(value: str, cast_to_type: bool = False) -> Any:
 class DBConfig:
     uri: str
     name: str
+    date_format: Optional[str] = field(default="%Y-%m-%d")
     host: Optional[str] = field(default=None)
     port: Optional[int] = field(default=None)
     user: Optional[str] = field(default=None)
@@ -86,6 +87,7 @@ def load_config() -> Config:
         db=DBConfig(
             uri=get_env("DB_URI"),
             name=get_env("DB_NAME"),
+            date_format=get_env("DB_DATE_FORMAT"),
             host=get_env("DB_HOST"),
             port=get_env("DB_PORT", True),
             user=get_env("DB_USER"),

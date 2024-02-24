@@ -37,7 +37,8 @@ async def process_book_command_in_default_state(
     num_days: int, # Number of days to generate (env variable that transfered through dp.workflow_data)
     exclude_weekends: bool,
     timezone: str,
-    country_code: str):
+    country_code: str,
+    date_format: str):
     
     # Create an inline keyboard with the function create_inline_kb with the following parameters:
     keyboard = create_kb_with_dates(
@@ -45,6 +46,7 @@ async def process_book_command_in_default_state(
         exclude_weekends,
         timezone,
         country_code,
+        date_format,
         1, # Width of the keyboard
         last_btn='Cancel')
 
@@ -71,15 +73,16 @@ async def process_callback_query_1(query: CallbackQuery, state: FSMContext):
 async def process_callback_query_2(
     query: CallbackQuery,
     session: AsyncSession,
-    state: FSMContext
+    state: FSMContext,
+    date_format: str
     ):
-    date = query.data.split(' ')[0] # Get the date from the callback data in format 'YYYY-MM-DD' (without Day of the week)
-    
+    date_string = query.data
+    date = datetime.strptime(date_string, date_format).date() # Parse date string to datetime.date type: 'YYYY-MM-DD' to query the database
     # Check if user with the same telegram_id already has a booking for the same date
     already_booked = await orm_select_booking_by_telegram_id_and_date(session, query.from_user.id, date)
     
     if already_booked:
-        await query.message.edit_text(f'You already have a booking for: {date}')
+        await query.message.edit_text(f'You already have a booking for: {date_string}')
         await state.clear()
         await query.answer()
         
@@ -128,7 +131,8 @@ async def process_callback_query_3(
 async def process_callback_query_4(
     query: CallbackQuery,
     session: AsyncSession,
-    state: FSMContext
+    state: FSMContext,
+    date_format: str
     ):
     # Retrieve telegram_id from the query
     telegram_id = query.from_user.id
@@ -139,14 +143,12 @@ async def process_callback_query_4(
     desk_id = await orm_select_desk_id_by_name(session, desk_name)
 
     # Retrieve room_id from the state
-    room_id = await state.get_data()
-    room_id = int(room_id['room_id'])
+    room_id_FSM_obj = await state.get_data()
+    room_id = int(room_id_FSM_obj['room_id'])
     
-    # Retrieve date from the state
+    # Retrieve date from the state, that is already of datetime.date type
     data = await state.get_data()
     date = data['date']
-    # Convert date variable to datetime.date type
-    date = datetime.strptime(date, '%Y-%m-%d').date()
 
     # Insert booking into the database
     await orm_insert_booking(
@@ -156,7 +158,7 @@ async def process_callback_query_4(
         room_id,
         date)
     
-    await query.message.edit_text(f'You have chosen the desk: {desk_name} for the date: {date}')
+    await query.message.edit_text(f'You have chosen the desk: {desk_name} for the date: {date.strftime(date_format)}')
     await query.answer()
     
     await state.clear()

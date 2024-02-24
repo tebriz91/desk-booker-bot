@@ -11,6 +11,7 @@ def create_kb_with_dates(
     exclude_weekends: bool,
     timezone: str,
     country_code: str,
+    date_format: str,
     width: int, # Width of the keyboard
     last_btn: str | None = None, # Last button of the keyboard
     ) -> InlineKeyboardMarkup:
@@ -25,7 +26,8 @@ def create_kb_with_dates(
         num_days,
         exclude_weekends,
         timezone,
-        country_code
+        country_code,
+        date_format
     )
     
     # Fill the list of buttons with args and kwargs

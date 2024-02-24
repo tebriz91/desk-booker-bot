@@ -6,7 +6,8 @@ def generate_dates(
     num_days: int,
     exclude_weekends: bool,
     timezone: str,
-    country_code: str
+    country_code: str,
+    date_format: str
     ) -> list:
     """
     Generates a list of dates from the current date.
@@ -15,6 +16,7 @@ def generate_dates(
     :param exclude_weekends: Exclude weekends if True.
     :param timezone: Time zone for date generation.
     :param country_code: Country code for public holidays (Optional).
+    :param date_format: Date format for the generated dates.
     :return: List of formatted date strings.
     """
     dates: list = []
@@ -31,12 +33,10 @@ def generate_dates(
             current_date += timedelta(days=1)
             continue
         
-        formatted_date = current_date.strftime('%Y-%m-%d (%a)') # Format the date as 'YYYY-MM-DD (Day)'
+        formatted_date = current_date.strftime(date_format) # Format the date as 'YYYY-MM-DD (Day)'
 
         dates.append(formatted_date) # Add the formatted date to the list of dates
 
         current_date += timedelta(days=1) # Add one day to the current date
-
-        # Output the list of dates: ['2022-10-10 (Mon)', '2022-10-11 (Tue)', '2022-10-12 (Wed)', '2022-10-13 (Thu)', '2022-10-14 (Fri)']
 
     return dates
