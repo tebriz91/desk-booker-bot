@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.orm_queries import (
     orm_select_booking_by_telegram_id_and_date,
+    orm_select_room_id_by_name,
     orm_select_rooms,
     orm_select_desks_by_room_name,
     orm_select_desk_id_by_name,
@@ -106,6 +107,10 @@ async def process_callback_query_3(
     state: FSMContext
     ):
     room_name = query.data
+    
+    room_id = await orm_select_room_id_by_name(session, room_name)
+    await state.update_data(room_id=room_id)
+    
     desks_orm_obj = await orm_select_desks_by_room_name(session, room_name)
     desks = [desks.name for desks in desks_orm_obj]
     
@@ -133,6 +138,10 @@ async def process_callback_query_4(
     # Retrieve desk_id from the database using the desk_name
     desk_id = await orm_select_desk_id_by_name(session, desk_name)
 
+    # Retrieve room_id from the state
+    room_id = await state.get_data()
+    room_id = int(room_id['room_id'])
+    
     # Retrieve date from the state
     data = await state.get_data()
     date = data['date']
@@ -140,10 +149,12 @@ async def process_callback_query_4(
     date = datetime.strptime(date, '%Y-%m-%d').date()
 
     # Insert booking into the database
-    await orm_insert_booking(session, {
-        "telegram_id": telegram_id,
-        "desk_id": desk_id,
-        "date": date})
+    await orm_insert_booking(
+        session,
+        telegram_id,
+        desk_id,
+        room_id,
+        date)
     
     await query.message.edit_text(f'You have chosen the desk: {desk_name} for the date: {date}')
     await query.answer()

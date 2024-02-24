@@ -11,7 +11,7 @@ from config_data.config import load_config
 from keyboards.set_menu import set_main_menu
 
 from middlewares.db import DataBaseSession
-from database.engine import create_db, session_maker
+from database.engine import create_db, drop_db, session_maker
 
 from utils.logger import Logger
 
@@ -47,6 +47,7 @@ dp.workflow_data.update({
     })
 
 async def on_startup(bot):
+    # await drop_db()
     await create_db()
 
     bot_info = await bot.me()

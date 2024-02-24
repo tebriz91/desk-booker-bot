@@ -1,5 +1,5 @@
 from sqlalchemy import Date, DateTime, ForeignKey, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 class Base(DeclarativeBase):
     created_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now())
@@ -21,8 +21,8 @@ class Base(DeclarativeBase):
 class User(Base):
     __tablename__ = 'users'
     
-    # id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    telegram_id: Mapped[int] = mapped_column(primary_key=True, unique=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    telegram_id: Mapped[int] = mapped_column(unique=True)
     telegram_name: Mapped[str] = mapped_column(unique=True)
     is_admin: Mapped[bool] = mapped_column(default=False)
     is_banned: Mapped[bool] = mapped_column(default=False)
@@ -42,14 +42,21 @@ class Desk(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(unique=True)
-    room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id'))
+    room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id', ondelete='CASCADE')) # ondelete='CASCADE' means that if the room is deleted, all the desks in it will be deleted as well
     availability: Mapped[bool] = mapped_column(default=True)
     additional_info: Mapped[str | None]
+
+    room: Mapped[Room] = relationship(backref='desks') # This relationship is used to access the room of the desk, e.g. desk.room
 
 class Booking(Base):
     __tablename__ = 'bookings'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    telegram_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id'))
-    desk_id: Mapped[int] = mapped_column(ForeignKey('desks.id'))
-    date: Mapped[Date]= mapped_column(Date) # format: "YYYY-MM-DD"
+    telegram_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id', ondelete='CASCADE'), nullable=False)
+    desk_id: Mapped[int] = mapped_column(ForeignKey('desks.id', ondelete='CASCADE'), nullable=False)
+    room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id', ondelete='CASCADE'), nullable=False)
+    date: Mapped[Date]= mapped_column(Date, nullable=False) # format: "YYYY-MM-DD"
+    
+    user: Mapped[User] = relationship(backref='bookings')
+    room: Mapped[Room] = relationship(backref='bookings')
+    desk: Mapped[Desk] = relationship(backref='bookings')

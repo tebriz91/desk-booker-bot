@@ -23,11 +23,9 @@ async def command_get_desks_by_room_id_handler(message: Message, session: AsyncS
 async def command_add_desk_handler(message: Message, session: AsyncSession):
     command_name, room_id, desk_name = message.text.split(sep=" ")
     logger.info(f"room_id: {room_id}, desk_name: {desk_name}")
+    room_id = int(room_id)
     try:
-        await orm_insert_desk(session, {
-            "room_id": room_id,
-            "name": desk_name
-            })
+        await orm_insert_desk(session, room_id, desk_name)
         await message.answer(f"Desk with name: {desk_name} in room with id: {room_id} added to database")
     except Exception as e:
         logger.error(e)

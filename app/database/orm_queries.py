@@ -1,41 +1,68 @@
+from datetime import date
+
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from database.models import User, Room, Desk, Booking
 
 #* User's ORM queries
-async def orm_insert_user(session: AsyncSession, data: dict):
-    object = User(
-        telegram_id=data["telegram_id"],
-        telegram_name=data["telegram_name"]
-    )
-    session.add(object)
-    await session.commit()
-    
+async def orm_insert_user(
+    session: AsyncSession,
+    telegram_id: int,
+    telegram_name: str):
+    # Check if the user is already in the database
+    query = select(User).where(User.telegram_id == telegram_id)
+    result = await session.execute(query)
+    user = result.first()
+    # Add a new user only if they do not already exist
+    if user is None:
+        new_user = User(
+            telegram_id=telegram_id,
+            telegram_name=telegram_name)
+        session.add(new_user)
+        await session.commit()
+    else:
+        raise Exception
+
 async def orm_select_users(session: AsyncSession):
     query = select(User)
     result = await session.execute(query)
     return result.scalars().all()
 
 #* Room's ORM queries
-async def orm_insert_room(session: AsyncSession, data: dict):
-    object = Room(name=data["name"])
-    session.add(object)
-    await session.commit()
-
+async def orm_insert_room(session: AsyncSession, room_name: str):
+    query = select(Room).where(Room.name == room_name)
+    result = await session.execute(query)
+    room = result.first()
+    if room is None:
+        new_room = Room(name=room_name)
+        session.add(new_room)
+        await session.commit()
+    else:
+        raise Exception
+    
 async def orm_select_rooms(session: AsyncSession):
     query = select(Room)
     result = await session.execute(query)
     return result.scalars().all()
 
+async def orm_select_room_id_by_name(session: AsyncSession, room_name: str):
+    query = select(Room.id).where(Room.name == room_name)
+    result = await session.execute(query)
+    return result.scalar_one()
+
 #* Desk's ORM queries
-async def orm_insert_desk(session: AsyncSession, data: dict):
-    object = Desk(
-        room_id=data["room_id"],
-        name=data["name"]
-    )
-    session.add(object)
-    await session.commit()
+async def orm_insert_desk(session: AsyncSession, room_id: int, desk_name: str):
+    query = select(Desk).where(Desk.name == desk_name)
+    result = await session.execute(query)
+    desk = result.first()
+    if desk is None:
+        new_desk = Desk(room_id=room_id, name=desk_name)
+        session.add(new_desk)
+        await session.commit()
+    else:
+        raise Exception
 
 async def orm_select_desk_id_by_name(session: AsyncSession, desk_name: str):
     query = select(Desk.id).where(Desk.name == desk_name)
@@ -53,21 +80,40 @@ async def orm_select_desks_by_room_name(session: AsyncSession, room_name: str):
     return result.scalars().all()
 
 #* Booking's ORM queries
-async def orm_insert_booking(session: AsyncSession, data: dict):
-    object = Booking(
-        telegram_id=data["telegram_id"],
-        desk_id=data["desk_id"],
-        date=data["date"]
-    )
-    session.add(object)
-    await session.commit()
+async def orm_insert_booking(
+    session: AsyncSession,
+    telegram_id: int,
+    desk_id: int,
+    room_id: int,
+    date: date):
+    query = select(Booking).where(
+        Booking.telegram_id == telegram_id,
+        Booking.desk_id == desk_id,
+        Booking.date == date)
+    result = await session.execute(query)
+    booking = result.first()
+    if booking is None:
+        new_booking = Booking(
+                telegram_id=telegram_id,
+                desk_id=desk_id,
+                room_id=room_id,
+                date=date)
+        session.add(new_booking)
+        await session.commit()
+    else:
+        raise Exception
 
-async def orm_select_bookings_by_telegram_id(session: AsyncSession, telegram_id: int):
-    query = select(Booking).where(Booking.telegram_id == telegram_id)
+async def orm_select_bookings_by_telegram_id_joined(session: AsyncSession, telegram_id: int):
+    query = select(Booking).filter(Booking.telegram_id == telegram_id).options(joinedload(Booking.desk).joinedload(Desk.room)).order_by(Booking.date)
     result = await session.execute(query)
     return result.scalars().all()
 
-async def orm_select_booking_by_telegram_id_and_date(session: AsyncSession, telegram_id: int, date: str): #? check date type annotation
+async def orm_select_bookings_by_telegram_id(session: AsyncSession, telegram_id: int):
+    query = select(Booking).where(Booking.telegram_id == telegram_id).order_by(Booking.date)
+    result = await session.execute(query)
+    return result.scalars().all()
+
+async def orm_select_booking_by_telegram_id_and_date(session: AsyncSession, telegram_id: int, date: date):
     query = select(Booking).where(Booking.telegram_id == telegram_id, Booking.date == date)
     result = await session.execute(query)
     return result.scalar()
@@ -77,7 +123,7 @@ async def orm_select_bookings_by_desk_id(session: AsyncSession, desk_id: int):
     result = await session.execute(query)
     return result.scalars().all()
 
-async def orm_select_bookings_by_date(session: AsyncSession, date: str): #? check date type annotation
+async def orm_select_bookings_by_date(session: AsyncSession, date: date):
     query = select(Booking).where(Booking.date == date)
     result = await session.execute(query)
     return result.scalars().all()

@@ -23,7 +23,7 @@ async def command_add_room_handler(message: Message, session: AsyncSession):
     command_name, room_name = message.text.split(sep=" ")
     logger.info(f"room_name: {room_name}")
     try:
-        await orm_insert_room(session, {"name": room_name})
+        await orm_insert_room(session, room_name)
         await message.answer(f"Room with name: {room_name} added to database")
     except Exception as e:
         logger.error(e)
