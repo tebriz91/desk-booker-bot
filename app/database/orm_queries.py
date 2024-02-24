@@ -41,7 +41,7 @@ async def orm_insert_room(session: AsyncSession, room_name: str):
         await session.commit()
     else:
         raise Exception
-    
+
 async def orm_select_rooms(session: AsyncSession):
     query = select(Room)
     result = await session.execute(query)
@@ -113,6 +113,22 @@ async def orm_select_bookings_by_telegram_id_joined_from_today(session: AsyncSes
     query = select(Booking).filter(Booking.telegram_id == telegram_id, Booking.date >= date.today()).options(joinedload(Booking.desk).joinedload(Desk.room)).order_by(Booking.date)
     result = await session.execute(query)
     return result.scalars().all()
+
+#* In computer terms, we changed the way we asked for the data. We made sure that when we asked for the bookings (Booking), we got not only the bookings themselves but also the user who made each booking (User), and where the booking is for (Desk and Room), all in one go. This is called "eager loading" – like eagerly bringing all the toys you need at once.
+async def orm_select_bookings_by_room_id_joined_from_today(session: AsyncSession, room_id: int):
+    query = select(Booking).filter(
+        Booking.room_id == room_id, 
+        Booking.date >= date.today()
+    ).options(
+        joinedload(Booking.desk).joinedload(Desk.room),
+        joinedload(Booking.user)  # Eagerly load User relationship
+    ).order_by(Booking.date)
+    try:
+        result = await session.execute(query)
+        bookings = result.scalars().all()
+        return bookings
+    except Exception as e:
+        raise e
 
 async def orm_select_bookings_by_telegram_id(session: AsyncSession, telegram_id: int):
     query = select(Booking).where(Booking.telegram_id == telegram_id).order_by(Booking.date)

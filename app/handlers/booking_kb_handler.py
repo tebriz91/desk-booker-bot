@@ -142,14 +142,16 @@ async def process_callback_query_4(
     # Retrieve desk_id from the database using the desk_name
     desk_id = await orm_select_desk_id_by_name(session, desk_name)
 
-    # Retrieve room_id from the state
-    room_id_FSM_obj = await state.get_data()
-    room_id = int(room_id_FSM_obj['room_id'])
-    
     # Retrieve date from the state, that is already of datetime.date type
     data = await state.get_data()
     date = data['date']
 
+    #TODO: check if the desk is already booked for the date
+    
+    # Retrieve room_id from the state
+    room_id_FSM_obj = await state.get_data()
+    room_id = int(room_id_FSM_obj['room_id'])
+    
     # Insert booking into the database
     await orm_insert_booking(
         session,
