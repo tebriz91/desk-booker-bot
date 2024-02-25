@@ -1,5 +1,3 @@
-from datetime import datetime, timedelta
-
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -103,3 +101,11 @@ def create_kb_with_desk_names(
         ))
 
     return kb_builder.as_markup()
+
+def get_callback_btns(*, btns: dict[str, str], sizes: tuple[int] = (2,)):
+    keyboard = InlineKeyboardBuilder()
+
+    for text, data in btns.items():
+        keyboard.add(InlineKeyboardButton(text=text, callback_data=data))
+
+    return keyboard.adjust(*sizes).as_markup()

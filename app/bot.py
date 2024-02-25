@@ -10,11 +10,12 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from config_data.config import load_config
 from keyboards.set_menu import set_main_menu
 
-from middlewares.db import DataBaseSession
+from middlewares.db_middleware import DataBaseSession
 from database.engine import create_db, drop_db, session_maker
 
 from utils.logger import Logger
 
+#! from routers import router
 # from handlers.custom_kb_handler import kb_router
 from handlers.booking_kb_handler import booking_kb_router
 from handlers.booking_management import booking_management_router
@@ -31,6 +32,7 @@ storage = MemoryStorage()
 bot = Bot(token=config.bot.token, parse_mode=ParseMode.HTML)
 
 dp = Dispatcher()
+#! dp.include_router(router)
 # dp.include_router(kb_router)
 dp.include_router(booking_kb_router)
 dp.include_router(booking_management_router)

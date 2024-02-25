@@ -10,6 +10,7 @@ from aiogram.fsm.state import default_state, State, StatesGroup
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.orm_queries import (
+    orm_select_booking_by_desk_id_and_date,
     orm_select_booking_by_telegram_id_and_date,
     orm_select_room_id_by_name,
     orm_select_rooms,
@@ -31,7 +32,7 @@ class FSMBooking(StatesGroup):
 
 #* Process /book command in default state
 @booking_kb_router.message(Command('book'), StateFilter(default_state))
-async def process_book_command_in_default_state(
+async def process_command_book_in_default_state(
     message: Message,
     state: FSMContext,
     num_days: int, # Number of days to generate (env variable that transfered through dp.workflow_data)
@@ -58,19 +59,19 @@ async def process_book_command_in_default_state(
 
 #* Process /book command in non-default state
 @booking_kb_router.message(Command('book'), ~StateFilter(default_state))
-async def process_book_command_in_non_default_state(message: Message):
+async def process_command_book_in_non_default_state(message: Message):
     await message.answer("You are already in the booking process. Please finish it or cancel it.")
 
 #* Process the last button (Cancel)
 @booking_kb_router.callback_query(F.data == "last_btn")
-async def process_callback_query_1(query: CallbackQuery, state: FSMContext):
+async def process_cancel_button(query: CallbackQuery, state: FSMContext):
     await query.message.edit_text("Process has been canceled")
     await query.answer()
     await state.clear()
     
 #* Process the date button
 @booking_kb_router.callback_query(StateFilter(FSMBooking.select_date))
-async def process_callback_query_2(
+async def process_date_button(
     query: CallbackQuery,
     session: AsyncSession,
     state: FSMContext,
@@ -104,7 +105,7 @@ async def process_callback_query_2(
     
 #* Process the room button
 @booking_kb_router.callback_query(StateFilter(FSMBooking.select_room))
-async def process_callback_query_3(
+async def process_room_button(
     query: CallbackQuery,
     session: AsyncSession,
     state: FSMContext
@@ -128,39 +129,43 @@ async def process_callback_query_3(
     
 #* Process the desk button
 @booking_kb_router.callback_query(StateFilter(FSMBooking.select_desk))
-async def process_callback_query_4(
+async def process_desk_button(
     query: CallbackQuery,
     session: AsyncSession,
     state: FSMContext,
     date_format: str
     ):
-    # Retrieve telegram_id from the query
-    telegram_id = query.from_user.id
-
-    # Retrieve desk_name from the query
+    # Retrieve desk_name from the query, than desk_id from the database using the desk_name
     desk_name = query.data
-    # Retrieve desk_id from the database using the desk_name
     desk_id = await orm_select_desk_id_by_name(session, desk_name)
 
     # Retrieve date from the state, that is already of datetime.date type
     data = await state.get_data()
     date = data['date']
 
-    #TODO: check if the desk is already booked for the date
+    # Check if the desk is already booked for the date
+    already_booked = await orm_select_booking_by_desk_id_and_date(session, desk_id, date)
+    if already_booked:
+        await query.message.edit_text(f'The desk: {desk_name} is already booked for: {date.strftime(date_format)}')
+        await state.clear()
+        await query.answer()
     
-    # Retrieve room_id from the state
-    room_id_FSM_obj = await state.get_data()
-    room_id = int(room_id_FSM_obj['room_id'])
-    
-    # Insert booking into the database
-    await orm_insert_booking(
-        session,
-        telegram_id,
-        desk_id,
-        room_id,
-        date)
-    
-    await query.message.edit_text(f'You have chosen the desk: {desk_name} for the date: {date.strftime(date_format)}')
-    await query.answer()
-    
-    await state.clear()
+    else:
+        # Retrieve telegram_id from the query
+        telegram_id = query.from_user.id
+
+        # Retrieve room_id from the state
+        room_id_FSM_obj = await state.get_data()
+        room_id = int(room_id_FSM_obj['room_id'])
+        
+        # Insert booking into the database
+        await orm_insert_booking(
+            session,
+            telegram_id,
+            desk_id,
+            room_id,
+            date)
+        
+        await query.message.edit_text(f'You successfully booked desk: {desk_name} for: {date.strftime(date_format)}')
+        await state.clear()
+        await query.answer()

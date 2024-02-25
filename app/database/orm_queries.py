@@ -140,6 +140,11 @@ async def orm_select_booking_by_telegram_id_and_date(session: AsyncSession, tele
     result = await session.execute(query)
     return result.scalar()
 
+async def orm_select_booking_by_desk_id_and_date(session: AsyncSession, desk_id: int, date: date):
+    query = select(Booking).where(Booking.desk_id == desk_id, Booking.date == date)
+    result = await session.execute(query)
+    return result.scalar()
+
 async def orm_select_bookings_by_desk_id(session: AsyncSession, desk_id: int):
     query = select(Booking).where(Booking.desk_id == desk_id)
     result = await session.execute(query)
