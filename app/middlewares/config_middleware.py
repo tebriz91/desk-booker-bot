@@ -1,3 +1,4 @@
+'''
 from aiogram import BaseMiddleware
 from typing import Callable, Any, Awaitable
 
@@ -18,3 +19,4 @@ class ConfigMiddleware(BaseMiddleware):
     ) -> Any:
         data["config"] = self.config
         return await handler(event, data)
+'''

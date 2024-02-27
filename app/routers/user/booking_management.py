@@ -4,6 +4,8 @@ from aiogram.filters import Command
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from routers.user.router import user_router
+
 from database.orm_queries import orm_select_room_id_by_name, orm_select_rooms
 
 from keyboards.booking_kb import create_kb_with_room_names
@@ -13,10 +15,8 @@ from services.bookings_list_generator import (
     generate_list_of_current_bookings_by_telegram_id,
     generate_list_of_all_current_bookings_by_room_id)
 
-booking_management_router = Router()
-
 #* Process command /view_my_bookings
-@booking_management_router.message(Command("view_my_bookings"))
+@user_router.message(Command("view_my_bookings"))
 async def command_get_current_bookings_by_telegram_id(
     message: Message,
     session: AsyncSession,
@@ -33,7 +33,7 @@ async def command_get_current_bookings_by_telegram_id(
     await message.answer(text=bookings)
 
 #* Process command /view_all_bookings
-@booking_management_router.message(Command("view_all_bookings"))
+@user_router.message(Command("view_all_bookings"))
 async def process_command_view_all_bookings(
     message: Message,
     session: AsyncSession,
@@ -50,13 +50,13 @@ async def process_command_view_all_bookings(
     )
 
 #* Process the last button (Cancel)
-@booking_management_router.callback_query(F.data == "last_btn")
+@user_router.callback_query(F.data == "last_btn")
 async def process_callback_query_from_cancel_button(query: CallbackQuery):
     await query.message.edit_text("Process has been canceled")
     await query.answer()
 
 #* Process the room button
-@booking_management_router.callback_query(F.data.in_(['A', 'B', 'C']))
+@user_router.callback_query(F.data.in_(['A', 'B', 'C']))
 async def process_callback_query_from_room_button(
     query: CallbackQuery,
     session: AsyncSession,
@@ -83,7 +83,7 @@ async def process_callback_query_from_room_button(
 
 #* Process the back button
 #TODO: Refactor. Add callback factory and states
-@booking_management_router.callback_query(F.data.startswith("back_"))
+@user_router.callback_query(F.data.startswith("back_"))
 async def process_callback_query_from_back_button(query: CallbackQuery, session: AsyncSession):
     # Retrieve rooms from the database
     rooms_orm_obj = await orm_select_rooms(session)

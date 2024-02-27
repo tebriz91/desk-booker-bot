@@ -4,21 +4,21 @@ from aiogram.types import Message
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from routers.admin.router import admin_router
+
 from database.orm_queries import orm_insert_room, orm_select_rooms
 
 from utils.logger import Logger
 
 logger = Logger()
 
-room_management_router = Router()
-
-@room_management_router.message(Command("rooms"))
+@admin_router.message(Command("rooms"))
 async def command_get_rooms_handler(message: Message, session: AsyncSession):
     rooms = await orm_select_rooms(session)
     for room in rooms:
         await message.answer(f"id: {room.id}, name: {room.name}, availability: {room.availability}, plan: {room.plan}, additional_info: {room.additional_info}")
 
-@room_management_router.message(F.text.startswith("/add_room"))
+@admin_router.message(F.text.startswith("/add_room"))
 async def command_add_room_handler(message: Message, session: AsyncSession):
     command_name, room_name = message.text.split(sep=" ")
     logger.info(f"room_name: {room_name}")

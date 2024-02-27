@@ -1,3 +1,4 @@
+'''
 from aiogram import types, F, Router
 from aiogram.fsm.context import FSMContext
 
@@ -20,3 +21,4 @@ async def error_event(
         f'from_message: {message.text}'
     )
     await message.answer('What is going on?', reply_markup=types.ReplyKeyboardRemove())
+'''

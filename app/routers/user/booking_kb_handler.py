@@ -9,6 +9,8 @@ from aiogram.fsm.state import default_state, State, StatesGroup
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from routers.user.router import user_router
+
 from database.orm_queries import (
     orm_select_booking_by_desk_id_and_date,
     orm_select_booking_by_telegram_id_and_date,
@@ -23,15 +25,13 @@ from keyboards.booking_kb import (
     create_kb_with_room_names,
     create_kb_with_desk_names)
 
-booking_kb_router = Router()
-
 class FSMBooking(StatesGroup):
     select_date = State()
     select_room = State()
     select_desk = State()
 
 #* Process /book command in default state
-@booking_kb_router.message(Command('book'), StateFilter(default_state))
+@user_router.message(Command('book'), StateFilter(default_state))
 async def process_command_book_in_default_state(
     message: Message,
     state: FSMContext,
@@ -58,19 +58,19 @@ async def process_command_book_in_default_state(
     await state.set_state(FSMBooking.select_date)
 
 #* Process /book command in non-default state
-@booking_kb_router.message(Command('book'), ~StateFilter(default_state))
+@user_router.message(Command('book'), ~StateFilter(default_state))
 async def process_command_book_in_non_default_state(message: Message):
     await message.answer("You are already in the booking process. Please finish it or cancel it.")
 
 #* Process the last button (Cancel)
-@booking_kb_router.callback_query(F.data == "last_btn")
+@user_router.callback_query(F.data == "last_btn")
 async def process_cancel_button(query: CallbackQuery, state: FSMContext):
     await query.message.edit_text("Process has been canceled")
     await query.answer()
     await state.clear()
     
 #* Process the date button
-@booking_kb_router.callback_query(StateFilter(FSMBooking.select_date))
+@user_router.callback_query(StateFilter(FSMBooking.select_date))
 async def process_date_button(
     query: CallbackQuery,
     session: AsyncSession,
@@ -104,7 +104,7 @@ async def process_date_button(
         await state.set_state(FSMBooking.select_room)
     
 #* Process the room button
-@booking_kb_router.callback_query(StateFilter(FSMBooking.select_room))
+@user_router.callback_query(StateFilter(FSMBooking.select_room))
 async def process_room_button(
     query: CallbackQuery,
     session: AsyncSession,
@@ -128,7 +128,7 @@ async def process_room_button(
     await state.set_state(FSMBooking.select_desk)
     
 #* Process the desk button
-@booking_kb_router.callback_query(StateFilter(FSMBooking.select_desk))
+@user_router.callback_query(StateFilter(FSMBooking.select_desk))
 async def process_desk_button(
     query: CallbackQuery,
     session: AsyncSession,

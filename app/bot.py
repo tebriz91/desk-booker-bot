@@ -15,13 +15,7 @@ from database.engine import create_db, drop_db, session_maker
 
 from utils.logger import Logger
 
-#! from routers import router
-# from handlers.custom_kb_handler import kb_router
-from handlers.booking_kb_handler import booking_kb_router
-from handlers.booking_management import booking_management_router
-from handlers.admin.user_management import user_management_router
-from handlers.admin.room_management import room_management_router
-from handlers.admin.desk_management import desk_management_router
+from routers import router
 
 logger = Logger()
 
@@ -32,13 +26,7 @@ storage = MemoryStorage()
 bot = Bot(token=config.bot.token, parse_mode=ParseMode.HTML)
 
 dp = Dispatcher()
-#! dp.include_router(router)
-# dp.include_router(kb_router)
-dp.include_router(booking_kb_router)
-dp.include_router(booking_management_router)
-dp.include_router(user_management_router)
-dp.include_router(room_management_router)
-dp.include_router(desk_management_router)
+dp.include_router(router)
 
 # Workflow data available in all handlers and middlewares
 dp.workflow_data.update({
