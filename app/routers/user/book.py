@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from aiogram import F, Router
+from aiogram import F
 from aiogram.filters import Command, StateFilter
 from aiogram.types import Message, CallbackQuery
 
@@ -8,6 +8,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state, State, StatesGroup
 
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from callback.book_cb import BookingCallbackFactory
 
 from routers.user.router import user_router
 
@@ -63,21 +65,22 @@ async def process_command_book_in_non_default_state(message: Message):
     await message.answer("You are already in the booking process. Please finish it or cancel it.")
 
 #* Process the last button (Cancel)
-@user_router.callback_query(F.data == "last_btn")
+@user_router.callback_query(F.data == "cancel")
 async def process_cancel_button(query: CallbackQuery, state: FSMContext):
-    await query.message.edit_text("Process has been canceled")
+    await query.message.edit_text("Process canceled")
     await query.answer()
     await state.clear()
     
 #* Process the date button
-@user_router.callback_query(StateFilter(FSMBooking.select_date))
+@user_router.callback_query(BookingCallbackFactory.filter(),StateFilter(FSMBooking.select_date))
 async def process_date_button(
     query: CallbackQuery,
+    callback_data: BookingCallbackFactory,
     session: AsyncSession,
     state: FSMContext,
     date_format: str
     ):
-    date_string = query.data
+    date_string = callback_data.date
     date = datetime.strptime(date_string, date_format).date() # Parse date string to datetime.date type: 'YYYY-MM-DD' to query the database
     # Check if user with the same telegram_id already has a booking for the same date
     already_booked = await orm_select_booking_by_telegram_id_and_date(session, query.from_user.id, date)
@@ -104,13 +107,14 @@ async def process_date_button(
         await state.set_state(FSMBooking.select_room)
     
 #* Process the room button
-@user_router.callback_query(StateFilter(FSMBooking.select_room))
+@user_router.callback_query(BookingCallbackFactory.filter(), StateFilter(FSMBooking.select_room))
 async def process_room_button(
     query: CallbackQuery,
+    callback_data: BookingCallbackFactory,
     session: AsyncSession,
     state: FSMContext
     ):
-    room_name = query.data
+    room_name = callback_data.room_name
     
     room_id = await orm_select_room_id_by_name(session, room_name)
     await state.update_data(room_id=room_id)
@@ -128,15 +132,16 @@ async def process_room_button(
     await state.set_state(FSMBooking.select_desk)
     
 #* Process the desk button
-@user_router.callback_query(StateFilter(FSMBooking.select_desk))
+@user_router.callback_query(BookingCallbackFactory.filter(), StateFilter(FSMBooking.select_desk))
 async def process_desk_button(
     query: CallbackQuery,
+    callback_data: BookingCallbackFactory,
     session: AsyncSession,
     state: FSMContext,
     date_format: str
     ):
     # Retrieve desk_name from the query, than desk_id from the database using the desk_name
-    desk_name = query.data
+    desk_name = callback_data.desk_name
     desk_id = await orm_select_desk_id_by_name(session, desk_name)
 
     # Retrieve date from the state, that is already of datetime.date type

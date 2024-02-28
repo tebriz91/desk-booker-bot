@@ -1,6 +1,8 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from callback.book_cb import BookingCallbackFactory
+
 from services.dates_generator import generate_dates
 
 #* Date's inline keyboard
@@ -32,7 +34,7 @@ def create_kb_with_dates(
     for date in dates:
         buttons.append(InlineKeyboardButton(
             text=(date if date else dates[date]),
-            callback_data=date
+            callback_data=BookingCallbackFactory(date=date).pack()
         ))
 
     # Unpack the list of buttons into builder with method row with parameter width
@@ -42,7 +44,7 @@ def create_kb_with_dates(
     if last_btn:
         kb_builder.row(InlineKeyboardButton(
             text=last_btn,
-            callback_data='last_btn'
+            callback_data='cancel'
         ))
 
     # Return the keyboard as an object of class InlineKeyboardMarkup
@@ -62,7 +64,7 @@ def create_kb_with_room_names(
     for room in rooms:
         buttons.append(InlineKeyboardButton(
             text=room,
-            callback_data=room
+            callback_data=BookingCallbackFactory(room_name=room).pack()
         ))
     
     kb_builder.row(*buttons, width=width)
@@ -70,7 +72,7 @@ def create_kb_with_room_names(
     if last_btn:
         kb_builder.row(InlineKeyboardButton(
             text=last_btn,
-            callback_data='last_btn'
+            callback_data='cancel'
         ))
 
     return kb_builder.as_markup()
@@ -89,7 +91,7 @@ def create_kb_with_desk_names(
     for desk in desks:
         buttons.append(InlineKeyboardButton(
             text=desk,
-            callback_data=desk
+            callback_data=BookingCallbackFactory(desk_name=desk).pack()
         ))
     
     kb_builder.row(*buttons, width=width)
@@ -97,7 +99,7 @@ def create_kb_with_desk_names(
     if last_btn:
         kb_builder.row(InlineKeyboardButton(
             text=last_btn,
-            callback_data='last_btn'
+            callback_data='cancel'
         ))
 
     return kb_builder.as_markup()
