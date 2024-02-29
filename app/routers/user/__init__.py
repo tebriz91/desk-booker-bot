@@ -1,5 +1,6 @@
-from routers.user.booking_management import *
 from routers.user.book import *
+from routers.user.my_bookings import *
+from routers.user.all_bookings import *
 
 from routers.user.router import user_router
 

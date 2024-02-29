@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from enums.button_labels import ButtonLabel
 
-from keyboards.callbacks import CBFBooking, CBFUtilButtons
+from keyboards.callbacks import CBFBook, CBFUtilButtons
 
 from states.user import FSMBooking
 
@@ -26,7 +26,7 @@ from database.orm_queries import (
     orm_select_desk_id_by_name,
     orm_insert_booking)
 
-from keyboards.booking_kb import (
+from keyboards.book_kb import (
     create_kb_with_dates,
     create_kb_with_room_names,
     create_kb_with_desk_names)
@@ -59,7 +59,12 @@ async def process_command_book_in_default_state(
     await state.set_state(FSMBooking.select_date)
 
 #* Process /book command in non-default state
-@user_router.message(Command('book'), ~StateFilter(default_state))
+@user_router.message(
+    Command('book'),
+    ~StateFilter(default_state), #! Not working
+    StateFilter(FSMBooking.select_date,
+                FSMBooking.select_room,
+                FSMBooking.select_desk))
 async def process_command_book_in_non_default_state(message: Message):
     await message.answer("You are already in the booking process. Please finish it or cancel it.")
 
@@ -71,7 +76,12 @@ async def process_cancel_button(query: CallbackQuery, state: FSMContext):
     await state.clear()
 
 #* Process the last button 'Back'
-@user_router.callback_query(CBFUtilButtons.filter(F.action == ButtonLabel.BACK.value))
+@user_router.callback_query(
+    CBFUtilButtons.filter(
+        F.action == ButtonLabel.BACK.value),
+    StateFilter(
+        FSMBooking.select_room,
+        FSMBooking.select_desk))
 async def process_back_button(
     query: CallbackQuery,
     state: FSMContext,
@@ -102,25 +112,42 @@ async def process_back_button(
         await state.set_state(FSMBooking.select_room)
         rooms_orm_obj = await orm_select_rooms(session)
         rooms = [rooms.name for rooms in rooms_orm_obj]
-        keyboard = create_kb_with_room_names(
-            rooms,
-            1,
-            last_btns=[
-                ButtonLabel.BACK.value,
-                ButtonLabel.CANCEL.value])
+        
+        if len(rooms) <= 7:
+            keyboard = create_kb_with_room_names(
+                rooms,
+                1,
+                last_btns=[
+                    ButtonLabel.BACK.value,
+                    ButtonLabel.CANCEL.value])
 
-        await query.message.edit_text(
-        text='Choose a room:',
-        reply_markup=keyboard
-        )
+            await query.message.edit_text(
+            text='Choose a room:',
+            reply_markup=keyboard
+            )
+        else:
+            keyboard = create_kb_with_room_names(
+                rooms,
+                2,
+                last_btns=[
+                    ButtonLabel.BACK.value,
+                    ButtonLabel.CANCEL.value])
+
+            await query.message.edit_text(
+            text='Choose a room:',
+            reply_markup=keyboard
+            )
     
     await query.answer()
     
 #* Process the date button
-@user_router.callback_query(CBFBooking.filter(), StateFilter(FSMBooking.select_date))
+@user_router.callback_query(
+    CBFBook.filter(),
+    StateFilter(
+        FSMBooking.select_date))
 async def process_date_button(
     query: CallbackQuery,
-    callback_data: CBFBooking,
+    callback_data: CBFBook,
     session: AsyncSession,
     state: FSMContext,
     date_format: str):
@@ -141,25 +168,39 @@ async def process_date_button(
         rooms_orm_obj = await orm_select_rooms(session)
         rooms = [rooms.name for rooms in rooms_orm_obj]
         # Create an inline keyboard with available room names as buttons
-        keyboard = create_kb_with_room_names(
-            rooms,
-            1,
-            last_btns=[
-                ButtonLabel.BACK.value,
-                ButtonLabel.CANCEL.value])
+        
+        if len(rooms) <= 7:
+            keyboard = create_kb_with_room_names(
+                rooms,
+                1, # Width of the keyboard
+                last_btns=[
+                    ButtonLabel.BACK.value,
+                    ButtonLabel.CANCEL.value])
 
-        await query.message.edit_text(
-        text='Choose a room:',
-        reply_markup=keyboard
-        )
+            await query.message.edit_text(
+            text='Choose a room:',
+            reply_markup=keyboard
+            )
+        else:
+            keyboard = create_kb_with_room_names(
+                rooms,
+                2, # Width of the keyboard
+                last_btns=[
+                    ButtonLabel.BACK.value,
+                    ButtonLabel.CANCEL.value])
+
+            await query.message.edit_text(
+            text='Choose a room:',
+            reply_markup=keyboard
+            )
         
         await state.set_state(FSMBooking.select_room)
     
 #* Process the room button
-@user_router.callback_query(CBFBooking.filter(), StateFilter(FSMBooking.select_room))
+@user_router.callback_query(CBFBook.filter(), StateFilter(FSMBooking.select_room))
 async def process_room_button(
     query: CallbackQuery,
-    callback_data: CBFBooking,
+    callback_data: CBFBook,
     session: AsyncSession,
     state: FSMContext
     ):
@@ -171,12 +212,20 @@ async def process_room_button(
     desks_orm_obj = await orm_select_desks_by_room_name(session, room_name)
     desks = [desks.name for desks in desks_orm_obj]
     
-    keyboard = create_kb_with_desk_names(
-        desks,
-        1,
-        last_btns=[
-            ButtonLabel.BACK.value,
-            ButtonLabel.CANCEL.value])
+    if len(desks) <= 7:
+        keyboard = create_kb_with_desk_names(
+            desks,
+            1,
+            last_btns=[
+                ButtonLabel.BACK.value,
+                ButtonLabel.CANCEL.value])
+    else:
+        keyboard = create_kb_with_desk_names(
+            desks,
+            2,
+            last_btns=[
+                ButtonLabel.BACK.value,
+                ButtonLabel.CANCEL.value])
 
     await query.message.edit_text(
     text='Choose a desk:',
@@ -186,10 +235,10 @@ async def process_room_button(
     await state.set_state(FSMBooking.select_desk)
     
 #* Process the desk button
-@user_router.callback_query(CBFBooking.filter(), StateFilter(FSMBooking.select_desk))
+@user_router.callback_query(CBFBook.filter(), StateFilter(FSMBooking.select_desk))
 async def process_desk_button(
     query: CallbackQuery,
-    callback_data: CBFBooking,
+    callback_data: CBFBook,
     session: AsyncSession,
     state: FSMContext,
     date_format: str

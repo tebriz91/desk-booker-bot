@@ -3,7 +3,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from enums.button_labels import ButtonLabel
 
-from keyboards.callbacks import CBFBooking, CBFUtilButtons
+from keyboards.callbacks import CBFBook, CBFUtilButtons
 
 from services.dates_generator import generate_dates
 
@@ -36,7 +36,7 @@ def create_kb_with_dates(
     for date in dates:
         buttons.append(InlineKeyboardButton(
             text=(date if date else dates[date]),
-            callback_data=CBFBooking(date=date).pack()
+            callback_data=CBFBook(date=date).pack()
         ))
 
     # Unpack the list of buttons into builder with method row with parameter width
@@ -66,7 +66,7 @@ def create_kb_with_room_names(
     for room in rooms:
         buttons.append(InlineKeyboardButton(
             text=room,
-            callback_data=CBFBooking(room_name=room).pack()
+            callback_data=CBFBook(room_name=room).pack()
         ))
     
     kb_builder.row(*buttons, width=width)
@@ -98,7 +98,7 @@ def create_kb_with_desk_names(
     for desk in desks:
         buttons.append(InlineKeyboardButton(
             text=desk,
-            callback_data=CBFBooking(desk_name=desk).pack()
+            callback_data=CBFBook(desk_name=desk).pack()
         ))
     
     kb_builder.row(*buttons, width=width)

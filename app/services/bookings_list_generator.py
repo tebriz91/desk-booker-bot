@@ -36,7 +36,7 @@ async def generate_list_of_current_bookings_by_telegram_id(
                 formatted_booking = (
                     f"<b>{booking.date.strftime(date_format)}</b>\n"
                     f"Room: {booking.room.name}, Desk: {booking.desk.name}\n"
-                    f"<pre>booked on: {booking.created_at.strftime(date_format_short)}</pre>\n\n"
+                    f"<code>booked on: {booking.created_at.strftime(date_format_short)}</code>\n\n"
                 )
                 list_of_bookings += formatted_booking
             return first_line + list_of_bookings
