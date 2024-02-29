@@ -5,11 +5,15 @@ from aiogram.filters import Command, StateFilter
 from aiogram.types import Message, CallbackQuery
 
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import default_state, State, StatesGroup
+from aiogram.fsm.state import default_state
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from callback.book_cb import BookingCallbackFactory
+from enums.button_labels import ButtonLabel
+
+from keyboards.callbacks import CBFBooking, CBFUtilButtons
+
+from states.user import FSMBooking
 
 from routers.user.router import user_router
 
@@ -26,11 +30,6 @@ from keyboards.booking_kb import (
     create_kb_with_dates,
     create_kb_with_room_names,
     create_kb_with_desk_names)
-
-class FSMBooking(StatesGroup):
-    select_date = State()
-    select_room = State()
-    select_desk = State()
 
 #* Process /book command in default state
 @user_router.message(Command('book'), StateFilter(default_state))
@@ -51,7 +50,7 @@ async def process_command_book_in_default_state(
         country_code,
         date_format,
         1, # Width of the keyboard
-        last_btn='Cancel')
+        last_btn=ButtonLabel.CANCEL.value) # Last button of the keyboard
 
     await message.answer(
         text='Choose a date:',
@@ -64,22 +63,67 @@ async def process_command_book_in_default_state(
 async def process_command_book_in_non_default_state(message: Message):
     await message.answer("You are already in the booking process. Please finish it or cancel it.")
 
-#* Process the last button (Cancel)
-@user_router.callback_query(F.data == "cancel")
+#* Process the last button 'Cancel'
+@user_router.callback_query(CBFUtilButtons.filter(F.action == ButtonLabel.CANCEL.value))
 async def process_cancel_button(query: CallbackQuery, state: FSMContext):
     await query.message.edit_text("Process canceled")
     await query.answer()
     await state.clear()
+
+#* Process the last button 'Back'
+@user_router.callback_query(CBFUtilButtons.filter(F.action == ButtonLabel.BACK.value))
+async def process_back_button(
+    query: CallbackQuery,
+    state: FSMContext,
+    session: AsyncSession,
+    num_days: int,
+    exclude_weekends: bool,
+    timezone: str,
+    country_code: str,
+    date_format: str):
+    current_state = await state.get_state()
+    # If currently selecting a room, go back to date selection
+    if current_state == FSMBooking.select_room.state:
+        await state.set_state(FSMBooking.select_date)
+        keyboard = create_kb_with_dates(
+        num_days,
+        exclude_weekends,
+        timezone,
+        country_code,
+        date_format,
+        1, # Width of the keyboard
+        last_btn=ButtonLabel.CANCEL.value) # Last button of the keyboard
+
+        await query.message.edit_text(
+            text='Choose a date:',
+            reply_markup=keyboard)
+    
+    elif current_state == FSMBooking.select_desk.state:
+        await state.set_state(FSMBooking.select_room)
+        rooms_orm_obj = await orm_select_rooms(session)
+        rooms = [rooms.name for rooms in rooms_orm_obj]
+        keyboard = create_kb_with_room_names(
+            rooms,
+            1,
+            last_btns=[
+                ButtonLabel.BACK.value,
+                ButtonLabel.CANCEL.value])
+
+        await query.message.edit_text(
+        text='Choose a room:',
+        reply_markup=keyboard
+        )
+    
+    await query.answer()
     
 #* Process the date button
-@user_router.callback_query(BookingCallbackFactory.filter(),StateFilter(FSMBooking.select_date))
+@user_router.callback_query(CBFBooking.filter(), StateFilter(FSMBooking.select_date))
 async def process_date_button(
     query: CallbackQuery,
-    callback_data: BookingCallbackFactory,
+    callback_data: CBFBooking,
     session: AsyncSession,
     state: FSMContext,
-    date_format: str
-    ):
+    date_format: str):
     date_string = callback_data.date
     date = datetime.strptime(date_string, date_format).date() # Parse date string to datetime.date type: 'YYYY-MM-DD' to query the database
     # Check if user with the same telegram_id already has a booking for the same date
@@ -97,7 +141,12 @@ async def process_date_button(
         rooms_orm_obj = await orm_select_rooms(session)
         rooms = [rooms.name for rooms in rooms_orm_obj]
         # Create an inline keyboard with available room names as buttons
-        keyboard = create_kb_with_room_names(rooms, 1, last_btn='Cancel')
+        keyboard = create_kb_with_room_names(
+            rooms,
+            1,
+            last_btns=[
+                ButtonLabel.BACK.value,
+                ButtonLabel.CANCEL.value])
 
         await query.message.edit_text(
         text='Choose a room:',
@@ -107,10 +156,10 @@ async def process_date_button(
         await state.set_state(FSMBooking.select_room)
     
 #* Process the room button
-@user_router.callback_query(BookingCallbackFactory.filter(), StateFilter(FSMBooking.select_room))
+@user_router.callback_query(CBFBooking.filter(), StateFilter(FSMBooking.select_room))
 async def process_room_button(
     query: CallbackQuery,
-    callback_data: BookingCallbackFactory,
+    callback_data: CBFBooking,
     session: AsyncSession,
     state: FSMContext
     ):
@@ -122,7 +171,12 @@ async def process_room_button(
     desks_orm_obj = await orm_select_desks_by_room_name(session, room_name)
     desks = [desks.name for desks in desks_orm_obj]
     
-    keyboard = create_kb_with_desk_names(desks, 1, last_btn='Cancel')
+    keyboard = create_kb_with_desk_names(
+        desks,
+        1,
+        last_btns=[
+            ButtonLabel.BACK.value,
+            ButtonLabel.CANCEL.value])
 
     await query.message.edit_text(
     text='Choose a desk:',
@@ -132,10 +186,10 @@ async def process_room_button(
     await state.set_state(FSMBooking.select_desk)
     
 #* Process the desk button
-@user_router.callback_query(BookingCallbackFactory.filter(), StateFilter(FSMBooking.select_desk))
+@user_router.callback_query(CBFBooking.filter(), StateFilter(FSMBooking.select_desk))
 async def process_desk_button(
     query: CallbackQuery,
-    callback_data: BookingCallbackFactory,
+    callback_data: CBFBooking,
     session: AsyncSession,
     state: FSMContext,
     date_format: str
