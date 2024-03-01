@@ -49,8 +49,10 @@ async def process_command_book_in_default_state(
         timezone,
         country_code,
         date_format,
-        1, # Width of the keyboard
-        last_btn=ButtonLabel.CANCEL.value) # Last button of the keyboard
+        width=1, # Width of the keyboard
+        util_buttons_order=['cancel'], # Order of utility buttons
+        util_buttons_width=1, # Width for utility buttons
+        cancel_btn=ButtonLabel.CANCEL.value) # Last button of the keyboard
 
     await message.answer(
         text='Choose a date:',
@@ -58,88 +60,34 @@ async def process_command_book_in_default_state(
     
     await state.set_state(FSMBooking.select_date)
 
-#* Process /book command in non-default state
+#* Process /book command, if the user is already in the booking process
 @user_router.message(
     Command('book'),
-    ~StateFilter(default_state), #! Not working
     StateFilter(FSMBooking.select_date,
                 FSMBooking.select_room,
                 FSMBooking.select_desk))
-async def process_command_book_in_non_default_state(message: Message):
+async def process_command_book_in_booking_states(message: Message):
     await message.answer("You are already in the booking process. Please finish it or cancel it.")
 
+#* Process /book command, if the user has other unfinished process
+# Catch-all handler for the /book command in any state other than the default state
+@user_router.message(
+    Command('book'),
+    ~StateFilter(default_state))
+async def process_command_book_in_non_default_state(message: Message):
+    await message.answer("You have to finish or cancel other current process before using this command.")
+
 #* Process the last button 'Cancel'
-@user_router.callback_query(CBFUtilButtons.filter(F.action == ButtonLabel.CANCEL.value))
+@user_router.callback_query(
+    CBFUtilButtons.filter(F.action == ButtonLabel.CANCEL.value),
+    StateFilter(FSMBooking.select_date,
+                FSMBooking.select_room,
+                FSMBooking.select_desk))
 async def process_cancel_button(query: CallbackQuery, state: FSMContext):
     await query.message.edit_text("Process canceled")
     await query.answer()
     await state.clear()
 
-#* Process the last button 'Back'
-@user_router.callback_query(
-    CBFUtilButtons.filter(
-        F.action == ButtonLabel.BACK.value),
-    StateFilter(
-        FSMBooking.select_room,
-        FSMBooking.select_desk))
-async def process_back_button(
-    query: CallbackQuery,
-    state: FSMContext,
-    session: AsyncSession,
-    num_days: int,
-    exclude_weekends: bool,
-    timezone: str,
-    country_code: str,
-    date_format: str):
-    current_state = await state.get_state()
-    # If currently selecting a room, go back to date selection
-    if current_state == FSMBooking.select_room.state:
-        await state.set_state(FSMBooking.select_date)
-        keyboard = create_kb_with_dates(
-        num_days,
-        exclude_weekends,
-        timezone,
-        country_code,
-        date_format,
-        1, # Width of the keyboard
-        last_btn=ButtonLabel.CANCEL.value) # Last button of the keyboard
-
-        await query.message.edit_text(
-            text='Choose a date:',
-            reply_markup=keyboard)
-    
-    elif current_state == FSMBooking.select_desk.state:
-        await state.set_state(FSMBooking.select_room)
-        rooms_orm_obj = await orm_select_rooms(session)
-        rooms = [rooms.name for rooms in rooms_orm_obj]
-        
-        if len(rooms) <= 7:
-            keyboard = create_kb_with_room_names(
-                rooms,
-                1,
-                last_btns=[
-                    ButtonLabel.BACK.value,
-                    ButtonLabel.CANCEL.value])
-
-            await query.message.edit_text(
-            text='Choose a room:',
-            reply_markup=keyboard
-            )
-        else:
-            keyboard = create_kb_with_room_names(
-                rooms,
-                2,
-                last_btns=[
-                    ButtonLabel.BACK.value,
-                    ButtonLabel.CANCEL.value])
-
-            await query.message.edit_text(
-            text='Choose a room:',
-            reply_markup=keyboard
-            )
-    
-    await query.answer()
-    
 #* Process the date button
 @user_router.callback_query(
     CBFBook.filter(),
@@ -172,10 +120,11 @@ async def process_date_button(
         if len(rooms) <= 7:
             keyboard = create_kb_with_room_names(
                 rooms,
-                1, # Width of the keyboard
-                last_btns=[
-                    ButtonLabel.BACK.value,
-                    ButtonLabel.CANCEL.value])
+                width=1,
+                util_buttons_order=['back', 'cancel'],
+                util_buttons_width=2,
+                back_btn=ButtonLabel.BACK.value,
+                cancel_btn=ButtonLabel.CANCEL.value)
 
             await query.message.edit_text(
             text='Choose a room:',
@@ -184,10 +133,11 @@ async def process_date_button(
         else:
             keyboard = create_kb_with_room_names(
                 rooms,
-                2, # Width of the keyboard
-                last_btns=[
-                    ButtonLabel.BACK.value,
-                    ButtonLabel.CANCEL.value])
+                width=2, # Width of the keyboard
+                util_buttons_order=['back', 'cancel'],
+                util_buttons_width=2,
+                back_btn=ButtonLabel.BACK.value,
+                cancel_btn=ButtonLabel.CANCEL.value)
 
             await query.message.edit_text(
             text='Choose a room:',
@@ -215,17 +165,19 @@ async def process_room_button(
     if len(desks) <= 7:
         keyboard = create_kb_with_desk_names(
             desks,
-            1,
-            last_btns=[
-                ButtonLabel.BACK.value,
-                ButtonLabel.CANCEL.value])
+            width=1,
+            util_buttons_order=['back', 'cancel'],
+            util_buttons_width=2,
+            back_btn=ButtonLabel.BACK.value,
+            cancel_btn=ButtonLabel.CANCEL.value)
     else:
         keyboard = create_kb_with_desk_names(
             desks,
-            2,
-            last_btns=[
-                ButtonLabel.BACK.value,
-                ButtonLabel.CANCEL.value])
+            width=2,
+            util_buttons_order=['back', 'cancel'],
+            util_buttons_width=2,
+            back_btn=ButtonLabel.BACK.value,
+            cancel_btn=ButtonLabel.CANCEL.value)
 
     await query.message.edit_text(
     text='Choose a desk:',
@@ -277,3 +229,72 @@ async def process_desk_button(
         await query.message.edit_text(f'You successfully booked desk: {desk_name} for: {date.strftime(date_format)}')
         await state.clear()
         await query.answer()
+        
+#* Process the last button 'Back'
+@user_router.callback_query(
+    CBFUtilButtons.filter(
+        F.action == ButtonLabel.BACK.value),
+    StateFilter(
+        FSMBooking.select_room,
+        FSMBooking.select_desk))
+async def process_back_button(
+    query: CallbackQuery,
+    state: FSMContext,
+    session: AsyncSession,
+    num_days: int,
+    exclude_weekends: bool,
+    timezone: str,
+    country_code: str,
+    date_format: str):
+    current_state = await state.get_state()
+    # If currently selecting a room, go back to date selection
+    if current_state == FSMBooking.select_room.state:
+        await state.set_state(FSMBooking.select_date)
+        keyboard = create_kb_with_dates(
+        num_days,
+        exclude_weekends,
+        timezone,
+        country_code,
+        date_format,
+        width=1,
+        util_buttons_order=['cancel'],
+        util_buttons_width=1,
+        cancel_btn=ButtonLabel.CANCEL.value)
+
+        await query.message.edit_text(
+            text='Choose a date:',
+            reply_markup=keyboard)
+    
+    elif current_state == FSMBooking.select_desk.state:
+        await state.set_state(FSMBooking.select_room)
+        rooms_orm_obj = await orm_select_rooms(session)
+        rooms = [rooms.name for rooms in rooms_orm_obj]
+        
+        if len(rooms) <= 7:
+            keyboard = create_kb_with_room_names(
+                rooms,
+                width=1,
+                util_buttons_order=['back', 'cancel'],
+                util_buttons_width=2,
+                back_btn=ButtonLabel.BACK.value,
+                cancel_btn=ButtonLabel.CANCEL.value)
+
+            await query.message.edit_text(
+            text='Choose a room:',
+            reply_markup=keyboard
+            )
+        else:
+            keyboard = create_kb_with_room_names(
+                rooms,
+                width=2,
+                util_buttons_order=['back', 'cancel'],
+                util_buttons_width=2,
+                back_btn=ButtonLabel.BACK.value,
+                cancel_btn=ButtonLabel.CANCEL.value)
+
+            await query.message.edit_text(
+            text='Choose a room:',
+            reply_markup=keyboard
+            )
+    
+    await query.answer()

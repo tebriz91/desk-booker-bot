@@ -1,9 +1,10 @@
+from typing import List, Optional
+
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from enums.button_labels import ButtonLabel
-
-from keyboards.callbacks import CBFBook, CBFUtilButtons
+from keyboards.callbacks import CBFBook
+from keyboards.utils.callback_btns import get_callback_util_btns
 
 from services.dates_generator import generate_dates
 
@@ -15,11 +16,34 @@ def create_kb_with_dates(
     country_code: str,
     date_format: str,
     width: int, # Width of the keyboard
-    last_btn: str | None = None, # Last button of the keyboard
+    util_buttons_order: List[str],  # Add this parameter to specify the order of utility buttons
+    util_buttons_width: int, # Width for utility buttons
+    back_btn: Optional[str] = None,
+    next_btn: Optional[str] = None,
+    cancel_btn: Optional[str] = None,
+    exit_btn: Optional[str] = None,
+    ok_btn: Optional[str] = None
     ) -> InlineKeyboardMarkup:
-
+    '''
+    Generate an inline keyboard with dates based on provided parameters.
+    
+    :param num_days: Number of days to generate.
+    :param exclude_weekends: Whether to exclude weekends.
+    :param timezone: Timezone.
+    :param country_code: Country code.
+    :param date_format: Date format.
+    :param width: Width for keyboard with dates.
+    :param util_buttons_order: Order of utility buttons.
+    :param util_buttons_width: Width for utility buttons.
+    :param back_btn: Text for the "Back" button. None if not needed.
+    :param next_btn: Text for the "Next" button. None if not needed.
+    :param cancel_btn: Text for the "Cancel" button. None if not needed.
+    :param exit_btn: Text for the "Exit" button. None if not needed.
+    :param ok_btn: Text for the "Ok" button. None if not needed.
+    :return: An instance of InlineKeyboardMarkup.
+    '''
     # Initialize builder
-    kb_builder = InlineKeyboardBuilder()
+    keyboard = InlineKeyboardBuilder()
 
     # Initialize list of buttons
     buttons: list[InlineKeyboardButton] = []
@@ -40,26 +64,44 @@ def create_kb_with_dates(
         ))
 
     # Unpack the list of buttons into builder with method row with parameter width
-    kb_builder.row(*buttons, width=width)
+    keyboard.row(*buttons, width=width)
     
-    # Add the last button if it exists
-    if last_btn:
-        kb_builder.row(InlineKeyboardButton(
-            text=last_btn,
-            callback_data=CBFUtilButtons(action=ButtonLabel.CANCEL.value).pack()
-        ))
+    # Get the utility buttons
+    ordered_util_buttons = get_callback_util_btns(
+    util_buttons_order=util_buttons_order,
+    back_btn=back_btn,
+    next_btn=next_btn,
+    cancel_btn=cancel_btn,
+    exit_btn=exit_btn,
+    ok_btn=ok_btn
+    )
+    
+    # Iterate over the utility buttons dictionary to add them to the the end of the keyboard
+    util_buttons = [
+        InlineKeyboardButton(
+            text=btn_text,
+            callback_data=callback_data)
+        for btn_text, callback_data in ordered_util_buttons]
+    
+    keyboard.row(*util_buttons, width=util_buttons_width)
 
     # Return the keyboard as an object of class InlineKeyboardMarkup
-    return kb_builder.as_markup()
+    return keyboard.as_markup()
 
 #* Room's inline keyboard
 def create_kb_with_room_names(
     rooms: list,
-    width: int, # Width of the keyboard
-    last_btns: list[str, str] | None = None, # Last buttons of the keyboard
+    width: int,
+    util_buttons_order: List[str],  # Add this parameter to specify the order of utility buttons
+    util_buttons_width: int, # Width for utility buttons
+    back_btn: Optional[str] = None,
+    next_btn: Optional[str] = None,
+    cancel_btn: Optional[str] = None,
+    exit_btn: Optional[str] = None,
+    ok_btn: Optional[str] = None
     ) -> InlineKeyboardMarkup:
 
-    kb_builder = InlineKeyboardBuilder()
+    keyboard = InlineKeyboardBuilder()
 
     buttons: list[InlineKeyboardButton] = []
     
@@ -69,29 +111,41 @@ def create_kb_with_room_names(
             callback_data=CBFBook(room_name=room).pack()
         ))
     
-    kb_builder.row(*buttons, width=width)
+    keyboard.row(*buttons, width=width)
     
-    if last_btns:
-        kb_builder.row(
-            InlineKeyboardButton(
-            text=last_btns[0],
-            callback_data=CBFUtilButtons(action=ButtonLabel.BACK.value).pack()
-        ),
-            InlineKeyboardButton(
-            text=last_btns[1],
-            callback_data=CBFUtilButtons(action=ButtonLabel.CANCEL.value).pack()
-        ))
+    ordered_util_buttons = get_callback_util_btns(
+    util_buttons_order=util_buttons_order,
+    back_btn=back_btn,
+    next_btn=next_btn,
+    cancel_btn=cancel_btn,
+    exit_btn=exit_btn,
+    ok_btn=ok_btn
+    )
 
-    return kb_builder.as_markup()
+    util_buttons = [
+        InlineKeyboardButton(
+            text=btn_text,
+            callback_data=callback_data)
+        for btn_text, callback_data in ordered_util_buttons]
+    
+    keyboard.row(*util_buttons, width=util_buttons_width)
+    
+    return keyboard.as_markup()
 
 #* Desk's inline keyboard
 def create_kb_with_desk_names(
     desks: list,
     width: int, # Width of the keyboard
-    last_btns: list[str, str] | None = None, # Last button of the keyboard
+    util_buttons_order: List[str],  # Add this parameter to specify the order of utility buttons
+    util_buttons_width: int, # Width for utility buttons
+    back_btn: Optional[str] = None,
+    next_btn: Optional[str] = None,
+    cancel_btn: Optional[str] = None,
+    exit_btn: Optional[str] = None,
+    ok_btn: Optional[str] = None
     ) -> InlineKeyboardMarkup:
 
-    kb_builder = InlineKeyboardBuilder()
+    keyboard = InlineKeyboardBuilder()
 
     buttons: list[InlineKeyboardButton] = []
     
@@ -101,25 +155,23 @@ def create_kb_with_desk_names(
             callback_data=CBFBook(desk_name=desk).pack()
         ))
     
-    kb_builder.row(*buttons, width=width)
+    keyboard.row(*buttons, width=width)
     
-    if last_btns:
-        kb_builder.row(
-            InlineKeyboardButton(
-            text=last_btns[0],
-            callback_data=CBFUtilButtons(action=ButtonLabel.BACK.value).pack()
-        ),
-            InlineKeyboardButton(
-            text=last_btns[1],
-            callback_data=CBFUtilButtons(action=ButtonLabel.CANCEL.value).pack()
-        ))
+    ordered_util_buttons = get_callback_util_btns(
+    util_buttons_order=util_buttons_order,
+    back_btn=back_btn,
+    next_btn=next_btn,
+    cancel_btn=cancel_btn,
+    exit_btn=exit_btn,
+    ok_btn=ok_btn
+    )
 
-    return kb_builder.as_markup()
+    util_buttons = [
+        InlineKeyboardButton(
+            text=btn_text,
+            callback_data=callback_data)
+        for btn_text, callback_data in ordered_util_buttons]
+    
+    keyboard.row(*util_buttons, width=util_buttons_width)
 
-def get_callback_btns(*, btns: dict[str, str], sizes: tuple[int] = (2,)):
-    keyboard = InlineKeyboardBuilder()
-
-    for text, data in btns.items():
-        keyboard.add(InlineKeyboardButton(text=text, callback_data=data))
-
-    return keyboard.adjust(*sizes).as_markup()
+    return keyboard.as_markup()

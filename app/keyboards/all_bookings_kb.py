@@ -1,18 +1,25 @@
+from typing import List, Optional
+
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from enums.button_labels import ButtonLabel
-
-from keyboards.callbacks import CBFAllBookings, CBFUtilButtons
+from keyboards.callbacks import CBFAllBookings
+from keyboards.utils.callback_btns import get_callback_util_btns
 
 #* Room's inline keyboard
 def create_kb_with_room_names(
     rooms: list,
     width: int, # Width of the keyboard
-    last_btn: str | None = None
+    util_buttons_order: List[str],  # Add this parameter to specify the order of utility buttons
+    util_buttons_width: int, # Width for utility buttons
+    back_btn: Optional[str] = None,
+    next_btn: Optional[str] = None,
+    cancel_btn: Optional[str] = None,
+    exit_btn: Optional[str] = None,
+    ok_btn: Optional[str] = None
     ) -> InlineKeyboardMarkup:
 
-    kb_builder = InlineKeyboardBuilder()
+    keyboard = InlineKeyboardBuilder()
 
     buttons: list[InlineKeyboardButton] = []
     
@@ -22,21 +29,23 @@ def create_kb_with_room_names(
             callback_data=CBFAllBookings(room_name=room).pack()
         ))
     
-    kb_builder.row(*buttons, width=width)
+    keyboard.row(*buttons, width=width)
     
-    if last_btn:
-        kb_builder.row(
-            InlineKeyboardButton(
-            text=last_btn,
-            callback_data=CBFUtilButtons(action=ButtonLabel.CANCEL.value).pack()
-        ))
+    ordered_util_buttons = get_callback_util_btns(
+    util_buttons_order=util_buttons_order,
+    back_btn=back_btn,
+    next_btn=next_btn,
+    cancel_btn=cancel_btn,
+    exit_btn=exit_btn,
+    ok_btn=ok_btn
+    )
 
-    return kb_builder.as_markup()
+    util_buttons = [
+        InlineKeyboardButton(
+            text=btn_text,
+            callback_data=callback_data)
+        for btn_text, callback_data in ordered_util_buttons]
+    
+    keyboard.row(*util_buttons, width=util_buttons_width)
 
-def get_callback_btns(*, btns: dict[str, str], sizes: tuple[int] = (2,)):
-    keyboard = InlineKeyboardBuilder()
-
-    for text, data in btns.items():
-        keyboard.add(InlineKeyboardButton(text=text, callback_data=data))
-
-    return keyboard.adjust(*sizes).as_markup()
+    return keyboard.as_markup()
