@@ -1,8 +1,9 @@
+.README.md
 .mypy_cache
 .venv
 .env
 concat_script.py
-readme.txt
+project_tree.md
 my_db.db
 logs/
 

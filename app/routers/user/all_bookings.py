@@ -121,11 +121,10 @@ async def process_room_button(
         text=bookings,
         # Add keyboard with "Back" and "Ok" buttons
         reply_markup=get_inline_keyboard_with_util_buttons(
-            button_order=['back', 'ok', 'cancel'],
+            button_order=['back', 'ok'],
             sizes=(2,),
-            cancel_btn=ButtonLabel.CANCEL.value,
             back_btn=ButtonLabel.BACK.value,
-            ok_btn=ButtonLabel.OK.value,
+            ok_btn=ButtonLabel.OK.value
         ),)
     await state.set_state(FSMAllBookings.view_bookings)
     await query.answer()

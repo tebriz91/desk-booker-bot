@@ -8,3 +8,7 @@ class FSMBooking(StatesGroup):
 class FSMAllBookings(StatesGroup):
     select_room = State()
     view_bookings = State()
+
+class FSMCancelBooking(StatesGroup):
+    select_booking = State()
+    view_bookings = State()

@@ -106,3 +106,36 @@ async def generate_list_of_all_current_bookings_by_room_id(
     except Exception as e:
         # In case of any error, return an error message
         return f"Error: {e}"
+    
+# Generate a dict of current bookings by telegram ID to be used in InlineKeyboardBuilder to create a list of buttons
+async def generate_dict_of_current_bookings_by_telegram_id_for_inline_kb(
+    session: AsyncSession,
+    date_format: str,
+    telegram_id: int
+    ) -> Dict[Booking.id, str]:
+    """
+    Args:
+    - session (AsyncSession): SQLAlchemy AsyncSession
+    - telegram_id (int): Telegram user id
+    - date_format (str): Date format with weekday
+    
+    Returns:
+    - bookings (Dict[int, str]): Dict with booking ID as key and formatted string with the booking info (desk name, room name, booking date) as value
+    """
+    
+    bookings: Dict[Booking.id: int, str] = {}
+    
+    bookings_obj = await orm_select_bookings_by_telegram_id_joined_from_today(session, telegram_id)
+    
+    # If there are no bookings, return an empty dict
+    if not bookings_obj:
+        return {}
+    # If there are bookings, return a dict with booking ID as key and formatted string with the booking info (desk name, room name, booking date) as value
+    else:
+        for booking in bookings_obj:
+            formatted_booking = (
+                f"Desk {booking.desk.name} (room {booking.room.name}) on {booking.date.strftime(date_format)}"
+            )
+            # Add the formatted booking to the dict
+            bookings[booking.id] = formatted_booking
+        return bookings
