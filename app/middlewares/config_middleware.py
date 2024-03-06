@@ -1,5 +1,4 @@
-'''
-from aiogram import BaseMiddleware
+'''from aiogram import BaseMiddleware
 from typing import Callable, Any, Awaitable
 
 from aiogram.types import TelegramObject
@@ -18,5 +17,4 @@ class ConfigMiddleware(BaseMiddleware):
             data: dict[str, Any],
     ) -> Any:
         data["config"] = self.config
-        return await handler(event, data)
-'''
+        return await handler(event, data)'''

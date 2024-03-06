@@ -9,6 +9,8 @@ from aiogram.fsm.state import default_state
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from config_data.config import BotOperationConfig
+
 from enums.button_labels import ButtonLabel
 
 from keyboards.callbacks import CBFBook, CBFUtilButtons
@@ -36,19 +38,14 @@ from keyboards.book_kb import (
 async def process_command_book_in_default_state(
     message: Message,
     state: FSMContext,
-    num_days: int, # Number of days to generate (env variable that transfered through dp.workflow_data)
-    exclude_weekends: bool,
-    timezone: str,
-    country_code: str,
-    date_format: str):
-    
+    config: BotOperationConfig):
     # Create an inline keyboard with the function create_inline_kb with the following parameters:
     keyboard = create_kb_with_dates(
-        num_days,
-        exclude_weekends,
-        timezone,
-        country_code,
-        date_format,
+        num_days=config.num_days,
+        exclude_weekends=config.exclude_weekends,
+        timezone=config.timezone,
+        country_code=config.country_code,
+        date_format=config.date_format,
         width=1, # Width of the keyboard
         util_buttons_order=['cancel'], # Order of utility buttons
         util_buttons_width=1, # Width for utility buttons
@@ -98,8 +95,9 @@ async def process_date_button(
     callback_data: CBFBook,
     session: AsyncSession,
     state: FSMContext,
-    date_format: str):
+    config: BotOperationConfig):
     date_string = callback_data.date
+    date_format = config.date_format
     date = datetime.strptime(date_string, date_format).date() # Parse date string to datetime.date type: 'YYYY-MM-DD' to query the database
     # Check if user with the same telegram_id already has a booking for the same date
     already_booked = await orm_select_booking_by_telegram_id_and_date(session, query.from_user.id, date)
@@ -193,8 +191,9 @@ async def process_desk_button(
     callback_data: CBFBook,
     session: AsyncSession,
     state: FSMContext,
-    date_format: str
+    config: BotOperationConfig
     ):
+    date_format = config.date_format
     # Retrieve desk_name from the query, than desk_id from the database using the desk_name
     desk_name = callback_data.desk_name
     desk_id = await orm_select_desk_id_by_name(session, desk_name)
@@ -241,21 +240,17 @@ async def process_back_button(
     query: CallbackQuery,
     state: FSMContext,
     session: AsyncSession,
-    num_days: int,
-    exclude_weekends: bool,
-    timezone: str,
-    country_code: str,
-    date_format: str):
+    config: BotOperationConfig):
     current_state = await state.get_state()
     # If currently selecting a room, go back to date selection
     if current_state == FSMBooking.select_room.state:
         await state.set_state(FSMBooking.select_date)
         keyboard = create_kb_with_dates(
-        num_days,
-        exclude_weekends,
-        timezone,
-        country_code,
-        date_format,
+        num_days=config.num_days,
+        exclude_weekends=config.exclude_weekends,
+        timezone=config.timezone,
+        country_code=config.country_code,
+        date_format=config.date_format,
         width=1,
         util_buttons_order=['cancel'],
         util_buttons_width=1,

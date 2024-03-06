@@ -3,24 +3,24 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, List, Optional, Union
-
+# Attempt to load environment variables from .env file
 try:
     from dotenv import find_dotenv, load_dotenv
 
     load_dotenv(find_dotenv())
 except ImportError:
     pass
-
+# Define a type alias for file paths
 _PathLike = Union[os.PathLike[str], Path, str]
 
-
+# Function to fetch environment variables with optional type casting
 def get_env(value: str, cast_to_type: bool = False) -> Any:
     v = os.getenv(value)
     if cast_to_type and v:
         return json.loads(v)
     return v
 
-
+# Database configuration
 @dataclass(frozen=True, slots=True)
 class DBConfig:
     uri: str
@@ -39,11 +39,15 @@ class DBConfig:
             self.user, self.password, self.host, self.port, self.name
         )
 
-
+# Bot authentication configuration
 @dataclass(frozen=True, slots=True)
 class BotConfig:
     token: str
     admins: List[int]
+
+# Bot operation configuration
+@dataclass(frozen=True, slots=True)
+class BotOperationConfig:
     num_days: Optional[int] = field(default=5)
     exclude_weekends: Optional[bool] = field(default=True)
     timezone: Optional[str] = field(default="UTC")
@@ -51,6 +55,7 @@ class BotConfig:
     date_format: Optional[str] = field(default="%d.%m.%Y (%a)")
     date_format_short: Optional[str] = field(default="%d.%m.%Y")
 
+# Redis configuration
 @dataclass(frozen=True, slots=True)
 class RedisConfig:
     host: Optional[str] = field(default=None)
@@ -63,11 +68,12 @@ class RedisConfig:
 
         return {"host": self.host, "port": self.port}
 
-
+# Main configuration aggregator
 @dataclass(frozen=True, slots=True)
 class Config:
     db: DBConfig
     bot: BotConfig
+    bot_operation: BotOperationConfig
     redis: RedisConfig
 
     @staticmethod
@@ -81,7 +87,7 @@ class Config:
 
         return os.path.join(base_path, *paths)
 
-
+# Function to load configuration from environment variables
 def load_config() -> Config:
     return Config(
         db=DBConfig(
@@ -95,7 +101,9 @@ def load_config() -> Config:
         ),
         bot=BotConfig(
             token=get_env("BOT_TOKEN"),
-            admins=get_env("BOT_ADMINS", True),
+            admins=get_env("BOT_ADMINS", True)
+        ),
+        bot_operation=BotOperationConfig(
             num_days=get_env("NUM_DAYS"),
             exclude_weekends=get_env("EXCLUDE_WEEKENDS"),
             timezone=get_env("TIMEZONE"),

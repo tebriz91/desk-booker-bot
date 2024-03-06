@@ -29,14 +29,7 @@ dp = Dispatcher()
 dp.include_router(router)
 
 # Workflow data available in all handlers and middlewares
-dp.workflow_data.update({
-    'num_days': config.bot.num_days,
-    'exclude_weekends': config.bot.exclude_weekends,
-    'timezone': config.bot.timezone,
-    'country_code': config.bot.country_code,
-    'date_format': config.bot.date_format,
-    'date_format_short': config.bot.date_format_short
-    })
+dp.workflow_data.update(config=config.bot_operation)
 
 async def on_startup(bot):
     # await drop_db()

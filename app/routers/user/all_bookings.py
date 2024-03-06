@@ -7,6 +7,8 @@ from aiogram.fsm.state import default_state
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from config_data.config import BotOperationConfig
+
 from enums.button_labels import ButtonLabel
 
 from keyboards.callbacks import CBFAllBookings, CBFUtilButtons
@@ -108,8 +110,9 @@ async def process_room_button(
     callback_data: CBFAllBookings,
     state: FSMContext,
     session: AsyncSession,
-    date_format: str,
-    date_format_short: str) -> None:
+    config: BotOperationConfig) -> None:
+    date_format = config.date_format
+    date_format_short = config.date_format_short
     room_name = callback_data.room_name
     room_id = await orm_select_room_id_by_name(session, room_name)
     bookings = await generate_list_of_all_current_bookings_by_room_id(
