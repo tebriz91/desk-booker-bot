@@ -7,7 +7,7 @@ from aiogram.fsm.state import default_state
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config_data.config import BotOperationConfig
+from config_data.config import Config
 
 from enums.button_labels import ButtonLabel
 
@@ -17,7 +17,7 @@ from states.user import FSMAllBookings
 
 from routers.user.router import user_router
 
-from database.orm_queries import orm_select_room_id_by_name, orm_select_rooms
+from database.orm_queries import orm_select_room_id_by_name, orm_select_available_rooms
 
 from keyboards.all_bookings_kb import create_kb_with_room_names
 from keyboards.utils.callback_btns import get_inline_keyboard_with_util_buttons
@@ -34,7 +34,7 @@ async def process_command_all_bookings_in_default_state(
     session: AsyncSession,
     ):
     # Retrieve rooms from the database
-    rooms_orm_obj = await orm_select_rooms(session)
+    rooms_orm_obj = await orm_select_available_rooms(session)
     rooms = [rooms.name for rooms in rooms_orm_obj]
     # Create an inline keyboard with available room names as buttons
     if len(rooms) <= 7:
@@ -110,9 +110,9 @@ async def process_room_button(
     callback_data: CBFAllBookings,
     state: FSMContext,
     session: AsyncSession,
-    config: BotOperationConfig) -> None:
-    date_format = config.date_format
-    date_format_short = config.date_format_short
+    config: Config) -> None:
+    date_format = config.bot_operation.date_format
+    date_format_short = config.bot_operation.date_format_short
     room_name = callback_data.room_name
     room_id = await orm_select_room_id_by_name(session, room_name)
     bookings = await generate_list_of_all_current_bookings_by_room_id(
@@ -143,7 +143,7 @@ async def process_back_button(
     session: AsyncSession):
     await state.set_state(FSMAllBookings.select_room)
     # Retrieve rooms from the database
-    rooms_orm_obj = await orm_select_rooms(session)
+    rooms_orm_obj = await orm_select_available_rooms(session)
     rooms = [rooms.name for rooms in rooms_orm_obj]
     # Create an inline keyboard with available room names as buttons
     if len(rooms) <= 7:

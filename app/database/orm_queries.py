@@ -30,6 +30,11 @@ async def orm_select_users(session: AsyncSession):
     result = await session.execute(query)
     return result.scalars().all()
 
+async def orm_select_user_by_telegram_id(session: AsyncSession, telegram_id: int):
+    query = select(User).where(User.telegram_id == telegram_id)
+    result = await session.execute(query)
+    return result.scalar()
+
 #* Room's ORM queries
 async def orm_insert_room(session: AsyncSession, room_name: str):
     query = select(Room).where(Room.name == room_name)
@@ -44,6 +49,11 @@ async def orm_insert_room(session: AsyncSession, room_name: str):
 
 async def orm_select_rooms(session: AsyncSession):
     query = select(Room)
+    result = await session.execute(query)
+    return result.scalars().all()
+
+async def orm_select_available_rooms(session: AsyncSession):
+    query = select(Room).where(Room.is_available == True)
     result = await session.execute(query)
     return result.scalars().all()
 
@@ -74,8 +84,18 @@ async def orm_select_desks_by_room_id(session: AsyncSession, room_id: int):
     result = await session.execute(query)
     return result.scalars().all()
 
+async def orm_select_available_desks_by_room_id(session: AsyncSession, room_id: int):
+    query = select(Desk).where(Desk.room_id == room_id, Desk.is_available == True)
+    result = await session.execute(query)
+    return result.scalars().all()
+
 async def orm_select_desks_by_room_name(session: AsyncSession, room_name: str):
     query = select(Desk).join(Room).where(Room.name == room_name)
+    result = await session.execute(query)
+    return result.scalars().all()
+
+async def orm_select_available_desks_by_room_name(session: AsyncSession, room_name: str):
+    query = select(Desk).join(Room).where(Room.name == room_name, Desk.is_available == True)
     result = await session.execute(query)
     return result.scalars().all()
 

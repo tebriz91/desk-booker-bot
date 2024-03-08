@@ -33,7 +33,7 @@ class Room(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(unique=True)
-    availability: Mapped[bool] = mapped_column(default=True)
+    is_available: Mapped[bool] = mapped_column(default=True)
     plan: Mapped[str | None] # url to the room plan
     additional_info: Mapped[str | None]
 
@@ -43,7 +43,7 @@ class Desk(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(unique=True)
     room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id', ondelete='CASCADE')) # ondelete='CASCADE' means that if the room is deleted, all the desks in it will be deleted as well
-    availability: Mapped[bool] = mapped_column(default=True)
+    is_available: Mapped[bool] = mapped_column(default=True)
     additional_info: Mapped[str | None]
 
     room: Mapped[Room] = relationship(backref='desks') # This relationship is used to access the room of the desk, e.g. desk.room

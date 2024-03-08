@@ -7,7 +7,7 @@ from aiogram.fsm.state import default_state
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config_data.config import BotOperationConfig
+from config_data.config import Config
 
 from services.bookings_list_generator import (
     generate_dict_of_current_bookings_by_telegram_id_for_inline_kb,
@@ -33,8 +33,8 @@ async def process_cancel_bookings_command(
     message: Message,
     session: AsyncSession,
     state: FSMContext,
-    config: BotOperationConfig) -> None:
-    date_format = config.date_format
+    config: Config) -> None:
+    date_format = config.bot_operation.date_format
     telegram_id = message.from_user.id   
     bookings = await generate_dict_of_current_bookings_by_telegram_id_for_inline_kb(
         session,
@@ -111,9 +111,9 @@ async def process_button_with_booking_to_cancel(
     callback_data: CBFCancelBooking,
     state: FSMContext,
     session: AsyncSession,
-    config: BotOperationConfig) -> None:
-    date_format = config.date_format
-    date_format_short = config.date_format_short
+    config: Config) -> None:
+    date_format = config.bot_operation.date_format
+    date_format_short = config.bot_operation.date_format_short
     telegram_id = query.from_user.id
     telegram_name = query.from_user.username
     booking_id = callback_data.booking_id
@@ -144,8 +144,8 @@ async def process_back_button_in_view_bookings_state(
     query: CallbackQuery,
     state: FSMContext,
     session: AsyncSession,
-    config: BotOperationConfig) -> None:
-    date_format = config.date_format
+    config: Config) -> None:
+    date_format = config.bot_operation.date_format
     telegram_id = query.from_user.id
     bookings = await generate_dict_of_current_bookings_by_telegram_id_for_inline_kb(
         session,
