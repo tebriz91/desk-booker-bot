@@ -35,6 +35,16 @@ async def orm_select_user_by_telegram_id(session: AsyncSession, telegram_id: int
     result = await session.execute(query)
     return result.scalar()
 
+async def orm_select_user_by_telegram_id_or_telegram_name(
+    session: AsyncSession,
+    telegram_id: int,
+    telegram_name: str):
+    query = select(User).where(
+        (User.telegram_id == telegram_id) | (User.telegram_name == telegram_name)
+    )
+    result = await session.execute(query)
+    return result.scalar()
+    
 #* Room's ORM queries
 async def orm_insert_room(session: AsyncSession, room_name: str):
     query = select(Room).where(Room.name == room_name)
