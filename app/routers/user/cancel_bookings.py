@@ -15,7 +15,7 @@ from services.bookings_list_generator import (
 
 from keyboards.utils.callback_btns import get_inline_keyboard_with_util_buttons
 
-from enums.button_labels import ButtonLabel
+from misc.const.button_labels import ButtonLabel
 
 from keyboards.callbacks import CBFCancelBooking, CBFUtilButtons
 

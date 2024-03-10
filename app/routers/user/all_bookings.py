@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config_data.config import Config
 
-from enums.button_labels import ButtonLabel
+from misc.const.button_labels import ButtonLabel
 
 from keyboards.callbacks import CBFAllBookings, CBFUtilButtons
 

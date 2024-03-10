@@ -6,10 +6,14 @@ from datetime import datetime
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.memory import SimpleEventIsolation
 
 from config_data.config import load_config
 from keyboards.set_menu import set_main_menu
+
+from scenes.setup import register_scenes
 
 from middlewares.user_middleware import UserMiddleware
 # from middlewares.config_middleware import ConfigMiddleware
@@ -31,8 +35,13 @@ bot = Bot(
         link_preview_is_disabled=False,
         link_preview_prefer_large_media=True,
         link_preview_show_above_text=False))
-dp = Dispatcher()
+dp = Dispatcher(
+    events_isolation=SimpleEventIsolation(),
+)
 dp.include_router(router)
+
+# Initialize SceneRegistry and register scenes
+register_scenes(dp)
 
 # Workflow data available in all handlers and middlewares
 dp.workflow_data.update(config=config)
@@ -62,7 +71,7 @@ async def main():
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
