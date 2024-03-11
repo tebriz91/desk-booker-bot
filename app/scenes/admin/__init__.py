@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from .main import AdminMenuScene
 
 from .user_management.main import UserManagementScene
@@ -20,17 +19,6 @@ __all__ = [
     UserDeleteScene,
     UserDeleteByIDScene,
     UserDeleteByUsernameScene,
-=======
-from .main import AdminPanelScene
-from .user_management.main import UserManagementScene
-from .room_management.main import RoomManagementScene
-from .booking_management.main import BookingManagementScene
-from .analytics.main import AnalyticsScene
-
-__all__ = [
-    AdminPanelScene,
-    UserManagementScene,
->>>>>>> 9ead955e717c190c7a83d0e1aa1f4102a4929b44
     RoomManagementScene,
     BookingManagementScene,
     AnalyticsScene,
