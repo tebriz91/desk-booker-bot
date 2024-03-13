@@ -17,7 +17,7 @@ class UserManagementMenu(Enum):
     EDIT_USER = 'Edit User'
     BAN_USER = 'Ban User'
     UNBAN_USER = 'Unban User'
-    BROWSE_USERS = 'Browse Users'
+    BROWSE_USERS = 'Browse Users' #TODO: Add browse users logic
 
     def __str__(self):
         return self.value
@@ -83,9 +83,10 @@ class RoomDeleteMenu(Enum):
         return self.value
     
 class RoomEditMenu(Enum):
-    SELECT_ROOM = 'Select Room'
-    EDIT_BY_ID = 'Edit by ID'
-    EDIT_BY_NAME = 'Edit by Name'
+    EDIT_ROOM_NAME = 'Edit Name'
+    TOGGLE_AVAILABILITY = 'Toggle Availability'
+    EDIT_ROOM_PLAN = 'Edit Room Plan'
+    EDIT_ADDITIONAL_INFO = 'Edit Additional Info'
     
     def __str__(self):
         return self.value

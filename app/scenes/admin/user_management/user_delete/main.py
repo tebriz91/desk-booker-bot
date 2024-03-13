@@ -21,9 +21,10 @@ class UserDeleteScene(Scene, state="user_delete"):
                 UserDeleteMenu.DELETE_BY_USERNAME.value],
             width=3,
             util_buttons=[
+                ButtonLabel.TO_MAIN_MENU.value,
                 ButtonLabel.BACK.value,
                 ButtonLabel.EXIT.value],
-            width_util=2,
+            width_util=3,
             one_time_keyboard=True)
 
         await message.answer(
@@ -46,6 +47,11 @@ class UserDeleteScene(Scene, state="user_delete"):
         await message.delete()
         await self.wizard.back()
 
+    @on.message(F.text == ButtonLabel.TO_MAIN_MENU.value)
+    async def to_main_menu(self, message: Message):
+        await message.delete()
+        await self.wizard.goto("admin_menu")
+    
     #* GOTO other scenes handlers
     @on.message(F.text == UserDeleteMenu.SELECT_USER.value)
     async def to_user_select_to_delete(self, message: Message):

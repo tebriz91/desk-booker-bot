@@ -3,37 +3,44 @@ from typing import Any
 from aiogram import F
 from aiogram.types import Message, ReplyKeyboardRemove
 
-from aiogram.fsm.context import FSMContext
 from aiogram.fsm.scene import Scene, on
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from services.admin.user_delete_by_username import UserInputError, user_delete_by_username_service
 
+from misc.const.admin_menu import RoomManagementMenu
 from misc.const.button_labels import ButtonLabel
+
+from database.orm_queries import orm_select_rooms
 from keyboards.reply import create_reply_kb
 
-class UserDeleteByUsernameScene(Scene, state="user_delete_by_username"):
-    
+class RoomSelectScene(Scene, state="room_select_scene"):
+
     @on.message.enter()
-    async def on_enter(self, message: Message, state: FSMContext) -> Any:
+    async def on_enter(self, message: Message, session: AsyncSession) -> Any:
+        """
+        Do not forget to pass session to the on_enter()
+        """
+        rooms_orm_obj = await orm_select_rooms(session)
+        rooms = [rooms.name for rooms in rooms_orm_obj]
         keyboard = create_reply_kb(
+            buttons=rooms,
+            width=3 if len(rooms) > 5 else 2,
             util_buttons=[
                 ButtonLabel.TO_MAIN_MENU.value,
                 ButtonLabel.BACK.value,
                 ButtonLabel.EXIT.value],
             width_util=3,
-            one_time_keyboard=True,
-            input_field_placeholder="@username")
+            one_time_keyboard=True)
 
         await message.answer(
-            text="Enter telegram username",
+            text='Choose room',
             reply_markup=keyboard)
-    
+
     @on.message.exit()
-    async def on_exit(self, message: Message, state: FSMContext) -> None:
+    async def on_exit(self, message: Message) -> None:
         await message.delete()
         await message.answer(
-            text="You've exited User Delete By Username Menu",
+            text="You've exited Room Select Menu",
             reply_markup=ReplyKeyboardRemove())
     
     @on.message(F.text == ButtonLabel.EXIT.value)
@@ -48,22 +55,18 @@ class UserDeleteByUsernameScene(Scene, state="user_delete_by_username"):
     @on.message(F.text == ButtonLabel.TO_MAIN_MENU.value)
     async def to_main_menu(self, message: Message):
         await message.delete()
+        await self.wizard.clear_data()
         await self.wizard.goto("admin_menu")
     
-    # FIX: Change back() method to goto()
-    # TODO: Ask for confirmation before deleting the user
-    # Handler to process the user's input
+    # Add more
     @on.message(F.text)
-    async def process_user_input(
-        self,
-        message: Message,
-        state: FSMContext,
-        session: AsyncSession):
-        try:
-            result_message = await user_delete_by_username_service(session, message.text)
-            await message.answer(result_message)
-            await self.wizard.retake()
-        except UserInputError as e:
-            await message.answer(str(e))
-        except Exception as e:
-            await message.answer(f"Failed to delete user: {str(e)}")
+    async def process_input(self, message: Message):
+        await self.wizard.update_data(room_name=message.text)
+        data = await self.wizard.get_data()
+        flag = data.get("flag")
+        if flag == RoomManagementMenu.EDIT_ROOM.value:
+            await self.wizard.goto("room_edit_scene")
+        elif flag == RoomManagementMenu.DELETE_ROOM.value:
+            await self.wizard.goto("room_delete_scene")
+        else:
+            raise Exception("Flag is not set in RoomSelectScene")

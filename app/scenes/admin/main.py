@@ -71,7 +71,7 @@ class AdminMenuScene(Scene, state="admin_menu"):
     @on.message(F.text == AdminMenu.ROOM_MANAGEMENT.value)
     async def to_room_management(self, message: Message):
         await message.delete()
-        await self.wizard.goto("room_management")
+        await self.wizard.goto("room_management_scene")
 
     @on.message(F.text == AdminMenu.BOOKING_MANAGEMENT.value)
     async def to_booking_management(self, message: Message):

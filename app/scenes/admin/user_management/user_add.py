@@ -18,9 +18,10 @@ class UserAddScene(Scene, state="user_add"):
     async def on_enter(self, message: Message, state: FSMContext) -> Any:
         keyboard = create_reply_kb(
             util_buttons=[
+                ButtonLabel.TO_MAIN_MENU.value,
                 ButtonLabel.BACK.value,
                 ButtonLabel.EXIT.value],
-            width_util=2,
+            width_util=3,
             one_time_keyboard=True,
             input_field_placeholder="123456789 @username")
 
@@ -44,6 +45,11 @@ class UserAddScene(Scene, state="user_add"):
         await message.delete()
         await self.wizard.back()
 
+    @on.message(F.text == ButtonLabel.TO_MAIN_MENU.value)
+    async def to_main_menu(self, message: Message):
+        await message.delete()
+        await self.wizard.goto("admin_menu")
+    
     # Handler to process the user's input
     @on.message(F.text)
     async def process_user_input(

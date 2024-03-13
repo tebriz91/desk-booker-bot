@@ -7,6 +7,11 @@ from .user_management.user_delete.user_delete_by_id import UserDeleteByIDScene
 from .user_management.user_delete.user_delete_by_username import UserDeleteByUsernameScene
 
 from .room_management.main import RoomManagementScene
+from .room_management.room_select import RoomSelectScene
+from .room_management.room_add import RoomAddScene
+from .room_management.room_edit.main import RoomEditScene
+from .room_management.room_edit.room_name_edit import RoomNameEditScene
+from .room_management.room_delete import RoomDeleteScene
 
 from .booking_management.main import BookingManagementScene
 
@@ -20,6 +25,11 @@ __all__ = [
     UserDeleteByIDScene,
     UserDeleteByUsernameScene,
     RoomManagementScene,
+    RoomSelectScene,
+    RoomAddScene,
+    RoomEditScene,
+    RoomNameEditScene,
+    RoomDeleteScene,
     BookingManagementScene,
     AnalyticsScene,
     ]

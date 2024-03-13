@@ -10,7 +10,7 @@ from misc.const.admin_menu import UserManagementMenu
 from misc.const.button_labels import ButtonLabel
 from keyboards.reply import create_reply_kb
 
-class UserManagementScene(Scene, state="user_management"):
+class UserManagementScene(Scene, state="user_management"): # TODO: rename state to user_management_scene and update in other files
     
     @on.message.enter()
     async def on_enter(self, message: Message, state: FSMContext) -> Any:
@@ -48,7 +48,7 @@ class UserManagementScene(Scene, state="user_management"):
     async def back(self, message: Message):
         await message.delete()
         await self.wizard.back()
-    
+
     #* GOTO other scenes handlers
     @on.message(F.text == UserManagementMenu.ADD_USER.value)
     async def to_user_add(self, message: Message):
@@ -56,6 +56,6 @@ class UserManagementScene(Scene, state="user_management"):
         await self.wizard.goto("user_add")
 
     @on.message(F.text == UserManagementMenu.DELETE_USER.value)
-    async def to_user_add(self, message: Message):
+    async def to_user_delete(self, message: Message):
         await message.delete()
         await self.wizard.goto("user_delete")

@@ -87,6 +87,21 @@ async def orm_select_room_id_by_name(session: AsyncSession, room_name: str):
     result = await session.execute(query)
     return result.scalar_one()
 
+async def orm_select_room_by_name(session: AsyncSession, room_name: str):
+    query = select(Room).where(Room.name == room_name)
+    result = await session.execute(query)
+    return result.scalar()
+
+async def orm_update_room_name_by_name(session: AsyncSession, old_room_name: str, new_room_name: str):
+    query = update(Room).where(Room.name == old_room_name).values(name=new_room_name)
+    await session.execute(query)
+    await session.commit()
+
+async def orm_delete_room_by_name(session: AsyncSession, room_name: str):
+    query = delete(Room).where(Room.name == room_name)
+    await session.execute(query)
+    await session.commit()
+
 #* Desk's ORM queries
 async def orm_insert_desk(session: AsyncSession, room_id: int, desk_name: str):
     query = select(Desk).where(Desk.name == desk_name)

@@ -33,4 +33,4 @@ async def user_add_service(session: AsyncSession, user_input: str) -> str:
         raise UserInputError("User already exists.")
 
     await orm_insert_user(session, telegram_id, telegram_name)
-    return "User has been added"
+    return f"User @{telegram_name} has been added"
