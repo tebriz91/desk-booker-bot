@@ -6,35 +6,34 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.scene import Scene, on
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from services.admin.room_name_edit import InputError, room_name_edit_service
+from services.admin.room_availability_toggle import room_availability_toggle_service
 
 from misc.const.button_labels import ButtonLabel
 from keyboards.reply import create_reply_kb
 
-class RoomNameEditScene(Scene, state="room_name_edit_scene"):
+class RoomAvailabilityToggleScene(Scene, state="room_availability_toggle_scene"):
 
     @on.message.enter()
     async def on_enter(self, message: Message) -> Any:       
         keyboard = create_reply_kb(
             util_buttons=[
-                ButtonLabel.TO_MAIN_MENU.value,
+                ButtonLabel.TOGGLE.value,
                 ButtonLabel.BACK.value,
                 ButtonLabel.EXIT.value],
             width_util=3,
-            one_time_keyboard=True,
-            input_field_placeholder='Enter room name, for example: "108" or "A"')
+            one_time_keyboard=True)
 
         data = await self.wizard.get_data()
         room_name = data.get('room_name')
         await message.answer(
-            text=f'Enter a new room name for the room: {room_name}',
+            text=f'Press "Toggle" to change the availability of the room: {room_name}',
             reply_markup=keyboard)
 
     @on.message.exit()
     async def on_exit(self, message: Message) -> None:
         await message.delete()
         await message.answer(
-            text="You've exited Room Name Edit Menu",
+            text="You've exited Room Toggle Availability Menu",
             reply_markup=ReplyKeyboardRemove())
     
     @on.message(F.text == ButtonLabel.EXIT.value)
@@ -46,28 +45,15 @@ class RoomNameEditScene(Scene, state="room_name_edit_scene"):
         await message.delete()
         await self.wizard.back()
 
-    @on.message(F.text == ButtonLabel.TO_MAIN_MENU.value)
-    async def to_main_menu(self, message: Message):
+    @on.message(F.text == ButtonLabel.TOGGLE.value)
+    async def toggle_room_availability(self, message: Message, session: AsyncSession):
         await message.delete()
-        await self.wizard.clear_data()
-        await self.wizard.goto("admin_menu")
-    
-    @on.message(F.text)
-    async def process_input(self, message: Message, session: AsyncSession):
         data = await self.wizard.get_data()
-        old_room_name = data.get('room_name')
-        new_room_name=message.text
+        room_name = data.get('room_name')
         try:
-            result_message = await room_name_edit_service(
-                session,
-                old_room_name,
-                new_room_name)
+            result_message = await room_availability_toggle_service(session, room_name)
             await message.answer(result_message)
-            await self.wizard.update_data(room_name=new_room_name)
-            await self.wizard.goto('room_edit_scene') #TODO: Check if it is better to use back() method instead of goto()
-        except InputError as e:
-            await message.answer(str(e))
             await self.wizard.retake()
         except Exception as e:
-            await message.answer(f'Error: {str(e)}')
+            await message.answer(f"An error occurred: {e}")
             await self.wizard.retake()

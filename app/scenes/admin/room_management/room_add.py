@@ -32,7 +32,7 @@ class RoomAddScene(Scene, state="room_add_scene"):
     async def on_exit(self, message: Message) -> None:
         await message.delete()
         await message.answer(
-            text="You've exited User Add Menu",
+            text="You've exited Room Add Menu",
             reply_markup=ReplyKeyboardRemove())
     
     @on.message(F.text == ButtonLabel.EXIT.value)
@@ -42,7 +42,6 @@ class RoomAddScene(Scene, state="room_add_scene"):
     @on.message(F.text == ButtonLabel.BACK.value)
     async def back(self, message: Message):
         await message.delete()
-        await self.wizard.clear_data()
         await self.wizard.back()
 
     @on.message(F.text == ButtonLabel.TO_MAIN_MENU.value)

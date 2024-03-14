@@ -6,7 +6,7 @@ async def room_delete_service(
     session: AsyncSession,
     room_name: str
     ) -> str:
-    room_name = room_name.strip()
+    room_name = room_name.strip() #TODO: remove if it's not needed
     try:
         await orm_delete_room_by_name(session, room_name)
         return f"Room with name: {room_name} has been deleted."

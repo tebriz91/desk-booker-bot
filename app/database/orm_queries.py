@@ -102,8 +102,23 @@ async def orm_delete_room_by_name(session: AsyncSession, room_name: str):
     await session.execute(query)
     await session.commit()
 
+async def orm_get_room_availability_by_name(session: AsyncSession, room_name: str):
+    query = select(Room.is_available).where(Room.name == room_name)
+    result = await session.execute(query)
+    return result.scalar_one()
+
+async def orm_update_room_availability_by_name(session: AsyncSession, room_name: str, is_available: bool):
+    query = update(Room).where(Room.name == room_name).values(is_available=is_available)
+    await session.execute(query)
+    await session.commit()
+
+async def orm_get_room_data_by_name(session: AsyncSession, room_name: str):
+    query = select(Room).where(Room.name == room_name)
+    result = await session.execute(query)
+    return result.scalar()
+
 #* Desk's ORM queries
-async def orm_insert_desk(session: AsyncSession, room_id: int, desk_name: str):
+async def orm_insert_desk_with_room_id(session: AsyncSession, room_id: int, desk_name: str):
     query = select(Desk).where(Desk.name == desk_name)
     result = await session.execute(query)
     desk = result.first()
@@ -118,6 +133,11 @@ async def orm_select_desk_id_by_name(session: AsyncSession, desk_name: str):
     query = select(Desk.id).where(Desk.name == desk_name)
     result = await session.execute(query)
     return result.scalar_one()
+
+async def orm_select_desk_by_name(session: AsyncSession, desk_name: str):
+    query = select(Desk).where(Desk.name == desk_name)
+    result = await session.execute(query)
+    return result.scalar()
 
 async def orm_select_desks_by_room_id(session: AsyncSession, room_id: int):
     query = select(Desk).where(Desk.room_id == room_id)
@@ -138,6 +158,31 @@ async def orm_select_available_desks_by_room_name(session: AsyncSession, room_na
     query = select(Desk).join(Room).where(Room.name == room_name, Desk.is_available == True)
     result = await session.execute(query)
     return result.scalars().all()
+
+async def orm_get_desk_availability_by_name(session: AsyncSession, desk_name: str):
+    query = select(Desk.is_available).where(Desk.name == desk_name)
+    result = await session.execute(query)
+    return result.scalar_one()
+
+async def orm_update_desk_name_by_id(session: AsyncSession, desk_id: int, new_desk_name: str):
+    query = update(Desk).where(Desk.id == desk_id).values(name=new_desk_name)
+    await session.execute(query)
+    await session.commit()
+
+async def orm_update_desk_name_by_name(session: AsyncSession, desk_name: str, new_desk_name: str):
+    query = update(Desk).where(Desk.name == desk_name).values(name=new_desk_name)
+    await session.execute(query)
+    await session.commit()
+
+async def orm_update_desk_availability_by_name(session: AsyncSession, desk_name: str, is_available: bool):
+    query = update(Desk).where(Desk.name == desk_name).values(is_available=is_available)
+    await session.execute(query)
+    await session.commit()
+
+async def orm_delete_desk_by_id(session: AsyncSession, desk_id: int):
+    query = delete(Desk).where(Desk.id == desk_id)
+    await session.execute(query)
+    await session.commit()
 
 #* Booking's ORM queries
 async def orm_insert_booking(

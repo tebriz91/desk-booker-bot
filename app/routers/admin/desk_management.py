@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from routers.admin.router import admin_router
 
-from database.orm_queries import orm_insert_desk, orm_select_desks_by_room_id
+from database.orm_queries import orm_insert_desk_with_room_id, orm_select_desks_by_room_id
 
 from utils.logger import Logger
 
@@ -25,7 +25,7 @@ async def command_add_desk_handler(message: Message, session: AsyncSession):
     logger.info(f"room_id: {room_id}, desk_name: {desk_name}")
     room_id = int(room_id)
     try:
-        await orm_insert_desk(session, room_id, desk_name)
+        await orm_insert_desk_with_room_id(session, room_id, desk_name)
         await message.answer(f"Desk with name: {desk_name} in room with id: {room_id} added to database")
     except Exception as e:
         logger.error(e)

@@ -10,6 +10,7 @@ class ButtonLabel(Enum):
     YES = 'Yes'
     NO = 'No'
     CONFIRM = '✅Confirm'
+    TOGGLE = '🔄Toggle'
     
     def __str__(self):
         return self.value

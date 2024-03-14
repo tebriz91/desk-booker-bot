@@ -3,6 +3,7 @@
 .venv
 .env
 *.db
+.VSCodeCounter
 concat_script.py
 project_tree.md
 project_notes.md

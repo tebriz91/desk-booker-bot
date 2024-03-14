@@ -12,12 +12,12 @@ from misc.const.button_labels import ButtonLabel
 from keyboards.reply import create_reply_kb
 
 class RoomManagementScene(Scene, state="room_management_scene"):
+    """
+    flag_room_act: Scene argument, can be passed to the scene using the wizard. It is stored in state data and can be used in other scenes to determine the action that the user wants to perform with room.
+    """
     
     @on.message.enter()
-    async def on_enter(self, message: Message, flag: RoomManagementMenu = None) -> Any:
-        """
-        flag: Scene argument, can be passed to the scene using the wizard. It is stored in state data and can be used in other scenes to determine the action that the user wants to perform.
-        """
+    async def on_enter(self, message: Message) -> Any:
         keyboard = create_reply_kb(
             buttons=[
                 RoomManagementMenu.ADD_ROOM.value,
@@ -61,18 +61,18 @@ class RoomManagementScene(Scene, state="room_management_scene"):
     @on.message(F.text == RoomManagementMenu.DELETE_ROOM.value)
     async def to_room_delete(self, message: Message, session: AsyncSession):
         await message.delete()
-        await self.wizard.update_data(flag=RoomManagementMenu.DELETE_ROOM.value)
+        await self.wizard.update_data(flag_room_act=RoomManagementMenu.DELETE_ROOM.value)
         # RoomSelectScene.on_enter() requires database session
         await self.wizard.goto("room_select_scene", session=session)
         
     @on.message(F.text == RoomManagementMenu.EDIT_ROOM.value)
     async def to_room_edit(self, message: Message, session: AsyncSession):
         await message.delete()
-        await self.wizard.update_data(flag=RoomManagementMenu.EDIT_ROOM.value)
+        await self.wizard.update_data(flag_room_act=RoomManagementMenu.EDIT_ROOM.value)
         await self.wizard.goto("room_select_scene", session=session)
     
     @on.message(F.text == RoomManagementMenu.BROWSE_ROOMS.value)
     async def to_room_browse(self, message: Message, session: AsyncSession):
         await message.delete()
-        await self.wizard.update_data(flag=RoomManagementMenu.BROWSE_ROOMS.value)
+        await self.wizard.update_data(flag_room_act=RoomManagementMenu.BROWSE_ROOMS.value)
         await self.wizard.goto("room_select_scene", session=session)

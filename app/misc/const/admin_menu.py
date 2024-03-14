@@ -27,9 +27,6 @@ class RoomManagementMenu(Enum):
     DELETE_ROOM = 'Delete Room'
     EDIT_ROOM = 'Edit Room'
     BROWSE_ROOMS = 'Browse Rooms'
-    # ADD_DESK = 'Add Desk'
-    # DELETE_DESK = 'Delete Desk'
-    # EDIT_DESK = 'Edit Desk'
 
     def __str__(self):
         return self.value
@@ -87,9 +84,18 @@ class RoomEditMenu(Enum):
     TOGGLE_AVAILABILITY = 'Toggle Availability'
     EDIT_ROOM_PLAN = 'Edit Room Plan'
     EDIT_ADDITIONAL_INFO = 'Edit Additional Info'
+    ADD_DESK = 'Add Desk'
+    DELETE_DESK = 'Delete Desk'
+    EDIT_DESK = 'Edit Desk'
     
     def __str__(self):
         return self.value
+
+#* Submenus for Room Edit Menu (submenu of Room Management Menu)
+class DeskEditMenu(Enum):
+    EDIT_DESK_NAME = 'Edit Desk Name'
+    TOGGLE_AVAILABILITY = 'Toggle Availability'
+    EDIT_ADDITIONAL_INFO = 'Edit Additional Info'
 
 #* Submenus for Booking Management Menu (submenu of Admin Menu)
 class BookingBrowseMenu(Enum):

@@ -27,5 +27,8 @@ async def room_name_edit_service(
     if existing_room:
         raise InputError(f"Room with name: '{new_room_name}' already exists.")
     
-    await orm_update_room_name_by_name(session, old_room_name, new_room_name)
-    return f"Room with name: {old_room_name} has been renamed to: {new_room_name}."
+    try:
+        await orm_update_room_name_by_name(session, old_room_name, new_room_name)
+        return f"Room with name: {old_room_name} has been renamed to: {new_room_name}."
+    except Exception as e:
+        raise e
