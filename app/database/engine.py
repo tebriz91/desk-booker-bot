@@ -4,11 +4,9 @@ from config_data.config import load_config
 
 from database.models import Base
 
-#* DB_URL=postgresql+asyncpg://login:password@localhost:5432/db_name
-
 config = load_config()
 
-engine = create_async_engine((config.db.uri + config.db.name), echo=True)
+engine = create_async_engine(config.db.url, echo=True)
 
 session_maker = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 

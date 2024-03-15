@@ -33,11 +33,14 @@ class DBConfig:
 
     @property
     def url(self) -> str:
-        if "sqlite" in self.uri:
-            return self.uri.format(self.name)
-        return self.uri.format(
-            self.user, self.password, self.host, self.port, self.name
-        )
+        if 'sqlite' in self.uri:
+            # Check if '.db' extension is already included in the name
+            db_extension = '' if self.name.endswith('.db') else '.db'
+            return f'{self.uri}///{self.name}{db_extension}' # returns: sqlite+aiosqlite:///db_name.db
+        elif 'postgresql' in self.uri:
+            return f'{self.uri}://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}' # returns: postgresql+asyncpg://login:password@localhost:5432/db_name
+        else:
+            raise ValueError("Unsupported database type")
 
 # Bot authentication configuration
 @dataclass(frozen=True, slots=True)

@@ -100,7 +100,7 @@ async def process_date_button(
     date_format = config.bot_operation.date_format
     date = datetime.strptime(date_string, date_format).date() # Parse date string to datetime.date type: 'YYYY-MM-DD' to query the database
     # Check if user with the same telegram_id already has a booking for the same date
-    already_booked = await orm_select_booking_by_telegram_id_and_date(session, query.from_user.id, date)
+    already_booked = await orm_select_booking_by_telegram_id_and_date(session, query.from_user.id, date) #! PostgreSQL requires the date to be of type datetime.date
     
     if already_booked:
         await query.message.edit_text(f'You already have a booking for: {date_string}')
@@ -108,7 +108,7 @@ async def process_date_button(
         await query.answer()
         
     else:
-        await state.update_data(date=date)
+        await state.update_data(date=date.strftime('%Y-%m-%d')) #TEST: This modification "date.strftime('%Y-%m-%d')" ensures that the date object is converted to a string that represents the date in the format 'YYYY-MM-DD', making it JSON serializable and suitable for storing in the state context. Otherwise, the error "TypeError: Object of type date is not JSON serializable" would occur.
 
         # Retrieve rooms from the database
         rooms_orm_obj = await orm_select_available_rooms(session)
@@ -198,12 +198,14 @@ async def process_desk_button(
     desk_name = callback_data.desk_name
     desk_id = await orm_select_desk_id_by_name(session, desk_name)
 
-    # Retrieve date from the state, that is already of datetime.date type
+    # Retrieve date from the state
     data = await state.get_data()
     date = data['date']
-
+    # Convert date string to datetime.date type
+    date = datetime.strptime(date, '%Y-%m-%d').date() #TEST: Added this line because the date was a string and not a datetime.date type, but PostgreSQL requires the date to be of type datetime.date
+    
     # Check if the desk is already booked for the date
-    already_booked = await orm_select_booking_by_desk_id_and_date(session, desk_id, date)
+    already_booked = await orm_select_booking_by_desk_id_and_date(session, desk_id, date) #! PostgreSQL requires the date to be of type datetime.date
     if already_booked:
         await query.message.edit_text(f'The desk: {desk_name} is already booked for: {date.strftime(date_format)}')
         await state.clear()

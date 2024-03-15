@@ -19,6 +19,6 @@ async def room_availability_toggle_service(
             return f"Room: {room_name} is now 🚫unavailable."
         else:
             await orm_update_room_availability_by_name(session, room_name, True)
-            return f"Room: {room_name} is now ✅available."
+            return f"Room: {room_name} is now ☑️available."
     except Exception as e:
         return f"Error: {e}"

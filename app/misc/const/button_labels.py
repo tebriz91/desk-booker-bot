@@ -6,7 +6,7 @@ class ButtonLabel(Enum):
     BACK = '⏪Back'
     NEXT = '⏩Next'
     TO_MAIN_MENU = '↩️Main Menu'
-    OK = '🆗'
+    OK = '👌OK'
     YES = 'Yes'
     NO = 'No'
     CONFIRM = '✅Confirm'

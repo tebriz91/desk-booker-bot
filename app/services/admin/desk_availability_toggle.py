@@ -20,6 +20,6 @@ async def desk_availability_toggle_service(
             return f"Desk: {desk_name} in room: {room_name} is now 🚫unavailable."
         else:
             await orm_update_desk_availability_by_name(session, desk_name, True)
-            return f"Desk: {desk_name} in room: {room_name} is now ✅available."
+            return f"Desk: {desk_name} in room: {room_name} is now ☑️available."
     except Exception as e:
         return f"Error: {e}"

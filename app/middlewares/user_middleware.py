@@ -10,6 +10,9 @@ from config_data.config import Config
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 class UserMiddleware(BaseMiddleware):
+    """
+    This middleware checks if the user is registered in the database.
+    """
     def __init__(self, session_pool: async_sessionmaker):
         self.session_pool = session_pool
 

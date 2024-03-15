@@ -10,7 +10,7 @@ async def room_browse_service(
     try:
         # Retrieve room info (name, id, created, updated)
         room = await orm_get_room_data_by_name(session, room_name)
-        room_availability_emoji = "✅" if room.is_available else "🚫"
+        room_availability_emoji = "☑️" if room.is_available else "🚫"
         room_info = f"<b>Room name</b>: {room.name}\n" \
                     f"<b>Room id</b>: {room.id}\n" \
                     f"<b>Room availability</b>: {room_availability_emoji}\n" \
@@ -30,7 +30,7 @@ async def room_browse_service(
                 desks_info = f"<b>Desks</b>:\n"
                 # Get enumerated list of desks
                 for i, desk in enumerate(desks, start=1):
-                    desk_availability_emoji = "✅" if desk.is_available else "🚫"
+                    desk_availability_emoji = "☑️" if desk.is_available else "🚫"
                     desks_info += f"{i}. Desk name: {desk.name}\n" \
                                 f"    id: {desk.id}\n" \
                                 f"    availability: {desk_availability_emoji}\n" \
