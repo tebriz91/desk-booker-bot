@@ -1,0 +1,39 @@
+# Name of the workflow
+name: "build-and-push-docker-image"
+
+# Defines when the workflow should run
+on:
+  push:
+    branches:
+      - 'master' # The workflow triggers on push events to the master branch
+
+# Jobs to execute
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest # Specifies the type of runner that the job will execute on, here using the latest Ubuntu version
+    
+    steps: # Steps represent a sequence of tasks that will be executed as part of the job
+      - 
+        name: Check out repository code
+        uses: actions/checkout@v3
+        # This step uses the actions/checkout GitHub Action to check out your repository under $GITHUB_WORKSPACE, so your workflow can access it
+      
+      - 
+        name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }} # Username for Docker Hub, stored as a secret
+          password: ${{ secrets.DOCKERHUB_TOKEN }} # Password or token for Docker Hub, stored as a secret
+        # This step logs into Docker Hub using the provided username and password/token, allowing subsequent steps to push images to your Docker Hub repository
+      
+      - 
+        name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          push: true # Enables pushing the built image to a Docker registry
+          tags: tebriz91/booker-template-image:latest # Sets the tag for the image to be pushed
+          context: . # Specifies the build context. Using ".", which means the current directory (the root of your GitHub repository)
+          file: ./Dockerfile # Path to the Dockerfile
+          build-args:
+            YOUR_ENV: production # Build-time variables passed to the build. Here, YOUR_ENV is set to production, which your Dockerfile can use to conditionalize behavior
+        # This step builds the Docker image using the Dockerfile in your repository and then pushes the built image to Docker Hub under the specified tag
