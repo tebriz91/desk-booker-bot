@@ -34,6 +34,3 @@ jobs:
           tags: tebriz91/booker-template-image:latest # Sets the tag for the image to be pushed
           context: . # Specifies the build context. Using ".", which means the current directory (the root of your GitHub repository)
           file: ./Dockerfile # Path to the Dockerfile
-          build-args:
-            YOUR_ENV: production # Build-time variables passed to the build. Here, YOUR_ENV is set to production, which your Dockerfile can use to conditionalize behavior
-        # This step builds the Docker image using the Dockerfile in your repository and then pushes the built image to Docker Hub under the specified tag
