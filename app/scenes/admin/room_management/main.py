@@ -15,7 +15,6 @@ class RoomManagementScene(Scene, state="room_management_scene"):
     """
     flag_room_act: Scene argument, can be passed to the scene using the wizard. It is stored in state data and can be used in other scenes to determine the action that the user wants to perform with room.
     """
-    
     @on.message.enter()
     async def on_enter(self, message: Message) -> Any:
         keyboard = create_reply_kb(

@@ -18,6 +18,9 @@ class DeskSelectScene(Scene, state="desk_select_scene"):
     @on.message.enter()
     async def on_enter(self, message: Message, session: AsyncSession) -> Any:
         """
+        This scene generates a keyboard with desk names.
+        Selecting a desk name will lead to the next scene, depending on the flag_desk_act, which is passed through the wizard.data in the previous scene.
+        
         Do not forget to pass session to the on_enter()
         """
         data = await self.wizard.get_data()

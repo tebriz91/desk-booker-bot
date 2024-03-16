@@ -18,7 +18,10 @@ class RoomSelectScene(Scene, state="room_select_scene"):
     @on.message.enter()
     async def on_enter(self, message: Message, session: AsyncSession) -> Any:
         """
-        Do not forget to pass session to the on_enter()
+        This scene generates a keyboard with room names.
+        Selecting a room name will lead to the next scene, depending on the flag_room_act, which is passed through the wizard.data in the previous scene.
+        
+        Do not forget to pass session to the on_enter() method.
         """
         rooms_orm_obj = await orm_select_rooms(session) # TODO: Move this logic to a service
         rooms = [rooms.name for rooms in rooms_orm_obj]

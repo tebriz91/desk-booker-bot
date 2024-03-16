@@ -15,7 +15,6 @@ class RoomEditScene(Scene, state="room_edit_scene"):
     """
     flag_desk_act: Scene argument, can be passed to the scene using the wizard. It is stored in state data and can be used in other scenes to determine the action that the user wants to perform with desk.
     """
-    
     @on.message.enter()
     async def on_enter(self, message: Message) -> Any:
         keyboard = create_reply_kb(
@@ -92,6 +91,7 @@ class RoomEditScene(Scene, state="room_edit_scene"):
         await message.delete()
         await self.wizard.goto("desk_add_scene")
     
+    #* GOTO DeskSelectScene scenes handlers
     @on.message(F.text == RoomEditMenu.DELETE_DESK.value)
     async def to_desk_delete(self, message: Message, session: AsyncSession):
         await message.delete()
