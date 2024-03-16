@@ -33,6 +33,9 @@ class DBConfig:
 
     @property
     def url(self) -> str:
+        """
+        Returns the database URL based on the provided configuration in .env file.
+        """
         if 'sqlite' in self.uri:
             # Check if '.db' extension is already included in the name
             db_extension = '' if self.name.endswith('.db') else '.db'
