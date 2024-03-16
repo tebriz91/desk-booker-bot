@@ -20,7 +20,7 @@ class RoomSelectScene(Scene, state="room_select_scene"):
         """
         Do not forget to pass session to the on_enter()
         """
-        rooms_orm_obj = await orm_select_rooms(session) #TODO: Move this logic to a service
+        rooms_orm_obj = await orm_select_rooms(session) # TODO: Move this logic to a service
         rooms = [rooms.name for rooms in rooms_orm_obj]
         keyboard = create_reply_kb(
             buttons=rooms,

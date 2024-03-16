@@ -70,6 +70,6 @@ class DeskEditScene(Scene, state="desk_edit_scene"):
     @on.message(F.text == DeskEditMenu.EDIT_ADDITIONAL_INFO.value)
     async def to_desk_additional_info_edit(self, message: Message):
         await message.delete()
-        await message.answer("Not implemented yet") #TODO: Implement desk additional info edit scene
+        await message.answer("Not implemented yet") # TODO: Implement desk additional info edit scene
         await self.wizard.retake()
         # await self.wizard.goto("desk_additional_info_edit_scene")

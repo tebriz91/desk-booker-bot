@@ -6,7 +6,7 @@ async def room_browse_service(
     session: AsyncSession,
     room_name: str
     ) -> str:
-    room_name = room_name.strip() #TODO: remove if it's not needed
+    room_name = room_name.strip() # TODO: Remove if it's not needed
     try:
         # Retrieve room info (name, id, created, updated)
         room = await orm_get_room_data_by_name(session, room_name)

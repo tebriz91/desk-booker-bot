@@ -54,7 +54,7 @@ class DeskDeleteScene(Scene, state="desk_delete_scene"):
         try:
             result_message = await desk_delete_service(session, desk_name, room_name)
             await message.answer(result_message)
-            await self.wizard.back(session=session) #FIX: Change  to goto() method
+            await self.wizard.back(session=session) # FIX: Change back() method to goto() if it's required
         except Exception as e:
             await message.answer(f"An error occurred: {e}")
             await self.wizard.back(session=session)

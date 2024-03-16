@@ -67,7 +67,7 @@ class DeskNameEditScene(Scene, state="desk_name_edit_scene"):
                 new_desk_name)
             await message.answer(result_message)
             await self.wizard.update_data(desk_name=new_desk_name)
-            await self.wizard.goto('desk_edit_scene') #TODO: Check if it is better to use back() method instead of goto()
+            await self.wizard.goto('desk_edit_scene') # FIX: Check if it is better to use back() method instead of goto()
         except InputError as e:
             await message.answer(str(e))
             await self.wizard.retake()

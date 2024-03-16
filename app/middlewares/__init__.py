@@ -1,4 +1,4 @@
-#TODO: Setup middlewares for the bot
+# TODO: Setup middlewares for the bot
 '''
 from aiogram import Dispatcher
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession

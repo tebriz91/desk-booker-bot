@@ -6,7 +6,7 @@ async def room_availability_toggle_service(
     session: AsyncSession,
     room_name: str
     ) -> str:
-    room_name = room_name.strip() #TODO: remove if it's not needed
+    room_name = room_name.strip() # TODO: Remove if it's not needed
     # Retrieve room availability by name
     try:
         room_availability = await orm_get_room_availability_by_name(session, room_name)

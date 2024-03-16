@@ -22,7 +22,7 @@ class DeskSelectScene(Scene, state="desk_select_scene"):
         """
         data = await self.wizard.get_data()
         room_name = data.get('room_name')
-        desks_orm_obj = await orm_select_desks_by_room_name(session, room_name) #TODO: Move this logic to a service
+        desks_orm_obj = await orm_select_desks_by_room_name(session, room_name) # TODO: Move this logic to a service
         desks = [desks.name for desks in desks_orm_obj]
         keyboard = create_reply_kb(
             buttons=desks,

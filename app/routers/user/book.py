@@ -202,7 +202,7 @@ async def process_desk_button(
     data = await state.get_data()
     date = data['date']
     # Convert date string to datetime.date type
-    date = datetime.strptime(date, '%Y-%m-%d').date() #TEST: Added this line because the date was a string and not a datetime.date type, but PostgreSQL requires the date to be of type datetime.date
+    date = datetime.strptime(date, '%Y-%m-%d').date() # TEST: Added this line because the date was a string and not a datetime.date type, but PostgreSQL requires the date to be of type datetime.date
     
     # Check if the desk is already booked for the date
     already_booked = await orm_select_booking_by_desk_id_and_date(session, desk_id, date) #! PostgreSQL requires the date to be of type datetime.date

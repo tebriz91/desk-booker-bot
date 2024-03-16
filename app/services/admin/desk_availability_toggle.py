@@ -7,7 +7,7 @@ async def desk_availability_toggle_service(
     room_name: str,
     desk_name: str
     ) -> str:
-    desk_name = desk_name.strip() #TODO: remove if it's not needed
+    desk_name = desk_name.strip() # TODO: Remove if it's not needed
     # Retrieve desk availability by name
     try:
         desk_availability = await orm_get_desk_availability_by_name(session, desk_name)

@@ -10,7 +10,7 @@ from misc.const.admin_menu import UserManagementMenu
 from misc.const.button_labels import ButtonLabel
 from keyboards.reply import create_reply_kb
 
-class UserManagementScene(Scene, state="user_management"): # TODO: rename state to user_management_scene and update in other files
+class UserManagementScene(Scene, state="user_management"): # TODO: Rename state to user_management_scene and update in other files
     
     @on.message.enter()
     async def on_enter(self, message: Message, state: FSMContext) -> Any:

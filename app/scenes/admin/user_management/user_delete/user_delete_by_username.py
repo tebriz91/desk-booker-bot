@@ -43,14 +43,13 @@ class UserDeleteByUsernameScene(Scene, state="user_delete_by_username"):
     @on.message(F.text == ButtonLabel.BACK.value)
     async def back(self, message: Message):
         await message.delete()
-        await self.wizard.back()
+        await self.wizard.back() # FIX: Change back() method to goto() if it's required
 
     @on.message(F.text == ButtonLabel.TO_MAIN_MENU.value)
     async def to_main_menu(self, message: Message):
         await message.delete()
         await self.wizard.goto("admin_menu")
     
-    # FIX: Change back() method to goto()
     # TODO: Ask for confirmation before deleting the user
     # Handler to process the user's input
     @on.message(F.text)
