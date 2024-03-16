@@ -4,6 +4,7 @@
 .env
 *.db
 .VSCodeCounter
+docker-compose.yml
 concat_script.py
 project_tree.md
 project_notes.md
