@@ -1,0 +1,16 @@
+dockerignore file:
+.git*
+.vscode
+.*ignore
+*.db
+__pycache__
+venv/
+cache/
+docker-compose*.yml
+Dockerfile*
+Makefile
+*.md
+!README.md
+logs/
+**/*_test.py
+**/tests/
