@@ -1,7 +1,6 @@
 .git*
 .vscode
 .*ignore
-# .env
 *.db
 __pycache__
 venv/
