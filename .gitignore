@@ -2,6 +2,7 @@
 .mypy_cache
 .venv
 .env
+.dockerenv
 *.db
 .VSCodeCounter
 docker-compose*.yml

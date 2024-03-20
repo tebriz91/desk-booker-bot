@@ -14,10 +14,30 @@ except ImportError:
 _PathLike = Union[os.PathLike[str], Path, str]
 
 # Function to fetch environment variables with optional type casting
-def get_env(value: str, cast_to_type: bool = False) -> Any:
+def get_env(value: str, cast_to_type: Optional[str] = None) -> Any:
+    """
+    Fetches environment variables with optional type casting.
+    
+    :param value: The name of the environment variable.
+    :param cast_to_type: The type to cast the value to. Supports 'int', 'bool', 'str', and 'json'.
+    :return: The environment variable value, possibly cast to a specified type.
+    """
     v = os.getenv(value)
-    if cast_to_type and v:
-        return json.loads(v)
+    if v is not None:
+        if cast_to_type == "json":
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Error parsing JSON for environment variable {value}: {e}")
+        elif cast_to_type == "int":
+            try:
+                return int(v)
+            except ValueError as e:
+                raise ValueError(f"Error casting to int for environment variable {value}: {e}")
+        elif cast_to_type == "bool":
+            return v.lower() in ("true", "1", "t", "yes")
+        else:
+            return v
     return v
 
 # Database configuration
@@ -101,17 +121,17 @@ def load_config() -> Config:
             name=get_env("DB_NAME"),
             date_format=get_env("DB_DATE_FORMAT"),
             host=get_env("DB_HOST"),
-            port=get_env("DB_PORT", True),
+            port=get_env("DB_PORT", "int"),
             user=get_env("DB_USER"),
             password=get_env("DB_PASSWORD")
         ),
         bot=BotConfig(
             token=get_env("BOT_TOKEN"),
-            admins=get_env("BOT_ADMINS", True)
+            admins=get_env("BOT_ADMINS", "json")
         ),
         bot_operation=BotOperationConfig(
-            num_days=get_env("NUM_DAYS"),
-            exclude_weekends=get_env("EXCLUDE_WEEKENDS"),
+            num_days=get_env("NUM_DAYS", "int"),
+            exclude_weekends=get_env("EXCLUDE_WEEKENDS", "bool"),
             timezone=get_env("TIMEZONE"),
             country_code=get_env("COUNTRY_CODE"),
             date_format=get_env("DATE_FORMAT"),
@@ -119,6 +139,6 @@ def load_config() -> Config:
         ),
         redis=RedisConfig(
             host=get_env("REDIS_HOST"),
-            port=get_env("REDIS_PORT")
+            port=get_env("REDIS_PORT", "int")
         ),
     )
