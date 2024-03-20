@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "booker-template"
+name = "desk-booker-bot"
 version = "0.1.0"
 description = ""
 authors = ["tebriz91 <tebriz.tagiyev@gmail.com>"]
