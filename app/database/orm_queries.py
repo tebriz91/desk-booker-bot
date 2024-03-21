@@ -4,7 +4,7 @@ from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from database.models import User, Room, Desk, Booking
+from database.models import User, Waitlist, Room, Desk, Booking
 
 #* User's ORM queries
 async def orm_insert_user(
@@ -59,6 +59,18 @@ async def orm_delete_user_by_telegram_name(session: AsyncSession, telegram_name:
     query = delete(User).where(User.telegram_name == telegram_name)
     await session.execute(query)
     await session.commit()
+
+#* Waitlist's ORM queries
+async def orm_insert_user_to_waitlist(session: AsyncSession, telegram_id: int, telegram_name: str):
+    query = select(User).where(User.telegram_id == telegram_id)
+    result = await session.execute(query)
+    user = result.first()
+    if user is None:
+        new_user = Waitlist(telegram_id=telegram_id, telegram_name=telegram_name)
+        session.add(new_user)
+        await session.commit()
+    else:
+        raise Exception
 
 #* Room's ORM queries
 async def orm_insert_room(session: AsyncSession, room_name: str):
