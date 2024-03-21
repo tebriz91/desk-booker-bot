@@ -1,4 +1,4 @@
-from sqlalchemy import Date, DateTime, ForeignKey, func
+from sqlalchemy import Date, DateTime, ForeignKey, BigInteger, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 class Base(DeclarativeBase):
@@ -22,7 +22,7 @@ class User(Base):
     __tablename__ = 'users'
     
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    telegram_id: Mapped[int] = mapped_column(unique=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True)
     telegram_name: Mapped[str] = mapped_column(unique=True)
     is_admin: Mapped[bool] = mapped_column(default=False)
     is_banned: Mapped[bool] = mapped_column(default=False)
@@ -30,12 +30,11 @@ class User(Base):
     last_name: Mapped[str | None]
     additional_info: Mapped[str | None]
 
-# Waitlist for unregistered users
 class Waitlist(Base):
     __tablename__ = 'waitlist'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    telegram_id: Mapped[int] = mapped_column(unique=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True)
     telegram_name: Mapped[str] = mapped_column(unique=True)
     first_name: Mapped[str | None]
     last_name: Mapped[str | None]
@@ -65,7 +64,7 @@ class Booking(Base):
     __tablename__ = 'bookings'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    telegram_id: Mapped[int] = mapped_column(ForeignKey('users.telegram_id', ondelete='CASCADE'), nullable=False)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('users.telegram_id', ondelete='CASCADE'), nullable=False)
     desk_id: Mapped[int] = mapped_column(ForeignKey('desks.id', ondelete='CASCADE'), nullable=False)
     room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id', ondelete='CASCADE'), nullable=False)
     date: Mapped[Date]= mapped_column(Date, nullable=False) # format: "YYYY-MM-DD"

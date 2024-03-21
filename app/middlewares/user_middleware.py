@@ -3,7 +3,9 @@ from typing import Any, Awaitable, Callable, Dict
 from aiogram import BaseMiddleware
 from aiogram.types import User, TelegramObject
 
-from database.orm_queries import orm_select_user_by_telegram_id
+from database.orm_queries import (
+    orm_select_user_by_telegram_id,
+    orm_select_user_from_waitlist_by_telegram_id)
 
 from config_data.config import Config
 
@@ -28,6 +30,7 @@ class UserMiddleware(BaseMiddleware):
             result = await handler(event, data)
             return result
 
+        #  Check if the user is registered or if user is already in the process of registration (in the waitlist table)
         async with self.session_pool() as session:
             data['session'] = session
             user_id = await orm_select_user_by_telegram_id(
@@ -37,7 +40,17 @@ class UserMiddleware(BaseMiddleware):
                 result = await handler(event, data)
                 return result
             else:
-                await event.answer(
-                        text="<b>You are not registered</b>", # TODO: Implement registration process
+                # Check if the user is in the waitlist
+                waitlist_user = await orm_select_user_from_waitlist_by_telegram_id(
+                    session,
+                    telegram_id=from_user.id)
+                if waitlist_user:
+                    await event.answer(
+                        text="You are in the waitlist already. Please wait for the admin to approve your registration.",
+                        # reply_markup=reply_markup,
+                    )
+                else:
+                    await event.answer(
+                        text="You are not registered. Please press /start to register.",
                         # reply_markup=reply_markup,
                     )
