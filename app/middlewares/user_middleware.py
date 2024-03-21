@@ -4,6 +4,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import User, TelegramObject
 
 from database.orm_queries import (
+    orm_insert_user_to_waitlist,
     orm_select_user_by_telegram_id,
     orm_select_user_from_waitlist_by_telegram_id)
 
@@ -40,17 +41,20 @@ class UserMiddleware(BaseMiddleware):
                 result = await handler(event, data)
                 return result
             else:
-                # Check if the user is in the waitlist
                 waitlist_user = await orm_select_user_from_waitlist_by_telegram_id(
                     session,
                     telegram_id=from_user.id)
-                if waitlist_user:
+                if not waitlist_user:
+                    await orm_insert_user_to_waitlist(
+                        session,
+                        telegram_id=from_user.id,
+                        telegram_name=from_user.username)
                     await event.answer(
-                        text="You are in the waitlist already. Please wait for the admin to approve your registration.",
+                        text="You were added to the waitlist. Please wait for the admin to approve your registration.",
                         # reply_markup=reply_markup,
                     )
                 else:
                     await event.answer(
-                        text="You are not registered. Please press /start to register.",
+                        text="You are already in the waitlist. Please wait for the admin to approve your registration.",
                         # reply_markup=reply_markup,
                     )
