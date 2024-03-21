@@ -30,6 +30,17 @@ class User(Base):
     last_name: Mapped[str | None]
     additional_info: Mapped[str | None]
 
+# Waitlist for unregistered users
+class Waitlist(Base):
+    __tablename__ = 'waitlist'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    telegram_id: Mapped[int] = mapped_column(unique=True)
+    telegram_name: Mapped[str] = mapped_column(unique=True)
+    first_name: Mapped[str | None]
+    last_name: Mapped[str | None]
+    additional_info: Mapped[str | None]
+
 class Room(Base):
     __tablename__ = 'rooms'
 
