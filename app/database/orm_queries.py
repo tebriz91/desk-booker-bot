@@ -72,6 +72,26 @@ async def orm_insert_user_to_waitlist(session: AsyncSession, telegram_id: int, t
     else:
         raise Exception
 
+async def orm_select_user_from_waitlist_by_telegram_id(session: AsyncSession, telegram_id: int):
+    query = select(Waitlist).where(Waitlist.telegram_id == telegram_id)
+    result = await session.execute(query)
+    return result.scalar()
+
+async def orm_select_user_from_waitlist_by_telegram_name(session: AsyncSession, telegram_name: str):
+    query = select(Waitlist).where(Waitlist.telegram_name == telegram_name)
+    result = await session.execute(query)
+    return result.scalar()
+
+async def orm_select_users_from_waitlist(session: AsyncSession):
+    query = select(Waitlist)
+    result = await session.execute(query)
+    return result.scalars().all()
+
+async def orm_delete_user_from_waitlist_by_telegram_id(session: AsyncSession, telegram_id: int):
+    query = delete(Waitlist).where(Waitlist.telegram_id == telegram_id)
+    await session.execute(query)
+    await session.commit()
+
 #* Room's ORM queries
 async def orm_insert_room(session: AsyncSession, room_name: str):
     query = select(Room).where(Room.name == room_name)
