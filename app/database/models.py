@@ -26,6 +26,8 @@ class User(Base):
     telegram_name: Mapped[str] = mapped_column(unique=True)
     is_admin: Mapped[bool] = mapped_column(default=False)
     is_banned: Mapped[bool] = mapped_column(default=False)
+    first_name: Mapped[str | None]
+    last_name: Mapped[str | None]
     additional_info: Mapped[str | None]
 
 class Room(Base):
