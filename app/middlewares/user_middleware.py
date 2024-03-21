@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 class UserMiddleware(BaseMiddleware):
     """
-    This middleware checks if the user is registered in the database.
+    This middleware checks if the user is registered in the database or in the waitlist. If the user is not registered, they are added to the waitlist.
     """
     def __init__(self, session_pool: async_sessionmaker):
         self.session_pool = session_pool
