@@ -82,11 +82,13 @@ class AdminMenuScene(Scene, state="admin_menu"):
         await self.wizard.goto("room_management_scene")
 
     @on.message(F.text == AdminMenu.BOOKING_MANAGEMENT.value)
-    async def to_booking_management(self, message: Message):
+    async def to_booking_management(self, message: Message): # TODO: Implement
         await message.delete()
-        await self.wizard.goto("booking_management")
+        await message.answer("Not implemented yet.")
+        # await self.wizard.goto("booking_management_scene")
 
     @on.message(F.text == AdminMenu.ANALYTICS.value)
-    async def to_analytics(self, message: Message):
+    async def to_analytics(self, message: Message): # TODO: Implement
         await message.delete()
-        await self.wizard.goto("analytics")
+        await message.answer("Not implemented yet.")
+        # await self.wizard.goto("analytics_scene")

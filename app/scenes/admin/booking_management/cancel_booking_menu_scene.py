@@ -7,7 +7,7 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 from aiogram.fsm.scene import Scene, on
 
-class CancelBookingMenuScene(Scene, state="cancel_booking_menu"):
+class CancelBookingMenuScene(Scene, state="cancel_booking_menu_scene"):
     
     @on.message.enter()
     async def on_enter(self, message: Message) -> Any:
