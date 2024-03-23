@@ -61,12 +61,21 @@ async def orm_delete_user_by_telegram_name(session: AsyncSession, telegram_name:
     await session.commit()
 
 #* Waitlist's ORM queries
-async def orm_insert_user_to_waitlist(session: AsyncSession, telegram_id: int, telegram_name: str):
+async def orm_insert_user_to_waitlist(
+    session: AsyncSession,
+    telegram_id: int,
+    telegram_name: str,
+    first_name: str = None,
+    last_name: str = None):
     query = select(User).where(User.telegram_id == telegram_id)
     result = await session.execute(query)
     user = result.first()
     if user is None:
-        new_user = Waitlist(telegram_id=telegram_id, telegram_name=telegram_name)
+        new_user = Waitlist(
+            telegram_id=telegram_id,
+            telegram_name=telegram_name,
+            first_name=first_name,
+            last_name=last_name)
         session.add(new_user)
         await session.commit()
     else:

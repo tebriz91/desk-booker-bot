@@ -27,11 +27,17 @@ class UserMiddleware(BaseMiddleware):
         ) -> Any:
         config: Config = data["config"]
         from_user: User = data["event_from_user"]
+        
+        # Check if user is a bot. is_bot is a boolean value
+        if from_user.is_bot == True:
+            return
+        
+        # Check if user is an admin
         if from_user.id in config.bot.admins:
             result = await handler(event, data)
             return result
 
-        #  Check if the user is registered or if user is already in the process of registration (in the waitlist table)
+        # Check if user is registered or if user is already in the waitlist table
         async with self.session_pool() as session:
             data['session'] = session
             user_id = await orm_select_user_by_telegram_id(
@@ -45,14 +51,23 @@ class UserMiddleware(BaseMiddleware):
                     session,
                     telegram_id=from_user.id)
                 if not waitlist_user:
-                    await orm_insert_user_to_waitlist(
-                        session,
-                        telegram_id=from_user.id,
-                        telegram_name=from_user.username)
-                    await event.answer(
-                        text="You were added to the waitlist. Please wait for the admin to approve your registration.",
-                        # reply_markup=reply_markup,
-                    )
+                    # Check if the user has a username set in their Telegram profile
+                    if not from_user.username:
+                        await event.answer(
+                            text="Please set a username in your Telegram profile settings to register.")
+                        return
+                    # Insert user to waitlist
+                    else:
+                        await orm_insert_user_to_waitlist(
+                            session,
+                            telegram_id=from_user.id,
+                            telegram_name=from_user.username,
+                            first_name=from_user.first_name,
+                            last_name=from_user.last_name)
+                        await event.answer(
+                            text="You were added to the waitlist. Please wait for the admin to approve your registration.",
+                            # reply_markup=reply_markup,
+                        )
                 else:
                     await event.answer(
                         text="You are already in the waitlist. Please wait for the admin to approve your registration.",
