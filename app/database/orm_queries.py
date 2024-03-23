@@ -10,7 +10,9 @@ from database.models import User, Waitlist, Room, Desk, Booking
 async def orm_insert_user(
     session: AsyncSession,
     telegram_id: int,
-    telegram_name: str):
+    telegram_name: str,
+    first_name: str = None,
+    last_name: str = None):
     # Check if the user is already in the database
     query = select(User).where(User.telegram_id == telegram_id)
     result = await session.execute(query)
@@ -19,7 +21,9 @@ async def orm_insert_user(
     if user is None:
         new_user = User(
             telegram_id=telegram_id,
-            telegram_name=telegram_name)
+            telegram_name=telegram_name,
+            first_name=first_name,
+            last_name=last_name)
         session.add(new_user)
         await session.commit()
     else:
@@ -91,6 +95,11 @@ async def orm_select_user_from_waitlist_by_telegram_name(session: AsyncSession, 
     result = await session.execute(query)
     return result.scalar()
 
+async def orm_select_telegram_id_from_waitlist_by_telegram_name(session: AsyncSession, telegram_name: str):
+    query = select(Waitlist.telegram_id).where(Waitlist.telegram_name == telegram_name)
+    result = await session.execute(query)
+    return result.scalar_one()
+
 async def orm_select_users_from_waitlist(session: AsyncSession):
     query = select(Waitlist)
     result = await session.execute(query)
@@ -98,6 +107,11 @@ async def orm_select_users_from_waitlist(session: AsyncSession):
 
 async def orm_delete_user_from_waitlist_by_telegram_id(session: AsyncSession, telegram_id: int):
     query = delete(Waitlist).where(Waitlist.telegram_id == telegram_id)
+    await session.execute(query)
+    await session.commit()
+
+async def orm_delete_user_from_waitlist_by_telegram_name(session: AsyncSession, telegram_name: str):
+    query = delete(Waitlist).where(Waitlist.telegram_name == telegram_name)
     await session.execute(query)
     await session.commit()
 
