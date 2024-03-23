@@ -3,6 +3,7 @@ from enum import Enum
 #* Admin Menu
 class AdminMenu(Enum):
     USER_MANAGEMENT = 'User Management'
+    WAITLIST = 'Waitlist'
     ROOM_MANAGEMENT = 'Room Management'
     BOOKING_MANAGEMENT = 'Booking Management'
     ANALYTICS = 'Analytics'

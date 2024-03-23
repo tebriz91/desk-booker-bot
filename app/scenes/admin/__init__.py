@@ -6,6 +6,9 @@ from .user_management.user_delete.main import UserDeleteScene
 from .user_management.user_delete.user_delete_by_id import UserDeleteByIDScene
 from .user_management.user_delete.user_delete_by_username import UserDeleteByUsernameScene
 
+from .waitlist.main import WaitlistScene
+from .waitlist.waitlist_user_info import WaitlistUserInfoScene
+
 from .room_management.main import RoomManagementScene
 from .room_management.room_select import RoomSelectScene
 from .room_management.room_add import RoomAddScene
@@ -32,6 +35,8 @@ __all__ = [
     UserDeleteScene,
     UserDeleteByIDScene,
     UserDeleteByUsernameScene,
+    WaitlistScene,
+    WaitlistUserInfoScene,
     RoomManagementScene,
     RoomSelectScene,
     RoomAddScene,
