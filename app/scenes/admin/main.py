@@ -58,7 +58,7 @@ class AdminMenuScene(Scene, state="admin_menu"):
             reply_markup=ReplyKeyboardRemove())
         
     @on.message(F.text == ButtonLabel.EXIT.value)
-    async def exit(self):
+    async def exit(self, message: Message):
         """
         This handler is called when the admin clicks the "Exit" button.
         """
@@ -69,7 +69,7 @@ class AdminMenuScene(Scene, state="admin_menu"):
     @on.message(F.text == AdminMenu.USER_MANAGEMENT.value)
     async def to_user_management(self, message: Message):
         await message.delete()
-        await self.wizard.goto("user_management")
+        await self.wizard.goto("user_management_scene")
 
     @on.message(F.text == AdminMenu.WAITLIST.value)
     async def to_waitlist(self, message: Message, session: AsyncSession):

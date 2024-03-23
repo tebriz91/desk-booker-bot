@@ -11,7 +11,7 @@ from services.admin.user_add import UserInputError, user_add_service_with_string
 from misc.const.button_labels import ButtonLabel
 from keyboards.reply import create_reply_kb
 
-class UserAddScene(Scene, state="user_add"):
+class UserAddScene(Scene, state="user_add_scene"):
     
     @on.message.enter()
     async def on_enter(self, message: Message) -> Any:
@@ -37,16 +37,19 @@ class UserAddScene(Scene, state="user_add"):
     
     @on.message(F.text == ButtonLabel.EXIT.value)
     async def exit(self, message: Message):
+        await self.wizard.clear_data()
         await self.wizard.exit()
     
     @on.message(F.text == ButtonLabel.BACK.value)
     async def back(self, message: Message):
         await message.delete()
+        await self.wizard.clear_data()
         await self.wizard.back()
 
     @on.message(F.text == ButtonLabel.TO_MAIN_MENU.value)
     async def to_main_menu(self, message: Message):
         await message.delete()
+        await self.wizard.clear_data()
         await self.wizard.goto("admin_menu")
     
     # Handler to process the user's input
@@ -61,5 +64,7 @@ class UserAddScene(Scene, state="user_add"):
             await self.wizard.retake()
         except UserInputError as e:
             await message.answer(str(e))
+            await self.wizard.retake()           
         except Exception as e:
             await message.answer(f"Failed to add user: {str(e)}")
+            await self.wizard.retake()

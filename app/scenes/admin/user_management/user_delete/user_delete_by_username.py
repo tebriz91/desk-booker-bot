@@ -3,7 +3,6 @@ from typing import Any
 from aiogram import F
 from aiogram.types import Message, ReplyKeyboardRemove
 
-from aiogram.fsm.context import FSMContext
 from aiogram.fsm.scene import Scene, on
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,10 +11,10 @@ from services.admin.user_delete_by_username import UserInputError, user_delete_b
 from misc.const.button_labels import ButtonLabel
 from keyboards.reply import create_reply_kb
 
-class UserDeleteByUsernameScene(Scene, state="user_delete_by_username"):
+class UserDeleteByUsernameScene(Scene, state="user_delete_by_username_scene"):
     
     @on.message.enter()
-    async def on_enter(self, message: Message, state: FSMContext) -> Any:
+    async def on_enter(self, message: Message) -> Any:
         keyboard = create_reply_kb(
             util_buttons=[
                 ButtonLabel.TO_MAIN_MENU.value,
@@ -30,7 +29,7 @@ class UserDeleteByUsernameScene(Scene, state="user_delete_by_username"):
             reply_markup=keyboard)
     
     @on.message.exit()
-    async def on_exit(self, message: Message, state: FSMContext) -> None:
+    async def on_exit(self, message: Message) -> None:
         await message.delete()
         await message.answer(
             text="You've exited User Delete By Username Menu",
@@ -38,6 +37,7 @@ class UserDeleteByUsernameScene(Scene, state="user_delete_by_username"):
     
     @on.message(F.text == ButtonLabel.EXIT.value)
     async def exit(self, message: Message):
+        await self.wizard.clear_data()
         await self.wizard.exit()
     
     @on.message(F.text == ButtonLabel.BACK.value)
@@ -48,6 +48,7 @@ class UserDeleteByUsernameScene(Scene, state="user_delete_by_username"):
     @on.message(F.text == ButtonLabel.TO_MAIN_MENU.value)
     async def to_main_menu(self, message: Message):
         await message.delete()
+        await self.wizard.clear_data()
         await self.wizard.goto("admin_menu")
     
     # TODO: Ask for confirmation before deleting the user
@@ -56,7 +57,6 @@ class UserDeleteByUsernameScene(Scene, state="user_delete_by_username"):
     async def process_user_input(
         self,
         message: Message,
-        state: FSMContext,
         session: AsyncSession):
         try:
             result_message = await user_delete_by_username_service(session, message.text)
@@ -64,5 +64,7 @@ class UserDeleteByUsernameScene(Scene, state="user_delete_by_username"):
             await self.wizard.retake()
         except UserInputError as e:
             await message.answer(str(e))
+            await self.wizard.retake()
         except Exception as e:
             await message.answer(f"Failed to delete user: {str(e)}")
+            await self.wizard.retake()            
