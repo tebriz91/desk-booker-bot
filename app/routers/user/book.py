@@ -34,7 +34,7 @@ from keyboards.book_kb import (
     create_kb_with_desk_names)
 
 #* Process /book command in default state
-@user_router.message(Command('book'), StateFilter(default_state))
+@user_router.message(Command('book1'), StateFilter(default_state))
 async def process_command_book_in_default_state(
     message: Message,
     state: FSMContext,

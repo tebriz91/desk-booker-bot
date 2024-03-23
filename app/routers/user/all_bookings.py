@@ -26,7 +26,7 @@ from services.bookings_list_generator import generate_list_of_all_current_bookin
 
 #* Process command /all_bookings
 @user_router.message(
-    Command("all_bookings"),
+    Command("all_bookings1"),
     StateFilter(default_state))
 async def process_command_all_bookings_in_default_state(
     message: Message,

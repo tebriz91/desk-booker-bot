@@ -28,7 +28,7 @@ from keyboards.cancel_bookings_kb import create_kb_with_bookings_to_cancel
 from database.orm_queries import orm_delete_booking_by_id
 
 #* Process command /cancel_bookings in default state
-@user_router.message(Command('cancel_bookings'), StateFilter(default_state))
+@user_router.message(Command('cancel_bookings1'), StateFilter(default_state))
 async def process_cancel_bookings_command(
     message: Message,
     session: AsyncSession,
