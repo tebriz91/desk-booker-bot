@@ -85,10 +85,12 @@ class AdminMenuScene(Scene, state="admin_menu"):
     async def to_booking_management(self, message: Message): # TODO: Implement
         await message.delete()
         await message.answer("Not implemented yet.")
+        await self.wizard.retake()
         # await self.wizard.goto("booking_management_scene")
 
     @on.message(F.text == AdminMenu.ANALYTICS.value)
     async def to_analytics(self, message: Message): # TODO: Implement
         await message.delete()
         await message.answer("Not implemented yet.")
+        await self.wizard.retake()
         # await self.wizard.goto("analytics_scene")
