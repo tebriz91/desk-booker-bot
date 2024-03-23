@@ -3,11 +3,10 @@ from typing import Any
 from aiogram import F
 from aiogram.types import Message, ReplyKeyboardRemove
 
-from aiogram.fsm.context import FSMContext
 from aiogram.fsm.scene import Scene, on
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from services.admin.user_add import UserInputError, user_add_service
+from services.admin.user_add import UserInputError, user_add_service_with_string_parsing
 
 from misc.const.button_labels import ButtonLabel
 from keyboards.reply import create_reply_kb
@@ -15,7 +14,7 @@ from keyboards.reply import create_reply_kb
 class UserAddScene(Scene, state="user_add"):
     
     @on.message.enter()
-    async def on_enter(self, message: Message, state: FSMContext) -> Any:
+    async def on_enter(self, message: Message) -> Any:
         keyboard = create_reply_kb(
             util_buttons=[
                 ButtonLabel.TO_MAIN_MENU.value,
@@ -30,7 +29,7 @@ class UserAddScene(Scene, state="user_add"):
             reply_markup=keyboard)
     
     @on.message.exit()
-    async def on_exit(self, message: Message, state: FSMContext) -> None:
+    async def on_exit(self, message: Message) -> None:
         await message.delete()
         await message.answer(
             text="You've exited User Add Menu",
@@ -55,10 +54,9 @@ class UserAddScene(Scene, state="user_add"):
     async def process_user_input(
         self,
         message: Message,
-        state: FSMContext,
         session: AsyncSession):
         try:
-            result_message = await user_add_service(session, message.text.strip())
+            result_message = await user_add_service_with_string_parsing(session, message.text.strip())
             await message.answer(result_message)
             await self.wizard.retake()
         except UserInputError as e:

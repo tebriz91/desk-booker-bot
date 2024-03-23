@@ -11,13 +11,15 @@ async def room_browse_service(
         # Retrieve room info (name, id, created, updated)
         room = await orm_get_room_data_by_name(session, room_name)
         room_availability_emoji = "☑️" if room.is_available else "🚫"
-        room_info = f"<b>Room name</b>: {room.name}\n" \
-                    f"<b>Room id</b>: {room.id}\n" \
-                    f"<b>Room availability</b>: {room_availability_emoji}\n" \
-                    f"<b>Room plan</b>: {room.plan}\n" \
-                    f"<b>Room additional info</b>: {room.additional_info}\n" \
-                    f"<b>Room created at</b>: {room.created_at}\n" \
-                    f"<b>Room updated at</b>: {room.updated_at}\n" \
+        room_info = (
+            f"<b>Room name</b>: {room.name}\n"
+            f"<b>Room id</b>: {room.id}\n"
+            f"<b>Room availability</b>: {room_availability_emoji}\n"
+            f"<b>Room plan</b>: {room.plan}\n"
+            f"<b>Room additional info</b>: {room.additional_info}\n"
+            f"<b>Room created at</b>: {room.created_at}\n"
+            f"<b>Room updated at</b>: {room.updated_at}\n"
+        )
         # Retrieve desks info by room_id
         room_id = room.id
         desks = await orm_select_desks_by_room_id(session, room_id)
