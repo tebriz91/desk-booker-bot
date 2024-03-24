@@ -69,9 +69,11 @@ class UserDateSelectScene(Scene, state="user_date_select_scene"):
                 await query.message.edit_text(
                     text=existing_booking,
                     reply_markup=None)
-                await self.wizard.exit()
+                await self.wizard.clear_data()
+                await self.wizard.state.clear()
         except Exception as e:
             await query.message.edit_text(
                 text=f"Error: {e}",
                 reply_markup=None)
-            await self.wizard.exit()
+            await self.wizard.clear_data()
+            await self.wizard.state.clear()

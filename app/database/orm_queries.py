@@ -1,10 +1,14 @@
 from datetime import date
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import and_, not_, select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload, selectinload, aliased
+from sqlalchemy.exc import SQLAlchemyError
 
 from database.models import User, Waitlist, Room, Desk, Booking
+
+class DeskBookerError(Exception):
+    pass
 
 #* User's ORM queries
 async def orm_insert_user(
@@ -69,8 +73,8 @@ async def orm_insert_user_to_waitlist(
     session: AsyncSession,
     telegram_id: int,
     telegram_name: str,
-    first_name: str = None,
-    last_name: str = None):
+    first_name: str | None = None,
+    last_name: str | None = None):
     query = select(User).where(User.telegram_id == telegram_id)
     result = await session.execute(query)
     user = result.first()
@@ -214,6 +218,58 @@ async def orm_select_available_desks_by_room_name(session: AsyncSession, room_na
     result = await session.execute(query)
     return result.scalars().all()
 
+async def orm_select_available_not_booked_desks_by_room_id(session: AsyncSession, room_id: int, date: date):
+    # Create an alias for bookings to use in the subquery
+    booking_alias = aliased(Booking)
+    # Subquery to check if a desk is booked on the given date
+    desk_booked_subquery = (
+        select(1)
+        .where(
+            and_(
+                booking_alias.desk_id == Desk.id,  # Ensure the subquery is correlated with the main query's desk
+                booking_alias.date == date,
+            )
+        )
+        .exists()
+    )
+    # Main query to find desks that are available and not booked on the specified date
+    query = (
+        select(Desk)
+        .where(
+            and_(
+                Desk.room_id == room_id,
+                Desk.is_available == True,
+                not_(desk_booked_subquery)  # Use `not_` to exclude desks that fulfill the subquery condition
+            )
+        )
+    )
+    result = await session.execute(query)
+    return result.scalars().all()
+
+async def orm_select_available_not_booked_desks_by_room_name(session: AsyncSession, room_name: str, date: date):
+    # This subquery checks for desks that have a booking on the specified date
+    booking_subquery = (
+        select(Booking.desk_id)
+        .where(Booking.date == date)
+        .correlate(Desk)
+        .exists()
+    )
+    # Main query selects desks that are available, in the specified room,
+    # and not in the subquery (i.e., not booked on the specified date)
+    query = (
+        select(Desk)
+        .join(Room)
+        .where(
+            and_(
+                Room.name == room_name,
+                Desk.is_available == True,
+                not_(booking_subquery)  # Not booked on the specified date
+            )
+        )
+    )
+    result = await session.execute(query)
+    return result.scalars().all()
+
 async def orm_get_desk_availability_by_name(session: AsyncSession, desk_name: str):
     query = select(Desk.is_available).where(Desk.name == desk_name)
     result = await session.execute(query)
@@ -245,23 +301,29 @@ async def orm_insert_booking(
     telegram_id: int,
     desk_id: int,
     room_id: int,
-    date: date):
+    date: date) -> str:
     query = select(Booking).where(
         Booking.telegram_id == telegram_id,
         Booking.desk_id == desk_id,
         Booking.date == date)
     result = await session.execute(query)
     booking = result.first()
-    if booking is None:
+    if booking:
+        raise DeskBookerError("A booking for this desk already exists.")
+    else:
         new_booking = Booking(
                 telegram_id=telegram_id,
                 desk_id=desk_id,
                 room_id=room_id,
                 date=date)
         session.add(new_booking)
-        await session.commit()
-    else:
-        raise Exception
+        try:
+            await session.commit()
+        except SQLAlchemyError as e:
+            await session.rollback()  # Rollback in case of any commit failure
+            raise Exception("Failed to insert booking into the database.") from e
+
+        return "Booking successfully made."
 
 async def orm_select_bookings_by_telegram_id_joined(session: AsyncSession, telegram_id: int):
     query = select(Booking).filter(Booking.telegram_id == telegram_id).options(joinedload(Booking.desk).joinedload(Desk.room)).order_by(Booking.date)
