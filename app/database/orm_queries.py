@@ -2,7 +2,7 @@ from datetime import date
 
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from database.models import User, Waitlist, Room, Desk, Booking
 
@@ -11,8 +11,8 @@ async def orm_insert_user(
     session: AsyncSession,
     telegram_id: int,
     telegram_name: str,
-    first_name: str = None,
-    last_name: str = None):
+    first_name: str | None = None,
+    last_name: str | None = None):
     # Check if the user is already in the database
     query = select(User).where(User.telegram_id == telegram_id)
     result = await session.execute(query)
@@ -297,6 +297,11 @@ async def orm_select_bookings_by_telegram_id(session: AsyncSession, telegram_id:
 
 async def orm_select_booking_by_telegram_id_and_date(session: AsyncSession, telegram_id: int, date: date):
     query = select(Booking).where(Booking.telegram_id == telegram_id, Booking.date == date)
+    result = await session.execute(query)
+    return result.scalar()
+
+async def orm_select_booking_by_telegram_id_and_date_selectinload(session: AsyncSession, telegram_id: int, date: date):
+    query = select(Booking).options(selectinload(Booking.room), selectinload(Booking.desk)).where(Booking.telegram_id == telegram_id, Booking.date == date)
     result = await session.execute(query)
     return result.scalar()
 

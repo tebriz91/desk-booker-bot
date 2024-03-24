@@ -15,6 +15,7 @@ from keyboards.inline import get_inline_keyboard
 from keyboards.callbacks import CBFBook, CBFUtilButtons
 
 from services.user.dates_generator import generate_dates
+from services.user.booking_checker import check_existing_booking
 
 
 class DateSelectScene(Scene, state="date_select_scene"):
@@ -24,7 +25,7 @@ class DateSelectScene(Scene, state="date_select_scene"):
         # Get the config data
         c = config.bot_operation
         # Generate dates
-        dates: List[str] = generate_dates(
+        dates: List[str] = await generate_dates(
             c.num_days,
             c.exclude_weekends,
             c.timezone,
@@ -44,22 +45,36 @@ class DateSelectScene(Scene, state="date_select_scene"):
 
     @on.callback_query.exit()
     async def on_exit(self, query: CallbackQuery) -> None:
+        await self.wizard.clear_data()
         await query.message.edit_text(text='Process finished')
     
     @on.callback_query(F.data == ButtonLabel.EXIT.value)
     async def exit(self, query: CallbackQuery) -> None:
-        await self.wizard.clear_data()
         await self.wizard.exit()
     
     @on.callback_query(F.data)
-    async def on_date_select(self, query: CallbackQuery, session: AsyncSession) -> None:
+    async def on_date_select(self, query: CallbackQuery, session: AsyncSession, config: Config) -> None:
         date = query.data
+        date_format = config.bot_operation.date_format
         # Call service to check if user has already has a booking on this date
         existing_booking = await check_existing_booking(
-            session,
+            session=session,
             telegram_id=query.from_user.id,
-            date=date)
-        
-        await query.message.edit_text(
-            text=f"Selected date: {date}")
-        await self.wizard.next()
+            date=date,
+            date_format=date_format)
+        try:
+            if existing_booking is False:
+                await query.message.edit_text(
+                    text=f"Selected date: {date}. Proceeding to the room selection step...",
+                    reply_markup=None)
+                await self.wizard.goto("room_select_scene", session=session)
+            else:
+                await query.message.edit_text(
+                    text=existing_booking,
+                    reply_markup=None)
+                await self.wizard.exit()
+        except Exception as e:
+            await query.message.edit_text(
+                text=f"Error: {e}",
+                reply_markup=None)
+            await self.wizard.exit()
