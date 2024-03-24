@@ -1,6 +1,7 @@
-from .book.date_select import DateSelectScene
+from .book.date_select import UserDateSelectScene
+from .book.room_select import UserRoomSelectScene
 
-# TODO: Add SelectRoomScene, SelectDeskScene
+# TODO: Add UserDeskSelectScene
 
 # from .cancel_booking import CancelBookingScene
 
@@ -11,5 +12,6 @@ from .book.date_select import DateSelectScene
 # from .help import HelpScene
 
 __all__ = [
-    DateSelectScene,
+    UserDateSelectScene,
+    UserRoomSelectScene,
     ]

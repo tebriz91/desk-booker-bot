@@ -6,7 +6,7 @@ from routers.admin.router import admin_router
 from routers.user.router import user_router
 
 from scenes.admin.main import AdminMenuScene
-from scenes.user.book.date_select import DateSelectScene
+from scenes.user.book.date_select import UserDateSelectScene
 
 def register_scenes(dispatcher: Dispatcher):
     # Create a SceneRegistry object
@@ -24,4 +24,4 @@ def register_scenes(dispatcher: Dispatcher):
     
     # Register entry-point handlers for the scenes
     admin_router.message.register(AdminMenuScene.as_handler(), Command("admin"))
-    user_router.message.register(DateSelectScene.as_handler(), Command("book"))
+    user_router.message.register(UserDateSelectScene.as_handler(), Command("book"))

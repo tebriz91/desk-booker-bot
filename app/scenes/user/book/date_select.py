@@ -15,7 +15,7 @@ from services.user.dates_generator import generate_dates
 from services.user.booking_checker import check_existing_booking
 
 
-class DateSelectScene(Scene, state="date_select_scene"):
+class UserDateSelectScene(Scene, state="user_date_select_scene"):
     
     @on.message.enter()
     async def on_enter(self, message: Message, config: Config) -> Any:
@@ -37,7 +37,7 @@ class DateSelectScene(Scene, state="date_select_scene"):
             width_util=1)
         
         await message.answer(
-            text="Select a date",
+            text="Select date",
             reply_markup=keyboard)
 
     @on.callback_query.exit()
@@ -64,7 +64,7 @@ class DateSelectScene(Scene, state="date_select_scene"):
                 await query.message.edit_text(
                     text=f"Selected date: {date}. Proceeding to the room selection step...",
                     reply_markup=None)
-                await self.wizard.goto("room_select_scene", session=session)
+                await self.wizard.goto("user_room_select_scene", session=session)
             else:
                 await query.message.edit_text(
                     text=existing_booking,
