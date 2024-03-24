@@ -176,6 +176,11 @@ async def orm_get_room_data_by_name(session: AsyncSession, room_name: str):
     result = await session.execute(query)
     return result.scalar()
 
+async def orm_select_room_plan_by_room_name(session: AsyncSession, room_name: str):
+    query = select(Room.plan).where(Room.name == room_name)
+    result = await session.execute(query)
+    return result.scalar_one()
+
 #* Desk's ORM queries
 async def orm_insert_desk_with_room_id(session: AsyncSession, room_id: int, desk_name: str):
     query = select(Desk).where(Desk.name == desk_name)

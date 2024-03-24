@@ -22,6 +22,7 @@ from keyboards.inline import get_inline_keyboard
 from services.user.dates_generator import generate_dates
 from services.user.booking_checker import check_existing_booking
 from services.common.rooms_list_generator import generate_available_rooms_list
+from services.common.room_plan_getter import get_room_plan_by_room_name
 from services.common.desks_list_generator import generate_available_not_booked_desks_list
 from services.user.desk_booker import desk_booker
 
@@ -211,6 +212,8 @@ async def process_room_button(
     room_name = str(query.data)
     await state.update_data(room_name=room_name)
     
+    room_plan_url = await get_room_plan_by_room_name(session, room_name)
+    
     try:
         desks = await generate_available_not_booked_desks_list(session, room_name, date, date_format)
         # Check if desks is a string (error message) or if it is an empty list
@@ -233,7 +236,7 @@ async def process_room_button(
             width_util=2)
             
             await query.message.edit_text(
-                text=f"Selected date: {date}, room: {room_name}. Now select desk.",
+                text=f"Selected date: {date}, room: {room_name}. Now select desk according to <a href='{room_plan_url}'>room plan</a>.",
                 reply_markup=keyboard)
             
             await state.set_state(FSMBooking.select_desk)
