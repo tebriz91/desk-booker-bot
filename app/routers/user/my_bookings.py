@@ -17,8 +17,8 @@ async def process_command_my_bookings(
     message: Message,
     session: AsyncSession,
     config: Config) -> None:
-    date_format = config.bot_operation.date_format
-    date_format_short = config.bot_operation.date_format_short
+    date_format = str(config.bot_operation.date_format)
+    date_format_short = str(config.bot_operation.date_format_short)
     telegram_id = message.from_user.id
     telegram_name = message.from_user.username
     bookings = await generate_list_of_current_bookings_by_telegram_id(
