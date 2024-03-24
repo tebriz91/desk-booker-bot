@@ -34,7 +34,7 @@ async def process_cancel_bookings_command(
     session: AsyncSession,
     state: FSMContext,
     config: Config) -> None:
-    date_format = config.bot_operation.date_format
+    date_format = str(config.bot_operation.date_format)
     telegram_id = message.from_user.id   
     bookings = await generate_dict_of_current_bookings_by_telegram_id_for_inline_kb(
         session,
@@ -53,7 +53,7 @@ async def process_cancel_bookings_command(
             cancel_btn=ButtonLabel.CANCEL.value)
         
         await message.answer(
-            text="Choose a booking to cancel:",
+            text="Select booking to cancel",
             reply_markup=keyboard)
         
         await state.set_state(FSMCancelBooking.select_booking)
@@ -112,8 +112,8 @@ async def process_button_with_booking_to_cancel(
     state: FSMContext,
     session: AsyncSession,
     config: Config) -> None:
-    date_format = config.bot_operation.date_format
-    date_format_short = config.bot_operation.date_format_short
+    date_format = str(config.bot_operation.date_format)
+    date_format_short = str(config.bot_operation.date_format_short)
     telegram_id = query.from_user.id
     telegram_name = query.from_user.username
     booking_id = callback_data.booking_id
@@ -145,7 +145,7 @@ async def process_back_button_in_view_bookings_state(
     state: FSMContext,
     session: AsyncSession,
     config: Config) -> None:
-    date_format = config.bot_operation.date_format
+    date_format = str(config.bot_operation.date_format)
     telegram_id = query.from_user.id
     bookings = await generate_dict_of_current_bookings_by_telegram_id_for_inline_kb(
         session,

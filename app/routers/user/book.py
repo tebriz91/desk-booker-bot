@@ -1,4 +1,4 @@
-from datetime import datetime
+from typing import List
 
 from aiogram import F
 from aiogram.filters import Command, StateFilter
@@ -13,25 +13,19 @@ from config_data.config import Config
 
 from misc.const.button_labels import ButtonLabel
 
-from keyboards.callbacks import CBFBook, CBFUtilButtons
-
 from states.user import FSMBooking
 
 from routers.user.router import user_router
 
-from database.orm_queries import (
-    orm_select_booking_by_desk_id_and_date,
-    orm_select_booking_by_telegram_id_and_date,
-    orm_select_room_id_by_name,
-    orm_select_available_rooms,
-    orm_select_available_desks_by_room_name,
-    orm_select_desk_id_by_name,
-    orm_insert_booking)
+from keyboards.inline import get_inline_keyboard
 
-from keyboards.book_kb import (
-    create_kb_with_dates,
-    create_kb_with_room_names,
-    create_kb_with_desk_names)
+from services.user.dates_generator import generate_dates
+from services.user.booking_checker import check_existing_booking
+from services.common.rooms_list_generator import generate_available_rooms_list
+from services.common.room_plan_getter import get_room_plan_by_room_name
+from services.common.desks_list_generator import generate_available_not_booked_desks_list
+from services.user.desk_booker import desk_booker
+
 
 #* Process /book command in default state
 @user_router.message(Command('book'), StateFilter(default_state))
@@ -39,23 +33,30 @@ async def process_command_book_in_default_state(
     message: Message,
     state: FSMContext,
     config: Config):
-    # Create an inline keyboard with the function create_inline_kb with the following parameters:
-    keyboard = create_kb_with_dates(
-        num_days=config.bot_operation.num_days,
-        exclude_weekends=config.bot_operation.exclude_weekends,
-        timezone=config.bot_operation.timezone,
-        country_code=config.bot_operation.country_code,
-        date_format=config.bot_operation.date_format,
-        width=1, # Width of the keyboard
-        util_buttons_order=['cancel'], # Order of utility buttons
-        util_buttons_width=1, # Width for utility buttons
-        cancel_btn=ButtonLabel.CANCEL.value) # Last button of the keyboard
+    
+    # Get the config data
+    c = config.bot_operation
+    # Generate dates
+    dates: List[str] = await generate_dates(
+        c.num_days,
+        c.exclude_weekends,
+        c.timezone,
+        c.country_code,
+        c.date_format)
+    
+    keyboard = get_inline_keyboard(
+        buttons=dates,
+        width=1,
+        util_buttons=[
+            ButtonLabel.CANCEL.value,],
+        width_util=1)
 
     await message.answer(
-        text='Choose a date:',
+        text='Select date',
         reply_markup=keyboard)
     
     await state.set_state(FSMBooking.select_date)
+
 
 #* Process /book command, if the user is already in the booking process
 @user_router.message(
@@ -66,6 +67,7 @@ async def process_command_book_in_default_state(
 async def process_command_book_in_booking_states(message: Message):
     await message.answer("You are already in the booking process. Please finish it or cancel it.")
 
+
 #* Process /book command, if the user has other unfinished process
 # Catch-all handler for the /book command in any state other than the default state
 @user_router.message(
@@ -74,9 +76,10 @@ async def process_command_book_in_booking_states(message: Message):
 async def process_command_book_in_non_default_state(message: Message):
     await message.answer("You have to finish or cancel other current process before using this command.")
 
-#* Process the last button 'Cancel'
+
+#* Process 'Cancel' button
 @user_router.callback_query(
-    CBFUtilButtons.filter(F.action == ButtonLabel.CANCEL.value),
+    F.data == ButtonLabel.CANCEL.value,
     StateFilter(FSMBooking.select_date,
                 FSMBooking.select_room,
                 FSMBooking.select_desk))
@@ -85,156 +88,55 @@ async def process_cancel_button(query: CallbackQuery, state: FSMContext):
     await query.answer()
     await state.clear()
 
-#* Process the date button
-@user_router.callback_query(
-    CBFBook.filter(),
-    StateFilter(
-        FSMBooking.select_date))
+
+#* Process date button
+@user_router.callback_query(StateFilter(FSMBooking.select_date))
 async def process_date_button(
     query: CallbackQuery,
-    callback_data: CBFBook,
     session: AsyncSession,
     state: FSMContext,
     config: Config):
-    date_string = callback_data.date
+    date = query.data
     date_format = config.bot_operation.date_format
-    date = datetime.strptime(date_string, date_format).date() # Parse date string to datetime.date type: 'YYYY-MM-DD' to query the database
-    # Check if user with the same telegram_id already has a booking for the same date
-    already_booked = await orm_select_booking_by_telegram_id_and_date(session, query.from_user.id, date) #! PostgreSQL requires the date to be of type datetime.date
+
+    existing_booking = await check_existing_booking(
+    session=session,
+    telegram_id=query.from_user.id,
+    date=date,
+    date_format=date_format)    
     
-    if already_booked:
-        await query.message.edit_text(f'You already have a booking for: {date_string}')
-        await state.clear()
-        await query.answer()
-        
-    else:
-        await state.update_data(date=date.strftime('%Y-%m-%d')) #TEST: This modification "date.strftime('%Y-%m-%d')" ensures that the date object is converted to a string that represents the date in the format 'YYYY-MM-DD', making it JSON serializable and suitable for storing in the state context. Otherwise, the error "TypeError: Object of type date is not JSON serializable" would occur.
-
-        # Retrieve rooms from the database
-        rooms_orm_obj = await orm_select_available_rooms(session)
-        rooms = [rooms.name for rooms in rooms_orm_obj]
-        # Create an inline keyboard with available room names as buttons
-        
-        if len(rooms) <= 7:
-            keyboard = create_kb_with_room_names(
-                rooms,
-                width=1,
-                util_buttons_order=['back', 'cancel'],
-                util_buttons_width=2,
-                back_btn=ButtonLabel.BACK.value,
-                cancel_btn=ButtonLabel.CANCEL.value)
-
-            await query.message.edit_text(
-            text='Choose a room:',
-            reply_markup=keyboard
-            )
+    try:
+        if existing_booking is not False:
+            await query.message.edit_text(text=f"{existing_booking}")
+            await state.clear()
+            await query.answer()
         else:
-            keyboard = create_kb_with_room_names(
-                rooms,
-                width=2, # Width of the keyboard
-                util_buttons_order=['back', 'cancel'],
-                util_buttons_width=2,
-                back_btn=ButtonLabel.BACK.value,
-                cancel_btn=ButtonLabel.CANCEL.value)
-
+            rooms = await generate_available_rooms_list(session)
+            keyboard = get_inline_keyboard(
+            buttons=rooms,
+            width=1 if len(rooms) <= 7 else 2,
+            util_buttons=[
+                ButtonLabel.BACK.value,
+                ButtonLabel.CANCEL.value,
+                ],
+            width_util=2)
+            
             await query.message.edit_text(
-            text='Choose a room:',
-            reply_markup=keyboard
-            )
-        
-        await state.set_state(FSMBooking.select_room)
+                text=f"Selected date: {date}. Now select room.",
+                reply_markup=keyboard)
+            await query.answer()
+            await state.update_data(date=date)
+            await state.set_state(FSMBooking.select_room)
     
-#* Process the room button
-@user_router.callback_query(CBFBook.filter(), StateFilter(FSMBooking.select_room))
-async def process_room_button(
-    query: CallbackQuery,
-    callback_data: CBFBook,
-    session: AsyncSession,
-    state: FSMContext
-    ):
-    room_name = callback_data.room_name
-    
-    room_id = await orm_select_room_id_by_name(session, room_name)
-    await state.update_data(room_id=room_id)
-    
-    desks_orm_obj = await orm_select_available_desks_by_room_name(session, room_name)
-    desks = [desks.name for desks in desks_orm_obj]
-    
-    if len(desks) <= 7:
-        keyboard = create_kb_with_desk_names(
-            desks,
-            width=1,
-            util_buttons_order=['back', 'cancel'],
-            util_buttons_width=2,
-            back_btn=ButtonLabel.BACK.value,
-            cancel_btn=ButtonLabel.CANCEL.value)
-    else:
-        keyboard = create_kb_with_desk_names(
-            desks,
-            width=2,
-            util_buttons_order=['back', 'cancel'],
-            util_buttons_width=2,
-            back_btn=ButtonLabel.BACK.value,
-            cancel_btn=ButtonLabel.CANCEL.value)
-
-    await query.message.edit_text(
-    text='Choose a desk:',
-    reply_markup=keyboard
-    )
-    
-    await state.set_state(FSMBooking.select_desk)
-    
-#* Process the desk button
-@user_router.callback_query(CBFBook.filter(), StateFilter(FSMBooking.select_desk))
-async def process_desk_button(
-    query: CallbackQuery,
-    callback_data: CBFBook,
-    session: AsyncSession,
-    state: FSMContext,
-    config: Config
-    ):
-    date_format = config.bot_operation.date_format
-    # Retrieve desk_name from the query, than desk_id from the database using the desk_name
-    desk_name = callback_data.desk_name
-    desk_id = await orm_select_desk_id_by_name(session, desk_name)
-
-    # Retrieve date from the state
-    data = await state.get_data()
-    date = data['date']
-    # Convert date string to datetime.date type
-    date = datetime.strptime(date, '%Y-%m-%d').date() # TEST: Added this line because the date was a string and not a datetime.date type, but PostgreSQL requires the date to be of type datetime.date
-    
-    # Check if the desk is already booked for the date
-    already_booked = await orm_select_booking_by_desk_id_and_date(session, desk_id, date) #! PostgreSQL requires the date to be of type datetime.date
-    if already_booked:
-        await query.message.edit_text(f'The desk: {desk_name} is already booked for: {date.strftime(date_format)}')
+    except Exception as e:
+        await query.message.edit_text(text=f"Error: {e}")
         await state.clear()
         await query.answer()
-    
-    else:
-        # Retrieve telegram_id from the query
-        telegram_id = query.from_user.id
 
-        # Retrieve room_id from the state
-        room_id_FSM_obj = await state.get_data()
-        room_id = int(room_id_FSM_obj['room_id'])
-        
-        # Insert booking into the database
-        await orm_insert_booking(
-            session,
-            telegram_id,
-            desk_id,
-            room_id,
-            date)
-        
-        await query.message.edit_text(f'You successfully booked desk: {desk_name} for: {date.strftime(date_format)}')
-        await state.clear()
-        await query.answer()
-        
-#* Process the last button 'Back'
+
+#* Process Back button
 @user_router.callback_query(
-    CBFUtilButtons.filter(
-        F.action == ButtonLabel.BACK.value),
+    F.data == ButtonLabel.BACK.value,
     StateFilter(
         FSMBooking.select_room,
         FSMBooking.select_desk))
@@ -244,54 +146,135 @@ async def process_back_button(
     session: AsyncSession,
     config: Config):
     current_state = await state.get_state()
-    # If currently selecting a room, go back to date selection
+    
     if current_state == FSMBooking.select_room.state:
-        await state.set_state(FSMBooking.select_date)
-        keyboard = create_kb_with_dates(
-        num_days=config.bot_operation.num_days,
-        exclude_weekends=config.bot_operation.exclude_weekends,
-        timezone=config.bot_operation.timezone,
-        country_code=config.bot_operation.country_code,
-        date_format=config.bot_operation.date_format,
-        width=1,
-        util_buttons_order=['cancel'],
-        util_buttons_width=1,
-        cancel_btn=ButtonLabel.CANCEL.value)
+        # Get the config data
+        c = config.bot_operation
+        # Generate dates
+        dates: List[str] = await generate_dates(
+            c.num_days,
+            c.exclude_weekends,
+            c.timezone,
+            c.country_code,
+            c.date_format)
+        
+        keyboard = get_inline_keyboard(
+            buttons=dates,
+            width=1,
+            util_buttons=[
+                ButtonLabel.CANCEL.value,],
+            width_util=1)
 
         await query.message.edit_text(
-            text='Choose a date:',
+            text='Select date',
             reply_markup=keyboard)
-    
-    elif current_state == FSMBooking.select_desk.state:
-        await state.set_state(FSMBooking.select_room)
-        rooms_orm_obj = await orm_select_available_rooms(session)
-        rooms = [rooms.name for rooms in rooms_orm_obj]
+        await query.answer()
         
-        if len(rooms) <= 7:
-            keyboard = create_kb_with_room_names(
-                rooms,
-                width=1,
-                util_buttons_order=['back', 'cancel'],
-                util_buttons_width=2,
-                back_btn=ButtonLabel.BACK.value,
-                cancel_btn=ButtonLabel.CANCEL.value)
-
-            await query.message.edit_text(
-            text='Choose a room:',
-            reply_markup=keyboard
-            )
-        else:
-            keyboard = create_kb_with_room_names(
-                rooms,
-                width=2,
-                util_buttons_order=['back', 'cancel'],
-                util_buttons_width=2,
-                back_btn=ButtonLabel.BACK.value,
-                cancel_btn=ButtonLabel.CANCEL.value)
-
-            await query.message.edit_text(
-            text='Choose a room:',
-            reply_markup=keyboard
-            )
+        await state.set_state(FSMBooking.select_date)
+        
+    elif current_state == FSMBooking.select_desk.state:
+        data = await state.get_data()
+        date = data['date']
+        rooms = await generate_available_rooms_list(session)
+        keyboard = get_inline_keyboard(
+        buttons=rooms,
+        width=1 if len(rooms) <= 7 else 2,
+        util_buttons=[
+            ButtonLabel.BACK.value,
+            ButtonLabel.CANCEL.value,
+            ],
+        width_util=2)
+        
+        await query.message.edit_text(
+            text=f"Selected date: {date}. Now select room.",
+            reply_markup=keyboard)
+        await query.answer()
     
-    await query.answer()
+        await state.set_state(FSMBooking.select_room)
+    
+    else:
+        await query.message.edit_text("Error: Invalid state")
+        await state.clear()
+        await query.answer()
+
+
+#* Process room button
+@user_router.callback_query(StateFilter(FSMBooking.select_room))
+async def process_room_button(
+    query: CallbackQuery,
+    session: AsyncSession,
+    state: FSMContext,
+    config: Config,
+    ):
+    data = await state.get_data()
+    date = data['date']
+    date_format = str(config.bot_operation.date_format)
+    room_name = str(query.data)
+    await state.update_data(room_name=room_name)
+    
+    room_plan_url = await get_room_plan_by_room_name(session, room_name)
+    
+    try:
+        desks = await generate_available_not_booked_desks_list(session, room_name, date, date_format)
+        # Check if desks is a string (error message) or if it is an empty list
+        if isinstance(desks, str):
+            await query.message.edit_text(text=f"{desks}")
+            await state.clear()
+            await query.answer()
+        elif not desks:
+            await query.message.edit_text(text=f"No available desks in room: {room_name} for: {date}")
+            await state.clear()
+            await query.answer()
+        else:
+            keyboard = get_inline_keyboard(
+            buttons=desks,
+            width=1 if len(desks) <= 7 else 2,
+            util_buttons=[
+                ButtonLabel.BACK.value,
+                ButtonLabel.CANCEL.value,
+                ],
+            width_util=2)
+            
+            await query.message.edit_text(
+                text=f"Selected date: {date}, room: {room_name}. Now select desk according to <a href='{room_plan_url}'>room plan</a>.",
+                reply_markup=keyboard)
+            
+            await state.set_state(FSMBooking.select_desk)
+    
+    except Exception as e:
+        await query.message.edit_text(text=f"Error: {e}")
+        await state.clear()
+        await query.answer()
+
+
+#* Process desk button
+@user_router.callback_query(StateFilter(FSMBooking.select_desk))
+async def process_desk_button(
+    query: CallbackQuery,
+    session: AsyncSession,
+    state: FSMContext,
+    config: Config
+    ):
+    data = await state.get_data()
+    telegram_id = query.from_user.id
+    desk_name = str(query.data)
+    room_name = str(data['room_name'])
+    date = data['date']
+    date_format = str(config.bot_operation.date_format)
+    
+    try:
+        result = await desk_booker(
+            session,
+            telegram_id,
+            desk_name,
+            room_name,
+            date,
+            date_format,
+        )
+        await query.message.edit_text(f"{result}")
+        await query.answer()
+        await state.clear()
+    except Exception as e:
+        await query.message.edit_text(f"Error: {e}")
+        await query.answer()
+        await state.clear()

@@ -3,19 +3,18 @@ from typing import Any
 from aiogram import F
 from aiogram.types import Message, ReplyKeyboardRemove
 
-from aiogram.fsm.context import FSMContext
 from aiogram.fsm.scene import Scene, on
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from services.admin.user_add import UserInputError, user_add_service
+from services.admin.user_add import UserInputError, user_add_service_with_string_parsing
 
 from misc.const.button_labels import ButtonLabel
 from keyboards.reply import create_reply_kb
 
-class UserAddScene(Scene, state="user_add"):
+class UserAddScene(Scene, state="user_add_scene"):
     
     @on.message.enter()
-    async def on_enter(self, message: Message, state: FSMContext) -> Any:
+    async def on_enter(self, message: Message) -> Any:
         keyboard = create_reply_kb(
             util_buttons=[
                 ButtonLabel.TO_MAIN_MENU.value,
@@ -30,7 +29,7 @@ class UserAddScene(Scene, state="user_add"):
             reply_markup=keyboard)
     
     @on.message.exit()
-    async def on_exit(self, message: Message, state: FSMContext) -> None:
+    async def on_exit(self, message: Message) -> None:
         await message.delete()
         await message.answer(
             text="You've exited User Add Menu",
@@ -38,16 +37,19 @@ class UserAddScene(Scene, state="user_add"):
     
     @on.message(F.text == ButtonLabel.EXIT.value)
     async def exit(self, message: Message):
+        await self.wizard.clear_data()
         await self.wizard.exit()
     
     @on.message(F.text == ButtonLabel.BACK.value)
     async def back(self, message: Message):
         await message.delete()
+        await self.wizard.clear_data()
         await self.wizard.back()
 
     @on.message(F.text == ButtonLabel.TO_MAIN_MENU.value)
     async def to_main_menu(self, message: Message):
         await message.delete()
+        await self.wizard.clear_data()
         await self.wizard.goto("admin_menu")
     
     # Handler to process the user's input
@@ -55,13 +57,14 @@ class UserAddScene(Scene, state="user_add"):
     async def process_user_input(
         self,
         message: Message,
-        state: FSMContext,
         session: AsyncSession):
         try:
-            result_message = await user_add_service(session, message.text.strip())
+            result_message = await user_add_service_with_string_parsing(session, message.text.strip())
             await message.answer(result_message)
             await self.wizard.retake()
         except UserInputError as e:
             await message.answer(str(e))
+            await self.wizard.retake()           
         except Exception as e:
             await message.answer(f"Failed to add user: {str(e)}")
+            await self.wizard.retake()

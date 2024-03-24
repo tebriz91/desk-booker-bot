@@ -11,18 +11,17 @@ from config_data.config import Config
 
 from misc.const.button_labels import ButtonLabel
 
-from keyboards.callbacks import CBFAllBookings, CBFUtilButtons
-
 from states.user import FSMAllBookings
 
 from routers.user.router import user_router
 
-from database.orm_queries import orm_select_room_id_by_name, orm_select_available_rooms
+from database.orm_queries import orm_select_room_id_by_name
 
-from keyboards.all_bookings_kb import create_kb_with_room_names
-from keyboards.utils.callback_btns import get_inline_keyboard_with_util_buttons
+from keyboards.inline import get_inline_keyboard
 
+from services.common.rooms_list_generator import generate_available_rooms_list
 from services.bookings_list_generator import generate_list_of_all_current_bookings_by_room_id
+
 
 #* Process command /all_bookings
 @user_router.message(
@@ -33,31 +32,21 @@ async def process_command_all_bookings_in_default_state(
     state: FSMContext,
     session: AsyncSession,
     ):
-    # Retrieve rooms from the database
-    rooms_orm_obj = await orm_select_available_rooms(session)
-    rooms = [rooms.name for rooms in rooms_orm_obj]
-    # Create an inline keyboard with available room names as buttons
-    if len(rooms) <= 7:
-        keyboard = create_kb_with_room_names(
-            rooms,
-            width=1,
-            util_buttons_order=['cancel'],
-            util_buttons_width=2,
-            cancel_btn=ButtonLabel.CANCEL.value)
-    else:
-        keyboard = create_kb_with_room_names(
-            rooms,
-            width=2,
-            util_buttons_order=['cancel'],
-            util_buttons_width=2,
-            cancel_btn=ButtonLabel.CANCEL.value)
+    rooms = await generate_available_rooms_list(session)
+    keyboard = get_inline_keyboard(
+    buttons=rooms,
+    width=1 if len(rooms) <= 7 else 2,
+    util_buttons=[
+        ButtonLabel.CANCEL.value,
+        ],
+    width_util=1)
 
     await message.answer(
-    text='Choose a room:',
+    text='Select room',
     reply_markup=keyboard
     )
-    
     await state.set_state(FSMAllBookings.select_room)
+
 
 #* Process /all_bookings command in states other than default
 @user_router.message(
@@ -70,6 +59,7 @@ async def process_command_all_bookings_in_all_bookings_states(message: Message):
         text="You are already in the process of viewing all bookings. Please, finish the process or cancel it."
     )
 
+
 #* Process /all_bookings, if the user has another unfinished process
 # Catch-all handler for the /all_bookings command in any state other than the default state
 @user_router.message(
@@ -80,20 +70,46 @@ async def process_command_all_bookings_in_non_default_state(message: Message):
         text="You have to finish or cancel other current process before using this command."
     )
 
-#* Process the button 'Cancel' in the select_room state
+
+#* Process cancel button
 @user_router.callback_query(
-    CBFUtilButtons.filter(
-        F.action == ButtonLabel.CANCEL.value),
+    F.data == ButtonLabel.CANCEL.value,
     StateFilter(FSMAllBookings.select_room))
 async def process_cancel_button(query: CallbackQuery, state: FSMContext):
     await query.message.edit_text("Process canceled")
     await query.answer()
     await state.clear()
 
-#* Process the button 'Ok' in the view_bookings state
+
+#* Process back button
 @user_router.callback_query(
-    CBFUtilButtons.filter(
-        F.action == ButtonLabel.OK.value),
+    F.data == ButtonLabel.BACK.value,
+    StateFilter(FSMAllBookings.view_bookings))
+async def process_back_button(
+    query: CallbackQuery,
+    state: FSMContext,
+    session: AsyncSession):
+
+    rooms = await generate_available_rooms_list(session)
+    keyboard = get_inline_keyboard(
+    buttons=rooms,
+    width=1 if len(rooms) <= 7 else 2,
+    util_buttons=[
+        ButtonLabel.CANCEL.value,
+        ],
+    width_util=1)
+
+    await query.message.edit_text(
+    text='Select room',
+    reply_markup=keyboard
+    )
+    await query.answer()
+    await state.set_state(FSMAllBookings.select_room)
+
+
+#* Process Ok button
+@user_router.callback_query(
+    F.data == ButtonLabel.OK.value,
     StateFilter(FSMAllBookings.view_bookings))
 async def process_ok_button(query: CallbackQuery, state: FSMContext):
     # Remove inline keyboard from the message
@@ -101,67 +117,34 @@ async def process_ok_button(query: CallbackQuery, state: FSMContext):
     await query.message.answer("Process finished")
     await state.clear()
 
+
 #* Process the room button
-@user_router.callback_query(
-    CBFAllBookings.filter(),
-    StateFilter(FSMAllBookings.select_room))
+@user_router.callback_query(StateFilter(FSMAllBookings.select_room))
 async def process_room_button(
     query: CallbackQuery,
-    callback_data: CBFAllBookings,
     state: FSMContext,
     session: AsyncSession,
     config: Config) -> None:
-    date_format = config.bot_operation.date_format
-    date_format_short = config.bot_operation.date_format_short
-    room_name = callback_data.room_name
+    date_format = str(config.bot_operation.date_format)
+    date_format_short = str(config.bot_operation.date_format_short)
+    room_name = query.data
     room_id = await orm_select_room_id_by_name(session, room_name)
     bookings = await generate_list_of_all_current_bookings_by_room_id(
         session,
         date_format,
         date_format_short,
         room_id)
+    # Add keyboard with "Back" and "Ok" buttons
+    keyboard = get_inline_keyboard(
+    util_buttons=[
+        ButtonLabel.BACK.value,
+        ButtonLabel.OK.value,
+        ],
+    width_util=2)
+    
     await query.message.edit_text(
         text=bookings,
-        # Add keyboard with "Back" and "Ok" buttons
-        reply_markup=get_inline_keyboard_with_util_buttons(
-            button_order=['back', 'ok'],
-            sizes=(2,),
-            back_btn=ButtonLabel.BACK.value,
-            ok_btn=ButtonLabel.OK.value
-        ),)
-    await state.set_state(FSMAllBookings.view_bookings)
+        reply_markup=keyboard)
     await query.answer()
 
-#* Process the back button
-@user_router.callback_query(
-    CBFUtilButtons.filter(
-        F.action == ButtonLabel.BACK.value),
-    StateFilter(FSMAllBookings.view_bookings))
-async def process_back_button(
-    query: CallbackQuery,
-    state: FSMContext,
-    session: AsyncSession):
-    await state.set_state(FSMAllBookings.select_room)
-    # Retrieve rooms from the database
-    rooms_orm_obj = await orm_select_available_rooms(session)
-    rooms = [rooms.name for rooms in rooms_orm_obj]
-    # Create an inline keyboard with available room names as buttons
-    if len(rooms) <= 7:
-        keyboard = create_kb_with_room_names(
-            rooms,
-            width=1,
-            util_buttons_order=['cancel'],
-            util_buttons_width=2,
-            cancel_btn=ButtonLabel.CANCEL.value)
-    else:
-        keyboard = create_kb_with_room_names(
-            rooms,
-            width=2,
-            util_buttons_order=['cancel'],
-            util_buttons_width=2,
-            cancel_btn=ButtonLabel.CANCEL.value)
-
-    await query.message.edit_text(
-    text='Choose a room:',
-    reply_markup=keyboard
-    )
+    await state.set_state(FSMAllBookings.view_bookings)

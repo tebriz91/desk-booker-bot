@@ -2,12 +2,12 @@ from datetime import datetime, timedelta
 import pytz
 import holidays
 
-def generate_dates(
-    num_days: int,
-    exclude_weekends: bool,
-    timezone: str,
-    country_code: str,
-    date_format: str
+async def generate_dates(
+    num_days: int | None = 5,
+    exclude_weekends: bool | None = True,
+    timezone: str | None = 'UTC',
+    country_code: str | None = 'Europe/Amsterdam',
+    date_format: str | None = '%d.%m.%Y (%a)'
     ) -> list:
     """
     Generates a list of dates from the current date.

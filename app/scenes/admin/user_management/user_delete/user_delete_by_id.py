@@ -11,7 +11,7 @@ from services.admin.user_delete_by_id import UserInputError, user_delete_by_id_s
 from misc.const.button_labels import ButtonLabel
 from keyboards.reply import create_reply_kb
 
-class UserDeleteByIDScene(Scene, state="user_delete_by_id"):
+class UserDeleteByIDScene(Scene, state="user_delete_by_id_scene"):
     
     @on.message.enter()
     async def on_enter(self, message: Message) -> Any:
@@ -37,6 +37,7 @@ class UserDeleteByIDScene(Scene, state="user_delete_by_id"):
     
     @on.message(F.text == ButtonLabel.EXIT.value)
     async def exit(self, message: Message):
+        await self.wizard.clear_data()
         await self.wizard.exit()
     
     @on.message(F.text == ButtonLabel.BACK.value)
@@ -47,6 +48,7 @@ class UserDeleteByIDScene(Scene, state="user_delete_by_id"):
     @on.message(F.text == ButtonLabel.TO_MAIN_MENU.value)
     async def to_main_menu(self, message: Message):
         await message.delete()
+        await self.wizard.clear_data()
         await self.wizard.goto("admin_menu")
     
     
@@ -63,5 +65,7 @@ class UserDeleteByIDScene(Scene, state="user_delete_by_id"):
             await self.wizard.retake()
         except UserInputError as e:
             await message.answer(str(e))
+            await self.wizard.retake()
         except Exception as e:
             await message.answer(f"Failed to delete user: {str(e)}")
+            await self.wizard.retake()            

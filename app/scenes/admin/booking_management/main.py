@@ -8,7 +8,7 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.scene import Scene, on
 
-class BookingManagementScene(Scene, state="booking_management"):
+class BookingManagementScene(Scene, state="booking_management_scene"):
     
     #* The scene's entry point is designed to handle callback queries.
     @on.message.enter()
@@ -47,7 +47,7 @@ class BookingManagementScene(Scene, state="booking_management"):
     @on.message(F.text == "Cancel Booking")
     async def to_cancel_booking_menu(self, message: Message):        
         await message.delete()
-        await self.wizard.goto("cancel_booking_menu")
+        await self.wizard.goto("cancel_booking_menu_scene")
     
     #* Show past bookings logic
     @on.message(F.text == "Show Past Bookings")
