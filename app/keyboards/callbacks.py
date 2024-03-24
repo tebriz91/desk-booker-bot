@@ -12,7 +12,7 @@ class CBFAllBookings(CallbackData, prefix='all_bookings'):
     room_name: Optional[str] = None
 
 class CBFCancelBooking(CallbackData, prefix='cancel_booking'):
-    booking_id: Optional[int] = None # TODO: Check callback parameter
+    booking_id: Optional[int] = None
     
 class CBFUtilButtons(CallbackData, prefix='util_buttons'):
     action: Optional[str] = None
