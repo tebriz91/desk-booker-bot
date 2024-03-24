@@ -12,7 +12,7 @@ from config_data.config import Config
 from services.bookings_list_generator import generate_list_of_current_bookings_by_telegram_id
 
 #* Process command /my_bookings
-@user_router.message(Command("my_bookings1"))
+@user_router.message(Command("my_bookings"))
 async def process_command_my_bookings(
     message: Message,
     session: AsyncSession,
