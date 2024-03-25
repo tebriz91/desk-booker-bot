@@ -22,6 +22,10 @@ from keyboards.inline import get_inline_keyboard
 from services.common.rooms_list_generator import generate_available_rooms_list
 from services.bookings_list_generator import generate_list_of_all_current_bookings_by_room_id
 
+from utils.logger import Logger
+
+logger = Logger(__name__)
+
 
 #* Process command /all_bookings
 @user_router.message(
@@ -135,12 +139,15 @@ async def process_room_button(
         date_format_short,
         room_id)
     # Add keyboard with "Back" and "Ok" buttons
+    logger.info(f">>>>>>>>>>>>>>> bookings: {bookings}")
     keyboard = get_inline_keyboard(
     util_buttons=[
         ButtonLabel.BACK.value,
         ButtonLabel.OK.value,
         ],
     width_util=2)
+    
+    logger.info(f">>>>>>>>>>>>>>> bookings: {bookings}")
     
     try:
         await query.message.edit_text(
