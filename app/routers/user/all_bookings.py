@@ -145,6 +145,7 @@ async def process_room_button(
     try:
         await query.message.edit_text(
             text=bookings,
+            parse_mode='HTML',
             reply_markup=keyboard)
         await query.answer()
     except Exception as e:
