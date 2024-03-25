@@ -22,10 +22,6 @@ from keyboards.inline import get_inline_keyboard
 from services.common.rooms_list_generator import generate_available_rooms_list
 from services.bookings_list_generator import generate_list_of_all_current_bookings_by_room_id
 
-from utils.logger import Logger
-
-logger = Logger(__name__)
-
 
 #* Process command /all_bookings
 @user_router.message(
@@ -139,7 +135,6 @@ async def process_room_button(
         date_format_short,
         room_id)
     # Add keyboard with "Back" and "Ok" buttons
-    logger.info(f">>>>>>>>>>>>>>> bookings: {bookings}")
     keyboard = get_inline_keyboard(
     util_buttons=[
         ButtonLabel.BACK.value,
@@ -147,17 +142,9 @@ async def process_room_button(
         ],
     width_util=2)
     
-    logger.info(f">>>>>>>>>>>>>>> bookings: {bookings}")
-    
-    try:
-        await query.message.edit_text(
-            text=bookings,
-            parse_mode='HTML',
-            reply_markup=keyboard)
-        await query.answer()
-    except Exception as e:
-        await query.message.edit_text(
-            text=f"Error: {e}"
-        )
+    await query.message.edit_text(
+        text=bookings,
+        reply_markup=keyboard)
+    await query.answer()
 
     await state.set_state(FSMAllBookings.view_bookings)
