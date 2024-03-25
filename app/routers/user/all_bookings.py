@@ -142,9 +142,14 @@ async def process_room_button(
         ],
     width_util=2)
     
-    await query.message.edit_text(
-        text=bookings,
-        reply_markup=keyboard)
-    await query.answer()
+    try:
+        await query.message.edit_text(
+            text=bookings,
+            reply_markup=keyboard)
+        await query.answer()
+    except Exception as e:
+        await query.message.edit_text(
+            text=f"Error: {e}"
+        )
 
     await state.set_state(FSMAllBookings.view_bookings)
