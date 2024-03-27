@@ -33,10 +33,6 @@ config = load_config()
 logger = Logger()
 
 
-# Initialize the engine with DB URL from config
-initialize_engine(config.db.url, echo=True)
-
-
 # Bot Initialization
 def initialize_bot():
     """
