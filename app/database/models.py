@@ -1,5 +1,9 @@
-from sqlalchemy import Date, DateTime, ForeignKey, BigInteger, func
+from sqlalchemy import Date, DateTime, Enum, ForeignKey, BigInteger, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+from database.enums.user_roles import UserRole
+# from database.enums.weekdays import Weekday
+
 
 class Base(DeclarativeBase):
     created_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now())
@@ -18,6 +22,7 @@ class Base(DeclarativeBase):
 
         return f"<{self.__class__.__name__} {', '.join(cols)}>"
 
+
 class User(Base):
     __tablename__ = 'users'
     
@@ -28,7 +33,23 @@ class User(Base):
     is_banned: Mapped[bool] = mapped_column(default=False)
     first_name: Mapped[str | None]
     last_name: Mapped[str | None]
+    team_id: Mapped[int | None] = mapped_column(ForeignKey('teams.id', ondelete='SET NULL'))
+    role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.TeamMember)
+    is_out_of_office: Mapped[bool] = mapped_column(default=False)
     additional_info: Mapped[str | None]
+
+    team: Mapped['Team'] = relationship(backref='users')
+
+
+class Team(Base):
+    __tablename__ = 'teams'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(unique=True)
+    room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id', ondelete='SET NULL'))
+
+    room: Mapped['Room'] = relationship(backref='teams')
+
 
 class Waitlist(Base):
     __tablename__ = 'waitlist'
@@ -40,6 +61,7 @@ class Waitlist(Base):
     last_name: Mapped[str | None]
     additional_info: Mapped[str | None]
 
+
 class Room(Base):
     __tablename__ = 'rooms'
 
@@ -48,6 +70,7 @@ class Room(Base):
     is_available: Mapped[bool] = mapped_column(default=True)
     plan: Mapped[str | None] # url to the room plan
     additional_info: Mapped[str | None]
+
 
 class Desk(Base):
     __tablename__ = 'desks'
@@ -58,7 +81,32 @@ class Desk(Base):
     is_available: Mapped[bool] = mapped_column(default=True)
     additional_info: Mapped[str | None]
 
-    room: Mapped[Room] = relationship(backref='desks') # This relationship is used to access the room of the desk, e.g. desk.room
+    room: Mapped['Room'] = relationship(backref='desks') # This relationship is used to access the room of the desk, e.g. desk.room
+
+
+class DeskAssignment(Base):
+    __tablename__ = 'desk_assignments'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
+    desk_id: Mapped[int] = mapped_column(ForeignKey('desks.id', ondelete='CASCADE'))
+    
+    user: Mapped['User'] = relationship(backref='desk_assignments')
+    desk: Mapped['Desk'] = relationship(backref='desk_assignments')
+
+class DeskAssignmentWeekday(Base):
+    __tablename__ = 'desk_assignment_weekdays'
+    
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    desk_assignment_id: Mapped[int] = mapped_column(ForeignKey('desk_assignments.id', ondelete='CASCADE'), nullable=False)
+    weekday: Mapped[int] = mapped_column(nullable=False)
+    
+    __table_args__ = (
+        UniqueConstraint('desk_assignment_id', 'weekday', name='uq_desk_assignment_weekday'),
+    )
+    
+    desk_assignment: Mapped['DeskAssignment'] = relationship(backref='desk_assignment_weekdays')
+
 
 class Booking(Base):
     __tablename__ = 'bookings'
@@ -69,6 +117,6 @@ class Booking(Base):
     room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id', ondelete='CASCADE'), nullable=False)
     date: Mapped[Date]= mapped_column(Date, nullable=False) # format: "YYYY-MM-DD"
     
-    user: Mapped[User] = relationship(backref='bookings')
-    room: Mapped[Room] = relationship(backref='bookings')
-    desk: Mapped[Desk] = relationship(backref='bookings')
+    user: Mapped['User'] = relationship(backref='bookings')
+    room: Mapped['Room'] = relationship(backref='bookings')
+    desk: Mapped['Desk'] = relationship(backref='bookings')
