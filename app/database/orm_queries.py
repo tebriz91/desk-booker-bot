@@ -5,7 +5,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload, aliased
 from sqlalchemy.exc import SQLAlchemyError
 
-from database.models import User, Waitlist, Room, Desk, Booking
+from database.models import (
+    User,
+    Team,
+    Waitlist,
+    Room,
+    Desk,
+    DeskAssignment,
+    DeskAssignmentWeekday,
+    Booking,
+)
+
+from utils.logger import Logger
+
+logger = Logger()
 
 class DeskBookerError(Exception):
     pass
@@ -67,6 +80,17 @@ async def orm_delete_user_by_telegram_name(session: AsyncSession, telegram_name:
     query = delete(User).where(User.telegram_name == telegram_name)
     await session.execute(query)
     await session.commit()
+
+#* Team's ORM queries
+async def orm_select_user_team_id(session: AsyncSession, telegram_id: int):
+    query = select(User.team_id).where(User.telegram_id == telegram_id)
+    result = await session.execute(query)
+    return result.scalar_one()
+
+async def orm_select_team_preffered_room_id(session: AsyncSession, team_id: int):
+    query = select(Team.room_id).where(Team.id == team_id)
+    result = await session.execute(query)
+    return result.scalar_one()
 
 #* Waitlist's ORM queries
 async def orm_insert_user_to_waitlist(
@@ -251,6 +275,29 @@ async def orm_select_available_not_booked_desks_by_room_id(session: AsyncSession
     result = await session.execute(query)
     return result.scalars().all()
 
+async def orm_select_available_not_assigned_desks_by_room_id(session: AsyncSession, room_id: int, weekday: int):
+    # Create an alias for DeskAssignmentWeekday to be used in the subquery
+    daw_alias = aliased(DeskAssignmentWeekday)
+    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Weekday: {weekday}")
+    # Subquery to find desk assignments that conflict with the booking date's weekday
+    conflicting_assignments_subquery = (
+        select(daw_alias.id)
+        .join(DeskAssignment, DeskAssignment.id == daw_alias.desk_assignment_id)
+        .where(daw_alias.weekday == weekday, DeskAssignment.desk_id == Desk.id)
+        .exists()
+    )
+    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Conflicting assignments subquery: {conflicting_assignments_subquery}")
+    # Main query to select desks from the specified room that do not have a conflicting assignment
+    query = (
+        select(Desk.name)
+        .join(Room, Room.id == Desk.room_id)
+        .where(and_(Room.id == room_id, Desk.is_available == True, not_(conflicting_assignments_subquery)))
+    )
+    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Main query: {query}")
+    result = await session.execute(query)
+    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Result: {result}")
+    return result.scalars().all()
+
 async def orm_select_available_not_booked_desks_by_room_name(session: AsyncSession, room_name: str, date: date):
     # This subquery checks for desks that have a booking on the specified date
     booking_subquery = (
@@ -299,6 +346,72 @@ async def orm_delete_desk_by_id(session: AsyncSession, desk_id: int):
     query = delete(Desk).where(Desk.id == desk_id)
     await session.execute(query)
     await session.commit()
+
+#* DeskAssignment's ORM queries
+async def orm_insert_desk_assignment(session: AsyncSession, user_id: int, desk_id: int, **weekdays):
+    try:
+        new_assignment = DeskAssignment(
+            user_id=user_id,
+            desk_id=desk_id,
+            is_monday=weekdays.get('is_monday', False),
+            is_tuesday=weekdays.get('is_tuesday', False),
+            is_wednesday=weekdays.get('is_wednesday', False),
+            is_thursday=weekdays.get('is_thursday', False),
+            is_friday=weekdays.get('is_friday', False)
+        )
+        session.add(new_assignment)
+        await session.commit()
+        return "Desk assignment successfully created."
+    except SQLAlchemyError as e:
+        await session.rollback()
+        raise DeskBookerError(f"Failed to insert desk assignment: {str(e)}")
+
+async def orm_select_desk_assignments_by_user_id(session: AsyncSession, user_id: int):
+    query = select(DeskAssignment).where(DeskAssignment.user_id == user_id)
+    result = await session.execute(query)
+    return result.scalars().all()
+
+async def orm_select_desk_assignments_by_desk_id(session: AsyncSession, desk_id: int):
+    query = select(DeskAssignment).where(DeskAssignment.desk_id == desk_id)
+    result = await session.execute(query)
+    return result.scalars().all()
+
+async def orm_update_desk_assignment_days(session: AsyncSession, user_id: int, desk_id: int, **weekdays):
+    try:
+        await session.execute(
+            update(DeskAssignment).
+            where(
+                DeskAssignment.user_id == user_id,
+                DeskAssignment.desk_id == desk_id
+            ).
+            values(
+                is_monday=weekdays.get('is_monday', False),
+                is_tuesday=weekdays.get('is_tuesday', False),
+                is_wednesday=weekdays.get('is_wednesday', False),
+                is_thursday=weekdays.get('is_thursday', False),
+                is_friday=weekdays.get('is_friday', False)
+            )
+        )
+        await session.commit()
+        return "Desk assignment successfully updated."
+    except SQLAlchemyError as e:
+        await session.rollback()
+        raise DeskBookerError(f"Failed to update desk assignment: {str(e)}")
+
+async def orm_delete_desk_assignment(session: AsyncSession, user_id: int, desk_id: int):
+    try:
+        await session.execute(
+            delete(DeskAssignment).
+            where(
+                DeskAssignment.user_id == user_id,
+                DeskAssignment.desk_id == desk_id
+            )
+        )
+        await session.commit()
+        return "Desk assignment successfully deleted."
+    except SQLAlchemyError as e:
+        await session.rollback()
+        raise DeskBookerError(f"Failed to delete desk assignment: {str(e)}")
 
 #* Booking's ORM queries
 async def orm_insert_booking(

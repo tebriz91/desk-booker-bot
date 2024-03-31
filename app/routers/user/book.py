@@ -26,6 +26,10 @@ from services.common.room_plan_getter import get_room_plan_by_room_name
 from services.common.desks_list_generator import generate_available_not_booked_desks_list
 from services.user.desk_booker import desk_booker
 
+from utils.logger import Logger
+
+logger = Logger()
+
 
 #* Process /book command in default state
 @user_router.message(Command('book'), StateFilter(default_state))
@@ -36,6 +40,13 @@ async def process_command_book_in_default_state(
     
     # Get the config data
     c = config.bot_operation
+    
+    # Check advanced mode and update state
+    if c.advanced_mode:
+        await state.update_data(advanced_mode=True)
+    else:
+        await state.update_data(advanced_mode=False)
+    
     # Generate dates
     dates: List[str] = await generate_dates(
         c.num_days,
@@ -207,17 +218,46 @@ async def process_room_button(
     config: Config,
     ):
     data = await state.get_data()
+    advanced_mode = data['advanced_mode']
     date = data['date']
+    telegram_id = query.from_user.id
     date_format = str(config.bot_operation.date_format)
     room_name = str(query.data)
     await state.update_data(room_name=room_name)
-    
     room_plan_url = await get_room_plan_by_room_name(session, room_name)
+
+    logger.info(f">>>>>>>>>>>>>telegram_id: {telegram_id}")
+    logger.info(f">>>>>>>>>>>>>advanced_mode: {advanced_mode}")
+    logger.info(f">>>>>>>>>>>>>date: {date}")
+    logger.info(f">>>>>>>>>>>>>date_format: {date_format}")
+    logger.info(f">>>>>>>>>>>>>room_name: {room_name}")
+    logger.info(f">>>>>>>>>>>>>room_plan_url: {room_plan_url}")
     
+    # Retrive desks info: list[str], if there are desks, or empty list if there are no desks to book or str if there is an error message
     try:
-        desks = await generate_available_not_booked_desks_list(session, room_name, date, date_format)
+        standard_access_days = config.bot_advanced_mode.standard_access_days if advanced_mode else None
+        desks = await generate_available_not_booked_desks_list(
+            session,
+            room_name,
+            date,
+            date_format,
+            advanced_mode,
+            telegram_id,
+            standard_access_days)
+        logger.info(f">>>>>>>>>>>>>desks (handler): {desks}")
+        
+    except Exception as e:
+        logger.error(f"Error retrieving desks: {e}")
+        await query.message.edit_text(text="An error occurred while retrieving available desks. Please try again later.")
+        await state.clear()
+        await query.answer()
+        return
+    
+    # Generate keyboard with desks if desks is a list with strings, or send message that there are no desks available if desks is an empty list or send error message if desks is a string
+    try:
         # Check if desks is a string (error message) or if it is an empty list
         if isinstance(desks, str):
+            logger.info(f">>>>>>>>>>>>>desks (handle - error): {desks}")
             await query.message.edit_text(text=f"{desks}")
             await state.clear()
             await query.answer()
