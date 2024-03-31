@@ -80,6 +80,13 @@ class BotOperationConfig:
     country_code: Optional[str] = field(default=None)
     date_format: Optional[str] = field(default="%d.%m.%Y (%a)")
     date_format_short: Optional[str] = field(default="%d.%m.%Y")
+    advanced_mode: Optional[bool] = field(default=False)
+    
+# Bot advanced mode configuration
+@dataclass(frozen=True, slots=True)
+class BotAdvancedModeConfig:
+    early_access_days: Optional[int] = field(default=5)
+    standard_access_days: Optional[int] = field(default=1)
 
 # Redis configuration
 @dataclass(frozen=True, slots=True)
@@ -100,6 +107,7 @@ class Config:
     db: DBConfig
     bot: BotConfig
     bot_operation: BotOperationConfig
+    bot_advanced_mode: BotAdvancedModeConfig
     redis: RedisConfig
 
     @staticmethod
@@ -135,7 +143,12 @@ def load_config() -> Config:
             timezone=get_env("TIMEZONE"),
             country_code=get_env("COUNTRY_CODE"),
             date_format=get_env("DATE_FORMAT"),
-            date_format_short=get_env("DATE_FORMAT_SHORT")
+            date_format_short=get_env("DATE_FORMAT_SHORT"),
+            advanced_mode=get_env("ADVANCED_MODE", "bool")
+        ),
+        bot_advanced_mode=BotAdvancedModeConfig(
+            early_access_days=get_env("EARLY_ACCESS_DAYS", "int"),
+            standard_access_days=get_env("STANDARD_ACCESS_DAYS", "int")
         ),
         redis=RedisConfig(
             host=get_env("REDIS_HOST"),
