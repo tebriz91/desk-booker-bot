@@ -88,7 +88,7 @@ class DeskAssignment(Base):
     __tablename__ = 'desk_assignments'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
+    telegram_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('users.telegram_id', ondelete='CASCADE'))
     desk_id: Mapped[int] = mapped_column(ForeignKey('desks.id', ondelete='CASCADE'))
     
     user: Mapped['User'] = relationship(backref='desk_assignments')
