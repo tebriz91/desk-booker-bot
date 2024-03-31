@@ -348,23 +348,40 @@ async def orm_delete_desk_by_id(session: AsyncSession, desk_id: int):
     await session.commit()
 
 #* DeskAssignment's ORM queries
-async def orm_insert_desk_assignment(session: AsyncSession, user_id: int, desk_id: int, **weekdays):
-    try:
-        new_assignment = DeskAssignment(
-            user_id=user_id,
-            desk_id=desk_id,
-            is_monday=weekdays.get('is_monday', False),
-            is_tuesday=weekdays.get('is_tuesday', False),
-            is_wednesday=weekdays.get('is_wednesday', False),
-            is_thursday=weekdays.get('is_thursday', False),
-            is_friday=weekdays.get('is_friday', False)
-        )
-        session.add(new_assignment)
-        await session.commit()
-        return "Desk assignment successfully created."
-    except SQLAlchemyError as e:
-        await session.rollback()
-        raise DeskBookerError(f"Failed to insert desk assignment: {str(e)}")
+async def orm_insert_desk_assignment():
+    pass
+
+async def orm_select_desk_assignment_by_telegram_id_and_weekday(session: AsyncSession, telegram_id: int, weekday: int):
+    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Telegram ID: {telegram_id}")
+    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Weekday: {weekday}")
+    
+    # Adjusted query to join DeskAssignment with User and filter by User.telegram_id
+    query = select(DeskAssignment.id).join(User).where(
+        User.telegram_id == telegram_id
+    )
+    result = await session.execute(query)
+    desk_assignment_ids = result.scalars().all()  # Expecting potentially more than one desk assignment for the user
+    
+    # If no desk assignments found for the user, return None or handle accordingly
+    if not desk_assignment_ids:
+        logger.info("No desk assignment found for the given Telegram ID.")
+        return None
+    
+    # Filter DeskAssignmentWeekday by the found desk assignment IDs and the specified weekday
+    query = select(DeskAssignmentWeekday).where(
+        DeskAssignmentWeekday.desk_assignment_id.in_(desk_assignment_ids),
+        DeskAssignmentWeekday.weekday == weekday
+    )
+    result = await session.execute(query)
+    desk_assignment_weekday = result.scalar_one_or_none()  # Using scalar_one_or_none() to handle zero or one result
+
+    # Log and return the result if found
+    if desk_assignment_weekday:
+        logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Desk assignment weekday: {desk_assignment_weekday}")
+        return desk_assignment_weekday
+    else:
+        logger.info("No desk assignment found for the given weekday.")
+        return None
 
 async def orm_select_desk_assignments_by_user_id(session: AsyncSession, user_id: int):
     query = select(DeskAssignment).where(DeskAssignment.user_id == user_id)

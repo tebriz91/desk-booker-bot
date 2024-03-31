@@ -21,6 +21,7 @@ from keyboards.inline import get_inline_keyboard
 
 from services.user.dates_generator import generate_dates
 from services.user.booking_checker import check_existing_booking
+from services.user.desk_assignment_checker import check_desk_assignment
 from services.common.rooms_list_generator import generate_available_rooms_list
 from services.common.room_plan_getter import get_room_plan_by_room_name
 from services.common.desks_list_generator import generate_available_not_booked_desks_list
@@ -109,35 +110,50 @@ async def process_date_button(
     config: Config):
     date = query.data
     date_format = config.bot_operation.date_format
-
+    telegram_id=query.from_user.id
+    
     existing_booking = await check_existing_booking(
-    session=session,
-    telegram_id=query.from_user.id,
-    date=date,
-    date_format=date_format)    
+    session,
+    telegram_id,
+    date,
+    date_format)
     
     try:
-        if existing_booking is not False:
+        if existing_booking:
             await query.message.edit_text(text=f"{existing_booking}")
             await state.clear()
             await query.answer()
-        else:
-            rooms = await generate_available_rooms_list(session)
-            keyboard = get_inline_keyboard(
-            buttons=rooms,
-            width=1 if len(rooms) <= 7 else 2,
-            util_buttons=[
-                ButtonLabel.BACK.value,
-                ButtonLabel.CANCEL.value,
-                ],
-            width_util=2)
-            
-            await query.message.edit_text(
-                text=f"Selected date: {date}. Now select room.",
-                reply_markup=keyboard)
-            await query.answer()
-            await state.update_data(date=date)
-            await state.set_state(FSMBooking.select_room)
+            logger.info(f">>>>>>>>>>>>>existing_booking: {existing_booking}")
+        # Check if the user has assigned desk for the weekday of the selected date
+        if not existing_booking:
+            desk_assignment = await check_desk_assignment(
+                session,
+                telegram_id,
+                date,
+                date_format)
+            logger.info(f">>>>>>>>>>>>>desk_assignment: {desk_assignment}")
+            if desk_assignment:
+                await query.message.edit_text(text=f"{desk_assignment}")
+                await state.clear()
+                await query.answer()
+        
+            else:
+                rooms = await generate_available_rooms_list(session)
+                keyboard = get_inline_keyboard(
+                buttons=rooms,
+                width=1 if len(rooms) <= 7 else 2,
+                util_buttons=[
+                    ButtonLabel.BACK.value,
+                    ButtonLabel.CANCEL.value,
+                    ],
+                width_util=2)
+                
+                await query.message.edit_text(
+                    text=f"Selected date: {date}. Now select room.",
+                    reply_markup=keyboard)
+                await query.answer()
+                await state.update_data(date=date)
+                await state.set_state(FSMBooking.select_room)
     
     except Exception as e:
         await query.message.edit_text(text=f"Error: {e}")
@@ -225,13 +241,6 @@ async def process_room_button(
     room_name = str(query.data)
     await state.update_data(room_name=room_name)
     room_plan_url = await get_room_plan_by_room_name(session, room_name)
-
-    logger.info(f">>>>>>>>>>>>>telegram_id: {telegram_id}")
-    logger.info(f">>>>>>>>>>>>>advanced_mode: {advanced_mode}")
-    logger.info(f">>>>>>>>>>>>>date: {date}")
-    logger.info(f">>>>>>>>>>>>>date_format: {date_format}")
-    logger.info(f">>>>>>>>>>>>>room_name: {room_name}")
-    logger.info(f">>>>>>>>>>>>>room_plan_url: {room_plan_url}")
     
     # Retrive desks info: list[str], if there are desks, or empty list if there are no desks to book or str if there is an error message
     try:
@@ -247,7 +256,6 @@ async def process_room_button(
         logger.info(f">>>>>>>>>>>>>desks (handler): {desks}")
         
     except Exception as e:
-        logger.error(f"Error retrieving desks: {e}")
         await query.message.edit_text(text="An error occurred while retrieving available desks. Please try again later.")
         await state.clear()
         await query.answer()
@@ -257,7 +265,6 @@ async def process_room_button(
     try:
         # Check if desks is a string (error message) or if it is an empty list
         if isinstance(desks, str):
-            logger.info(f">>>>>>>>>>>>>desks (handle - error): {desks}")
             await query.message.edit_text(text=f"{desks}")
             await state.clear()
             await query.answer()
