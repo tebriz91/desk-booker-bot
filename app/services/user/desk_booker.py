@@ -44,7 +44,7 @@ async def desk_booker(
     existing_booking = await orm_select_booking_by_desk_id_and_date(session, desk_id, booking_date)
     
     if existing_booking:
-        return "Oops... Someone has booked the desk before you. Please select another desk."
+        raise DeskBookerError("Oops... Someone has booked the desk before you. Please select another desk.")
     
     try:
         await orm_insert_booking(session, telegram_id, desk_id, room_id, booking_date)
