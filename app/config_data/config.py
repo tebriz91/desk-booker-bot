@@ -1,6 +1,6 @@
 import json
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, List, Optional, Union
 # Attempt to load environment variables from .env file
@@ -82,12 +82,21 @@ class BotOperationConfig:
     date_format_short: Optional[str] = field(default="%d.%m.%Y")
     advanced_mode: Optional[bool] = field(default=False)
     
+    def to_dict(self) -> dict:
+        """Convert the BotOperationConfig dataclass instance into a dictionary."""
+        return asdict(self)
+ 
+
 # Bot advanced mode configuration
 @dataclass(frozen=True, slots=True)
 class BotAdvancedModeConfig:
     early_access_days: Optional[int] = field(default=5)
     standard_access_days: Optional[int] = field(default=1)
 
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    
 # Redis configuration
 @dataclass(frozen=True, slots=True)
 class RedisConfig:
