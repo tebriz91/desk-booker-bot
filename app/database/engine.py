@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from database.models import Base
+from sqlalchemy import text
 
 
 engine = None  # Declare engine as a global variable to be initialized later
@@ -42,3 +43,14 @@ async def drop_db():
     """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+
+
+async def drop_db_cascade():
+    async with engine.begin() as conn:
+        # Reflecting all tables from the database
+        await conn.run_sync(Base.metadata.reflect)
+
+        # Dropping each table manually with CASCADE
+        for table_name in reversed(Base.metadata.sorted_tables):
+            await conn.execute(text(f"DROP TABLE IF EXISTS {table_name.name} CASCADE;"))
+        await conn.commit()
