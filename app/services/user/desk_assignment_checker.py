@@ -4,6 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.orm_queries import orm_select_desk_assignment_by_telegram_id_and_weekday
 
+from database.enums.weekdays import Weekday
+
 from utils.logger import Logger
 
 logger = Logger()
@@ -14,8 +16,8 @@ async def check_desk_assignment(session: AsyncSession, telegram_id: int, date: s
         booking_date = datetime.strptime(date, date_format).date()
     except ValueError as e:
         return f"Error: Incorrect date format. Parsing date to datetime.date failed."
-    
-    weekday = booking_date.weekday()
+    # Convert integer weekday to Weekday enum
+    weekday = Weekday(booking_date.weekday())
     logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Weekday: {weekday}")
     # Check if the user has assigned desk for the weekday of the selected date
     try:
