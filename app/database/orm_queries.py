@@ -87,7 +87,7 @@ async def orm_select_user_team_id(session: AsyncSession, telegram_id: int):
     result = await session.execute(query)
     return result.scalar_one()
 
-async def orm_select_team_preffered_room_id(session: AsyncSession, team_id: int):
+async def orm_select_team_preferred_room_id(session: AsyncSession, team_id: int):
     query = select(Team.room_id).where(Team.id == team_id)
     result = await session.execute(query)
     return result.scalar_one()
