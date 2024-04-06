@@ -53,4 +53,11 @@ async def drop_db_cascade():
         # Dropping each table manually with CASCADE
         for table_name in reversed(Base.metadata.sorted_tables):
             await conn.execute(text(f"DROP TABLE IF EXISTS {table_name.name} CASCADE;"))
-        await conn.commit()
+        
+        # Dropping all enums
+        enum_types_to_drop = [
+            "userrole",
+            "weekdays",
+        ]
+        for enum_type in enum_types_to_drop:
+            await conn.execute(text(f"DROP TYPE IF EXISTS {enum_type};"))
