@@ -16,7 +16,6 @@ async def room_browse_service(
             f"<b>Room id</b>: {room.id}\n"
             f"<b>Room availability</b>: {room_availability_emoji}\n"
             f"<b>Room plan</b>: {room.plan}\n"
-            f"<b>Room additional info</b>: {room.additional_info}\n"
             f"<b>Room created at</b>: {room.created_at}\n"
             f"<b>Room updated at</b>: {room.updated_at}\n"
         )
@@ -35,8 +34,7 @@ async def room_browse_service(
                     desk_availability_emoji = "☑️" if desk.is_available else "🚫"
                     desks_info += f"{i}. Desk name: {desk.name}\n" \
                                 f"    id: {desk.id}\n" \
-                                f"    availability: {desk_availability_emoji}\n" \
-                                f"    additional info: {desk.additional_info}\n\n"
+                                f"    availability: {desk_availability_emoji}\n\n"
             result = f"{room_info}\n{desks_info}"
             return result
         except Exception as e:

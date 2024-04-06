@@ -22,7 +22,6 @@ class RoomEditScene(Scene, state="room_edit_scene"):
                 RoomEditMenu.EDIT_ROOM_NAME.value,
                 RoomEditMenu.TOGGLE_AVAILABILITY.value,
                 RoomEditMenu.EDIT_ROOM_PLAN.value,
-                # RoomEditMenu.EDIT_ADDITIONAL_INFO.value,
                 RoomEditMenu.ADD_DESK.value,
                 RoomEditMenu.DELETE_DESK.value,
                 RoomEditMenu.EDIT_DESK.value],
@@ -78,13 +77,6 @@ class RoomEditScene(Scene, state="room_edit_scene"):
         await message.delete()
         await message.answer("Not implemented yet") # TODO: Implement room plan edit scene
         # await self.wizard.goto("room_plan_edit_scene")
-    
-    @on.message(F.text == RoomEditMenu.EDIT_ADDITIONAL_INFO.value)
-    async def to_room_additional_info_edit(self, message: Message):
-        await message.delete()
-        await message.answer("Not implemented yet") # TODO: Implement room additional info edit scene
-        await self.wizard.retake()
-        # await self.wizard.goto("room_additional_info_edit_scene")
     
     @on.message(F.text == RoomEditMenu.ADD_DESK.value)
     async def to_desk_add(self, message: Message):
