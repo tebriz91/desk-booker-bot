@@ -24,7 +24,7 @@ from services.user.booking_checker import check_existing_booking
 from services.user.desk_assignment_checker import check_desk_assignment
 from services.common.rooms_list_generator import generate_available_rooms_list
 from services.common.room_plan_getter import get_room_plan_by_room_name
-from services.common.desks_list_generator import generate_available_not_booked_desks_list
+from services.common.desks_list_generator import generate_desks_list
 from services.user.desk_booker import desk_booker
 
 from utils.logger import Logger
@@ -245,7 +245,7 @@ async def process_room_button(
     # Retrive desks info: list[str], if there are desks, or empty list if there are no desks to book or str if there is an error message
     try:
         standard_access_days = config.bot_advanced_mode.standard_access_days if advanced_mode else None
-        desks = await generate_available_not_booked_desks_list(
+        desks = await generate_desks_list(
             session,
             room_name,
             date,
