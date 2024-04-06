@@ -16,6 +16,8 @@ aiogram = "^3.4.1"
 asyncpg = "^0.29.0"
 redis = "^5.0.3"
 aioredis = "^2.0.1"
+aiogram-dialog = "^2.1.0"
+environs = "^11.0.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "==0.0.240"
