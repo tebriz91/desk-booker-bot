@@ -3,7 +3,7 @@ from sqlalchemy import Date, DateTime, Enum, ForeignKey, BigInteger, String, Uni
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from database.enums.user_roles import UserRole
-# from database.enums.weekdays import Weekday
+from database.enums.weekdays import Weekday
 
 
 class Base(DeclarativeBase):
@@ -44,7 +44,7 @@ class UserRoleAssignment(Base):
 
     telegram_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('users.telegram_id', ondelete='CASCADE'), primary_key=True)
     team_id: Mapped[int] = mapped_column(ForeignKey('teams.id', ondelete='CASCADE'))
-    role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.Member)
+    role: Mapped[UserRole] = mapped_column(Enum(UserRole, name='userrole'), default=UserRole.Member)
 
     user: Mapped['User'] = relationship(backref='user_role_assignments')
     team: Mapped['Team'] = relationship(backref='user_role_assignments')
@@ -113,21 +113,16 @@ class DeskAssignment(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     telegram_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('users.telegram_id', ondelete='CASCADE'))
     desk_id: Mapped[int] = mapped_column(ForeignKey('desks.id', ondelete='CASCADE'))
+    weekday: Mapped[Weekday] = mapped_column(Enum(Weekday, name='weekday'))
     
     user: Mapped['User'] = relationship(backref='desk_assignments')
     desk: Mapped['Desk'] = relationship(backref='desk_assignments')
 
-class DeskAssignmentWeekday(Base):
-    __tablename__ = 'desk_assignment_weekdays'
-    
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    desk_assignment_id: Mapped[int] = mapped_column(ForeignKey('desk_assignments.id', ondelete='CASCADE'), nullable=False)
-    weekday: Mapped[int] = mapped_column(nullable=False) # 0 - Monday, 1 - Tuesday, ..., 6 - Sunday
-    
-    desk_assignment: Mapped['DeskAssignment'] = relationship(backref='desk_assignment_weekdays')
-
     __table_args__ = (
-        UniqueConstraint('desk_assignment_id', 'weekday', name='uq_desk_assignment_weekday'),
+        # A desk cannot be assigned to more than one user on the same weekday.
+        UniqueConstraint('desk_id', 'weekday', name='uq_desk_weekday'),
+        # A user cannot be assigned more than one desk on the same weekday.
+        UniqueConstraint('telegram_id', 'weekday', name='uq_telegram_id_weekday'),
     )
 
 
