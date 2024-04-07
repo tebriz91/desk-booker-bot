@@ -1,4 +1,3 @@
-from aiogram.fsm.state import StatesGroup, State
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.kbd import (
     Select,
