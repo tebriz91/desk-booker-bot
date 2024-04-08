@@ -417,6 +417,38 @@ async def orm_select_available_not_assigned_desks_by_room_id(session: AsyncSessi
 
     return desks
 
+
+async def orm_select_available_not_booked_desks_by_room_name(session: AsyncSession, room_name: str, date: date):
+    # This subquery checks for desks that have a booking on the specified date
+    booking_subquery = (
+        select(Booking.desk_id)
+        .where(Booking.date == date)
+        .correlate(Desk)
+        .exists()
+    )
+    # Main query selects desks that are available, in the specified room,
+    # and not in the subquery (i.e., not booked on the specified date)
+    query = (
+        select(Desk)
+        .join(Room)
+        .where(
+            and_(
+                Room.name == room_name,
+                Desk.is_available == True,
+                not_(booking_subquery)  # Not booked on the specified date
+            )
+        )
+    )
+    result = await session.execute(query)
+    return result.scalars().all()
+
+
+async def orm_get_desk_availability_by_name(session: AsyncSession, desk_name: str):
+    query = select(Desk.is_available).where(Desk.name == desk_name)
+    result = await session.execute(query)
+    return result.scalar_one()
+
+
 async def orm_update_desk_name_by_id(session: AsyncSession, desk_id: int, new_desk_name: str):
     query = update(Desk).where(Desk.id == desk_id).values(name=new_desk_name)
     await session.execute(query)

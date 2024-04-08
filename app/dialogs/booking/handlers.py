@@ -1,6 +1,10 @@
+from typing import TYPE_CHECKING
+
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Select
 from aiogram.types import CallbackQuery
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from states.states import Booking
 
@@ -13,6 +17,8 @@ from database.orm_queries import DeskBookerError
 
 from utils.logger import Logger
 
+if TYPE_CHECKING:
+    from locales.stub import TranslatorRunner
 
 logger = Logger()
 
@@ -20,7 +26,7 @@ logger = Logger()
 async def selected_date(query: CallbackQuery,
                         widget: Select,
                         dialog_manager: DialogManager,
-                        item_id: str
+                        item_id: str,
                         ) -> None:
     """
     Handle the selection of a date in the booking dialog.
@@ -34,10 +40,12 @@ async def selected_date(query: CallbackQuery,
     Returns:
         None
     """
+    # Get TranslatorRunner from i18n middleware
+    i18n: TranslatorRunner = dialog_manager.middleware_data['i18n']
+    # Get session from DataBaseSession middleware
+    session: AsyncSession = dialog_manager.middleware_data['session']
     # Get the selected date
     date = item_id
-    # Get session from DataBaseSession middleware
-    session = dialog_manager.middleware_data['session']
     # Get the bot operation configuration
     config = dialog_manager.start_data['bot_operation_config']
     # Get the date format from the configuration
@@ -46,6 +54,7 @@ async def selected_date(query: CallbackQuery,
     telegram_id = query.from_user.id
     # Get the existing booking for the selected date, if any
     existing_booking = await check_existing_booking(
+                                            i18n,
                                             session,
                                             telegram_id,
                                             date,
@@ -53,20 +62,21 @@ async def selected_date(query: CallbackQuery,
     try:
         # Answer user with the existing booking, if any
         if existing_booking:
-            await query.message.answer(text=f"{existing_booking}")
+            await query.answer(text=f"{existing_booking}", show_alert=True)
             await dialog_manager.switch_to(state=Booking.select_date)
             logger.info(f">>>>>>>>>>>>>existing_booking: {existing_booking}")
         # If no existing booking, check for desk assignment
         if not existing_booking:
             # Get the desk assignment for the selected date, if any
             desk_assignment = await check_desk_assignment(
+                                            i18n,
                                             session,
                                             telegram_id,
                                             date,
                                             date_format)
             # Answer user with the desk assignment, if any
             if desk_assignment:
-                await query.message.answer(text=f"{desk_assignment}")
+                await query.answer(text=f"{desk_assignment}", show_alert=True)
                 await dialog_manager.switch_to(state=Booking.select_date)
                 logger.info(f">>>>>>>>>>>>>desk_assignment: {desk_assignment}")
             else:
@@ -96,6 +106,10 @@ async def selected_room(query: CallbackQuery,
     Returns:
         None
     """
+    # Get TranslatorRunner from i18n middleware
+    i18n: TranslatorRunner = dialog_manager.middleware_data['i18n']
+    # Get session from DataBaseSession middleware
+    session: AsyncSession = dialog_manager.middleware_data['session']
     # Save the selected room to the dialog data
     dialog_manager.dialog_data['room_name'] = item_id
     # Get the selected date from the dialog data
@@ -112,8 +126,6 @@ async def selected_room(query: CallbackQuery,
     date_format = str(c_ops['date_format'])
     # Get the advanced mode (boolean value) from the configuration
     advanced_mode = bool(c_ops['advanced_mode'])
-    # Get session from DataBaseSession middleware
-    session = dialog_manager.middleware_data['session']
     # Get room_plan from the database
     room_plan_url = await get_room_plan_by_room_name(session, room_name)
     # Save room_plan_url to the dialog data
@@ -141,7 +153,8 @@ async def selected_room(query: CallbackQuery,
             await dialog_manager.done()
         # Answer user is desks is a empty list
         if isinstance(desks, list) and not desks:
-            await query.message.answer(text=f"No available desks in room: {room_name} for: {date}")
+            #! there-are-no-desks
+            await query.answer(text=i18n.there.are.no.desks(room_name=room_name, date=date), show_alert=True)
             await dialog_manager.switch_to(Booking.select_date)
         # Save rooms to dialog_data and switch to the next window if desks is a list and not empty
         if isinstance(desks, list) and desks:
@@ -169,6 +182,10 @@ async def selected_desk(query: CallbackQuery,
     Returns:
         None
     """
+    # Get TranslatorRunner from i18n middleware
+    i18n: TranslatorRunner = dialog_manager.middleware_data['i18n']
+    # Get session from DataBaseSession middleware
+    session: AsyncSession = dialog_manager.middleware_data['session']
     # Save the selected desk to the dialog data
     dialog_manager.dialog_data['desk_name'] = item_id
     # Get the selected desk from the dialog data
@@ -183,11 +200,10 @@ async def selected_desk(query: CallbackQuery,
     config = dialog_manager.start_data['bot_operation_config']
     # Get the date format from the configuration
     date_format = str(config['date_format'])
-    # Get session from DataBaseSession middleware
-    session = dialog_manager.middleware_data['session']
     try:
         # Insert the booking into the database
         result = await desk_booker(
+            i18n,
             session,
             telegram_id,
             desk_name,
@@ -196,11 +212,11 @@ async def selected_desk(query: CallbackQuery,
             date_format,
         )
         # Answer user with the booking result
-        await query.message.edit_text(text=f"{result}")
-        await dialog_manager.done()
+        await query.answer(text=f"{result}", show_alert=True)
+        await dialog_manager.switch_to(Booking.select_date)
     except DeskBookerError as e:
         # In case of a race condition, answer user with the DeskBookerError message and switch to the select_room window
-        await query.message.answer(f"{e}")
+        await query.answer(text=f"{e}", show_alert=True)
         await dialog_manager.switch_to(Booking.select_room)
     except Exception as e:
         await query.message.edit_text(f"An error occurred: {e} while processing the booking. Please try again later.")

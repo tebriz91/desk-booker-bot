@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, TYPE_CHECKING, Tuple, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,42 +6,72 @@ from database.models import Booking
 
 from database.orm_queries import orm_select_bookings_by_room_id_joined_from_today, orm_select_bookings_by_telegram_id_joined_from_today
 
-# Generate a formatted string (with HTML tags) with the list of bookings
+if TYPE_CHECKING:
+    from locales.stub import TranslatorRunner
+
+from utils.logger import Logger
+
+logger = Logger()
+
+
+# async def generate_list_of_current_bookings_by_telegram_id(
+#     i18n,
+#     session: AsyncSession,
+#     date_format: str,
+#     date_format_short: str,
+#     telegram_id: int,
+#     telegram_name: str | None = "Anonymous user"
+# ) -> str:
+#     i18n: TranslatorRunner = i18n
+#     bookings_obj = await orm_select_bookings_by_telegram_id_joined_from_today(session, telegram_id)
+#     try:
+#         if not bookings_obj:
+#             #! my-bookings-no-bookings
+#             return i18n.my.bookings.no.bookings()
+#         else:
+#             #! my-bookings-greeting
+#             list_of_bookings: str = i18n.my.bookings.greeting(telegram_name=f'@{telegram_name}') + "\n\n"
+#             for booking in bookings_obj:
+#                 #! my-bookings-date
+#                 date = i18n.my.bookings.date(date=booking.date.strftime(date_format))
+#                 #! my-bookings-desk
+#                 desk = i18n.my.bookings.desk(room_name=booking.room.name, desk_name=booking.desk.name)
+#                 #! my-bookings-bookedOn
+#                 booked_on = i18n.my.bookings.bookedOn(booked_on=booking.created_at.strftime(date_format_short))
+#                 list_of_bookings += f"{date}\n{desk}\n{booked_on}\n\n"
+#             return list_of_bookings
+#     except Exception as e:
+#         return f"Error: {e}"
+
+
 async def generate_list_of_current_bookings_by_telegram_id(
+    i18n,
     session: AsyncSession,
     date_format: str,
     date_format_short: str,
     telegram_id: int,
     telegram_name: str | None = "Anonymous user"
-    ) -> str:
-    """
-    Args:
-    - session (AsyncSession): SQLAlchemy AsyncSession
-    - date_format (str): Date format with weekday
-    - date_format_short (str): Date format without weekday
-    - telegram_id (int): Telegram user id
-    - telegram_name (str): Telegram user name
-    
-    Returns:
-    - bookings (str): Formatted string with the list of bookings
-    """
-    first_line = f"Your bookings, @{telegram_name}:\n\n"
-    list_of_bookings: str = ""
+) -> str:
+    i18n: TranslatorRunner = i18n
     bookings_obj = await orm_select_bookings_by_telegram_id_joined_from_today(session, telegram_id)
     try:
         if not bookings_obj:
-            return f"You have no bookings yet"
+            #! my-bookings-no-bookings
+            return i18n.my.bookings.no.bookings()
         else:
+            #! my-bookings-greeting
+            list_of_bookings: str = i18n.my.bookings.greeting(telegram_name=f'@{telegram_name}') + '\n\n'
             for booking in bookings_obj:
-                formatted_booking = (
-                    f"<b>{booking.date.strftime(date_format)}</b>\n"
-                    f"Room: {booking.room.name}, Desk: {booking.desk.name}\n"
-                    f"<code>booked on: {booking.created_at.strftime(date_format_short)}</code>\n\n"
-                )
-                list_of_bookings += formatted_booking
-            return first_line + list_of_bookings
+                date = booking.date.strftime(date_format)
+                room_name = booking.room.name
+                desk_name = booking.desk.name
+                booked_on = booking.created_at.strftime(date_format_short)
+                #! my-bookings-list
+                list_of_bookings += i18n.my.bookings.list(date=date, room_name=room_name, desk_name=desk_name, booked_on=booked_on) + '\n\n'
+            return list_of_bookings
     except Exception as e:
         return f"Error: {e}"
+
 
 async def generate_list_of_all_current_bookings_by_room_id(
     session: AsyncSession,
@@ -106,7 +136,8 @@ async def generate_list_of_all_current_bookings_by_room_id(
     except Exception as e:
         # In case of any error, return an error message
         return f"Error: {e}"
-    
+
+
 # Generate a dict of current bookings by telegram ID to be used in InlineKeyboardBuilder to create a list of buttons
 async def generate_dict_of_current_bookings_by_telegram_id_for_inline_kb(
     session: AsyncSession,
@@ -139,3 +170,43 @@ async def generate_dict_of_current_bookings_by_telegram_id_for_inline_kb(
             # Add the formatted booking to the dict
             bookings[booking.id] = formatted_booking
         return bookings
+
+
+async def generate_current_bookings_by_telegram_id(
+    i18n,
+    session: AsyncSession,
+    date_format: str,
+    telegram_id: int
+) -> Union[List[Tuple[int, str]], str]:
+    """
+    Args:
+    - i18n (TranslatorRunner): TranslatorRunner instance
+    - session (AsyncSession): SQLAlchemy AsyncSession
+    - telegram_id (int): Telegram user id
+    - date_format (str): Date format with weekday
+    
+    Returns:
+    - If successful, returns a list of tuples where each tuple contains booking_id (int)
+      and a string with the booking data: date, room_name, desk_name.
+    - If an error occurs, returns a string describing the error.
+    """
+    i18n: TranslatorRunner = i18n
+    bookings_list: List[Tuple[int, str]] = []
+    logger.info(f"Generating current bookings by telegram ID: {telegram_id}")
+    bookings_obj = await orm_select_bookings_by_telegram_id_joined_from_today(session, telegram_id)
+    try:
+        if not bookings_obj:
+            logger.info("No bookings found")
+            return []
+        else:
+            for booking in bookings_obj:
+                date = booking.date.strftime(date_format)
+                room_name = booking.room.name
+                desk_name = booking.desk.name
+                booking_data = i18n.bookings.to.cancel(date=date, room_name=room_name, desk_name=desk_name)
+                bookings_list.append((booking.id, booking_data))
+            logger.info(f"Result of generate_current_bookings_by_telegram_id: {bookings_list}")
+            return bookings_list
+    except Exception as e:
+        logger.info(f"Error: {e}")
+        return f"Error: {e}"

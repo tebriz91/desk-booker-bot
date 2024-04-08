@@ -301,6 +301,20 @@ tests-mypy = ["mypy (>=1.6)", "pytest-mypy-plugins"]
 tests-no-zope = ["attrs[tests-mypy]", "cloudpickle", "hypothesis", "pympler", "pytest (>=4.3.0)", "pytest-xdist[psutil]"]
 
 [[package]]
+name = "babel"
+version = "2.14.0"
+description = "Internationalization utilities"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "Babel-2.14.0-py3-none-any.whl", hash = "sha256:efb1a25b7118e67ce3a259bed20545c29cb68be8ad2c784c83689981b7a57287"},
+    {file = "Babel-2.14.0.tar.gz", hash = "sha256:6919867db036398ba21eb5c7a0f6b28ab8cbc3ae7a73a44ebe34ae74a4e7d363"},
+]
+
+[package.extras]
+dev = ["freezegun (>=1.0,<2.0)", "pytest (>=6.0)", "pytest-cov"]
+
+[[package]]
 name = "black"
 version = "23.1.0"
 description = "The uncompromising code formatter."
@@ -413,6 +427,54 @@ python-dotenv = "*"
 dev = ["environs[tests]", "pre-commit (>=3.5,<4.0)", "tox"]
 django = ["dj-database-url", "dj-email-url", "django-cache-url"]
 tests = ["environs[django]", "pytest"]
+
+[[package]]
+name = "fluent-compiler"
+version = "0.3"
+description = "Blazing fast implementation of Fluent localization language."
+optional = false
+python-versions = "*"
+files = [
+    {file = "fluent_compiler-0.3-py2-none-any.whl", hash = "sha256:9789dfb89024cf9161580697ce72ee7aac30a74d146ec5122c876fe30c4885d5"},
+    {file = "fluent_compiler-0.3-py3-none-any.whl", hash = "sha256:8d7ebb23d8778f0f8dff994e7e9c7779155a8614945465b1b93fd7ad8eba8738"},
+    {file = "fluent_compiler-0.3.tar.gz", hash = "sha256:a0006c833d902d6c5d277dccd3c6f26047d30a5c880865dc8594e9543ff58488"},
+]
+
+[package.dependencies]
+attrs = ">=19.3.0"
+babel = ">=2.8.0"
+"fluent.syntax" = ">=0.14"
+pytz = "*"
+singledispatch = ">=3.4"
+six = "*"
+
+[[package]]
+name = "fluent-syntax"
+version = "0.19.0"
+description = "Localization library for expressive translations."
+optional = false
+python-versions = "*"
+files = [
+    {file = "fluent.syntax-0.19.0-py2.py3-none-any.whl", hash = "sha256:b352b3475fac6c6ed5f06527921f432aac073d764445508ee5218aeccc7cc5c4"},
+    {file = "fluent.syntax-0.19.0.tar.gz", hash = "sha256:920326d7f46864b9758f0044e9968e3112198bc826acee16ddd8f11d359004fd"},
+]
+
+[package.dependencies]
+typing-extensions = ">=3.7,<5"
+
+[[package]]
+name = "fluentogram"
+version = "1.1.6"
+description = "A proper way to use an i18n mechanism with Aiogram3."
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "fluentogram-1.1.6-py3-none-any.whl", hash = "sha256:ea9c9ed0a72e7a0b7ebc9d6ff902290734ffc43eefa4c92b34e73675aa886723"},
+    {file = "fluentogram-1.1.6.tar.gz", hash = "sha256:0fc4ebd4eec38272ff86eb9984873abf7447ac6708a02a36f81c79ef6f6de711"},
+]
+
+[package.dependencies]
+fluent-compiler = ">=0.3,<0.4"
 
 [[package]]
 name = "frozenlist"
@@ -1129,6 +1191,21 @@ testing = ["build[virtualenv]", "filelock (>=3.4.0)", "flake8-2020", "ini2toml[l
 testing-integration = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "packaging (>=23.2)", "pytest", "pytest-enabler", "pytest-xdist", "tomli", "virtualenv (>=13.0.0)", "wheel"]
 
 [[package]]
+name = "singledispatch"
+version = "4.1.0"
+description = "Backport functools.singledispatch to older Pythons."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "singledispatch-4.1.0-py2.py3-none-any.whl", hash = "sha256:6061bd291204beaeac90cdbc342b68d213b7a6efb44ae6c5e6422a78be351c8a"},
+    {file = "singledispatch-4.1.0.tar.gz", hash = "sha256:f3430b886d5b4213d07d715096a75da5e4a8105284c497b9aee6d6d48bfe90cb"},
+]
+
+[package.extras]
+docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
+testing = ["pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy (>=0.9.1)", "pytest-ruff"]
+
+[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -1343,4 +1420,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "f7757f45d8e4c04b9051e25bb8bfea3a25854d8c95c75c4654ec51ad8c6606c7"
+content-hash = "e90583219548f3fabe6ed641b7f44c362a7dac05aa5347c1b8f55cd849220bb5"

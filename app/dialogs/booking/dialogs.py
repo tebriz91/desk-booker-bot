@@ -5,12 +5,12 @@ from aiogram_dialog.widgets.kbd import (
     Row,
     Cancel,
     Back,
+    Group,
 )
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Format, Multi
 
 from states.states import Booking
 
-from misc.const.button_labels import ButtonLabel
 from dialogs.booking.handlers import (
     selected_date,
     selected_room,
@@ -25,42 +25,55 @@ from dialogs.booking.getters import (
 
 booking_dialog = Dialog(
     Window(
-        Const('Select a date'),
-        Column(
-            Select(
-                Format('{item}'),
-                id='date',
-                items='dates',
-                item_id_getter=lambda item: item,
-                on_click=selected_date,
+        Format(text='{select-date}',
+               when='dates'),
+        Group(
+            Column(
+                Select(
+                    Format('{item}'),
+                    id='date',
+                    items='dates',
+                    item_id_getter=lambda item: item,
+                    on_click=selected_date,
+                ),
             ),
+            Cancel(Format(text='{button-exit}')),
+            when='dates',
         ),
-        Cancel(Format(ButtonLabel.CANCEL.value)),
         state=Booking.select_date,
         getter=get_dates,
     ),
+    # TODO: Handle the case when there are no rooms available
     Window(
-        Format('Selected date: {dialog_data[date]}. Now select a room.'),
-        Column(
-            Select(
-                Format('{item}'),
-                id='room_name',
-                items='rooms',
-                item_id_getter=lambda item: item,
-                on_click=selected_room,
-            ),
+        Multi(
+            Format(text='{selected-date}'),
+            Format(text='{select-room}'),
+            when='rooms',
         ),
-        Row(
-            Back(Format(ButtonLabel.BACK.value)),
-            Cancel(Format(ButtonLabel.CANCEL.value)),
+        Group(
+            Column(
+                Select(
+                    Format('{item}'),
+                    id='room_name',
+                    items='rooms',
+                    item_id_getter=lambda item: item,
+                    on_click=selected_room,
+                ),
+            ),
+            Row(
+                Back(Format(text='{button-back}')),
+                Cancel(Format(text='{button-exit}')),
+            ),
+            when='rooms',
         ),
         getter=get_rooms,
         state=Booking.select_room,
     ),
+    # TODO: Handle the case when there are no desks available
     Window(
-        Format('''
-               Selected date: {dialog_data[date]}, room: {dialog_data[room_name]}. Now select a desk according to the <a href='{dialog_data[room_plan_url]}'>room plan</a>.
-               '''),
+        # FIX: Replace '📋' with something
+        Format(text='{selected-date}\n{selected-room}<a href="{room_plan}">📋</a>'),
+        Format(text='{select-desk}'),
         Column(
             Select(
                 Format('{item}'),
@@ -71,8 +84,8 @@ booking_dialog = Dialog(
             ),
         ),
         Row(
-            Back(Format(ButtonLabel.BACK.value)),
-            Cancel(Format(ButtonLabel.CANCEL.value)),
+            Back(Format(text='{button-back}')),
+            Cancel(Format(text='{button-exit}')),
         ),
         getter=get_desks,
         state=Booking.select_desk,

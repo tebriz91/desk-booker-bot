@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,16 +7,21 @@ from database.orm_queries import orm_select_desk_assignment_by_telegram_id_and_w
 
 from database.enums.weekdays import Weekday
 
+if TYPE_CHECKING:
+    from locales.stub import TranslatorRunner
+
 from utils.logger import Logger
 
 logger = Logger()
 
-async def check_desk_assignment(session: AsyncSession, telegram_id: int, date: str, date_format: str) -> bool | str:
+
+async def check_desk_assignment(i18n, session: AsyncSession, telegram_id: int, date: str, date_format: str) -> bool | str:
+    i18n: TranslatorRunner = i18n
     # Parse date string to datetime.date type: 'YYYY-MM-DD' to query the database. And handle incorrect date format.
     try:
         booking_date = datetime.strptime(date, date_format).date()
     except ValueError as e:
-        return f"Error: Incorrect date format. Parsing date to datetime.date failed."
+        return "Error: Incorrect date format. Parsing date to datetime.date failed."
     # Convert integer weekday to Weekday enum
     weekday = Weekday(booking_date.weekday())
     logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Weekday: {weekday}")
@@ -27,6 +33,7 @@ async def check_desk_assignment(session: AsyncSession, telegram_id: int, date: s
         if not desk_assignment:
             return False
         else:
-            return f"You already have an assigned desk for the selected weekday."
+            #! desk-assignment
+            return i18n.desk.assignment(weekday=booking_date.strftime('%A'))
     except Exception as e:
         return "An unexpected error occurred while checking for desk assignments."

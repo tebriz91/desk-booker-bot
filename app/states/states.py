@@ -7,11 +7,10 @@ class Booking(StatesGroup):
     select_desk = State()
 
 
+class CancelBookings(StatesGroup):
+    select_booking = State()
+
+
 class AllBookings(StatesGroup):
     select_room = State()
-    view_bookings = State()
-
-
-class CancelBooking(StatesGroup):
-    select_booking = State()
     view_bookings = State()
