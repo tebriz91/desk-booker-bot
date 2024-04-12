@@ -25,8 +25,7 @@ from dialogs.booking.getters import (
 
 booking_dialog = Dialog(
     Window(
-        Format(text='{select-date}',
-               when='dates'),
+        Format(text='{select-date}', when='dates'),
         Group(
             Column(
                 Select(
@@ -43,33 +42,30 @@ booking_dialog = Dialog(
         state=Booking.select_date,
         getter=get_dates,
     ),
-    # TODO: Handle the case when there are no rooms available
     Window(
+        Format(text='{no-rooms}', when='no-rooms'),
         Multi(
             Format(text='{selected-date}'),
             Format(text='{select-room}'),
             when='rooms',
         ),
-        Group(
-            Column(
-                Select(
-                    Format('{item}'),
-                    id='room_name',
-                    items='rooms',
-                    item_id_getter=lambda item: item,
-                    on_click=selected_room,
-                ),
-            ),
-            Row(
-                Back(Format(text='{button-back}')),
-                Cancel(Format(text='{button-exit}')),
+        Column(
+            Select(
+                Format('{item}'),
+                id='room_name',
+                items='rooms',
+                item_id_getter=lambda item: item,
+                on_click=selected_room,
             ),
             when='rooms',
+        ),
+        Row(
+            Back(Format(text='{button-back}', when='button-back')),
+            Cancel(Format(text='{button-exit}', when='button-exit')),
         ),
         getter=get_rooms,
         state=Booking.select_room,
     ),
-    # TODO: Handle the case when there are no desks available
     Window(
         # FIX: Replace '📋' with something
         Format(text='{selected-date}\n{selected-room}<a href="{room_plan}">📋</a>'),

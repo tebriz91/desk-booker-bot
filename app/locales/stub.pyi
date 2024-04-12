@@ -7,17 +7,17 @@ class TranslatorRunner:
     button: Button
     select: Select
     selected: Selected
+    no: No
     existing: Existing
     desk: Desk
     there: There
     my: My
-    no: No
     bookings: Bookings
     cancel: Cancel
+    all: All
 
 
 class Button:
-    cancel: ButtonCancel
     main: ButtonMain
 
     @staticmethod
@@ -28,6 +28,9 @@ class Button:
 
     @staticmethod
     def ok() -> Literal["""👌Ok"""]: ...
+
+    @staticmethod
+    def cancel() -> Literal["""❌Cancel"""]: ...
 
     @staticmethod
     def back() -> Literal["""⏪Back"""]: ...
@@ -43,13 +46,6 @@ class Button:
 
     @staticmethod
     def toggle() -> Literal["""🔄Toggle"""]: ...
-
-
-class ButtonCancel:
-    all: ButtonCancelAll
-
-    @staticmethod
-    def __call__() -> Literal["""❌Cancel"""]: ...
 
 
 class ButtonMain:
@@ -77,6 +73,16 @@ class Selected:
     @staticmethod
     def room(*, room_name) -> Literal["""Room: { $room_name }"""]: ...
 
+    @staticmethod
+    def desk(*, desk_name) -> Literal["""Desk: { $desk_name }"""]: ...
+
+
+class No:
+    bookings: NoBookings
+
+    @staticmethod
+    def rooms() -> Literal["""There are no rooms yet"""]: ...
+
 
 class Existing:
     @staticmethod
@@ -84,10 +90,25 @@ class Existing:
 
 
 class Desk:
+    assignment: DeskAssignment
     booker: DeskBooker
 
+
+class DeskAssignment:
     @staticmethod
-    def assignment(*, weekday) -> Literal["""You have an assigned desk for the selected weekday ({ $weekday })"""]: ...
+    def __call__(*, weekday) -> Literal["""You have an assigned desk for the selected weekday ({ $weekday })"""]: ...
+
+    @staticmethod
+    def empty() -> Literal["""You don&#39;t have an assigned desk"""]: ...
+
+    @staticmethod
+    def exists(*, desk_name, room_name, weekdays) -> Literal["""Your have an assigned desk: { $desk_name } in room: { $room_name } for following weekdays: { $weekdays }"""]: ...
+
+    @staticmethod
+    def active() -> Literal["""Your desk assignment is active✅. In case you are out of the office (vacation, sick leave, etc.), please press the button below to free the desk until your return"""]: ...
+
+    @staticmethod
+    def inactive() -> Literal["""Your desk assignment is inactive❌. In case you are back to the office, press the button below to activate the desk assignment"""]: ...
 
 
 class There:
@@ -141,10 +162,6 @@ class MyBookingsNo:
     def bookings() -> Literal["""You have no bookings yet"""]: ...
 
 
-class No:
-    bookings: NoBookings
-
-
 class NoBookings:
     to: NoBookingsTo
 
@@ -181,7 +198,27 @@ class CancelBooking:
     def success() -> Literal["""Booking has been cancelled"""]: ...
 
 
-class ButtonCancelAll:
+class All:
+    bookings: AllBookings
+
+
+class AllBookings:
+    no: AllBookingsNo
+    desk: AllBookingsDesk
+
     @staticmethod
-    def bookings() -> Literal["""❌Cancel all bookings"""]: ...
+    def greeting(*, room_name) -> Literal["""Bookings in Room: { $room_name }"""]: ...
+
+    @staticmethod
+    def date(*, date) -> Literal["""&lt;b&gt;{ $date }&lt;/b&gt;"""]: ...
+
+
+class AllBookingsNo:
+    @staticmethod
+    def bookings() -> Literal["""There are no bookings in this room yet"""]: ...
+
+
+class AllBookingsDesk:
+    @staticmethod
+    def user(*, desk_name, telegram_name) -> Literal["""Desk: { $desk_name }, { $telegram_name }"""]: ...
 

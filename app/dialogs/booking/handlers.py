@@ -15,11 +15,10 @@ from services.common.desks_list_generator import generate_desks_list
 from services.user.desk_booker import desk_booker
 from database.orm_queries import DeskBookerError
 
-from utils.logger import Logger
-
 if TYPE_CHECKING:
     from locales.stub import TranslatorRunner
 
+from utils.logger import Logger
 logger = Logger()
 
 
@@ -83,7 +82,7 @@ async def selected_date(query: CallbackQuery,
                 # Save the selected date to the dialog data
                 dialog_manager.dialog_data['date'] = date
                 # Switch to the next window
-                await dialog_manager.switch_to(Booking.select_room)
+                await dialog_manager.switch_to(state=Booking.select_room)
     except Exception as e:
         await query.message.edit_text(f"An error occurred: {e}")
         await dialog_manager.done()
@@ -155,11 +154,11 @@ async def selected_room(query: CallbackQuery,
         if isinstance(desks, list) and not desks:
             #! there-are-no-desks
             await query.answer(text=i18n.there.are.no.desks(room_name=room_name, date=date), show_alert=True)
-            await dialog_manager.switch_to(Booking.select_date)
+            await dialog_manager.switch_to(state=Booking.select_room)
         # Save rooms to dialog_data and switch to the next window if desks is a list and not empty
         if isinstance(desks, list) and desks:
             dialog_manager.dialog_data['desks'] = desks
-            await dialog_manager.switch_to(Booking.select_desk)
+            await dialog_manager.switch_to(state=Booking.select_desk)
     except Exception as e:
         await query.message.edit_text(f"An error occurred: {e} while processing available desks. Please try again later.")
         await dialog_manager.done()
@@ -212,12 +211,12 @@ async def selected_desk(query: CallbackQuery,
             date_format,
         )
         # Answer user with the booking result
-        await query.answer(text=f"{result}", show_alert=True)
-        await dialog_manager.switch_to(Booking.select_date)
-    except DeskBookerError as e:
+        await query.answer(text=result, show_alert=True)
+        await dialog_manager.switch_to(state=Booking.select_date)
+    except DeskBookerError as no_desk:
         # In case of a race condition, answer user with the DeskBookerError message and switch to the select_room window
-        await query.answer(text=f"{e}", show_alert=True)
-        await dialog_manager.switch_to(Booking.select_room)
+        await query.answer(text=f'{no_desk}', show_alert=True)
+        await dialog_manager.switch_to(state=Booking.select_room)
     except Exception as e:
         await query.message.edit_text(f"An error occurred: {e} while processing the booking. Please try again later.")
         await dialog_manager.done()

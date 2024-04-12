@@ -9,7 +9,6 @@ if TYPE_CHECKING:
     from locales.stub import TranslatorRunner
 
 from utils.logger import Logger
-
 logger = Logger()
 
 
@@ -32,13 +31,19 @@ async def get_rooms(dialog_manager: DialogManager,
                     **kwargs):
     # Get session from DataBaseSession middleware
     session = dialog_manager.middleware_data['session']
+    # TODO: Refactor to get list of tuples with room_id and room_name
     rooms = await generate_available_rooms_list(session)
-    date = dialog_manager.dialog_data['date']
-    return {'rooms': rooms,
-            'selected-date': i18n.selected.date(date=date),
-            'select-room': i18n.select.room(),
-            'button-back': i18n.button.back(),
-            'button-exit': i18n.button.exit()}
+    if not rooms:
+        return {'no-rooms': i18n.no.rooms(),
+                'button-back': i18n.button.back(),
+                'button-exit': i18n.button.exit()}
+    else:
+        date = dialog_manager.dialog_data['date']
+        return {'rooms': rooms,
+                'selected-date': i18n.selected.date(date=date),
+                'select-room': i18n.select.room(),
+                'button-back': i18n.button.back(),
+                'button-exit': i18n.button.exit()}
 
 
 async def get_desks(dialog_manager: DialogManager,

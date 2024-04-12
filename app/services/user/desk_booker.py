@@ -39,7 +39,6 @@ async def desk_booker(
     - str: Response message
     """
     i18n: TranslatorRunner = i18n
-    room_id = await orm_select_room_id_by_name(session, room_name)
     desk_id = await orm_select_desk_id_by_name(session, desk_name)
     try:
         booking_date = datetime.strptime(date, date_format).date()
@@ -54,7 +53,7 @@ async def desk_booker(
         raise DeskBookerError(i18n.desk.booker.error())
     
     try:
-        await orm_insert_booking(session, telegram_id, desk_id, room_id, booking_date)
+        await orm_insert_booking(session, telegram_id, desk_id, booking_date)
         #! desk-booker-success
         return i18n.desk.booker.success(date=date, room_name=room_name, desk_name=desk_name)
     except Exception as e:

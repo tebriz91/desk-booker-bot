@@ -1,6 +1,7 @@
 from datetime import date
+from typing import Optional
 
-from sqlalchemy import Integer, and_, func, literal, not_, select, update, delete
+from sqlalchemy import Integer, and_, func, literal, not_, or_, select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload, aliased
 from sqlalchemy.exc import SQLAlchemyError
@@ -80,6 +81,85 @@ async def orm_select_user_by_telegram_id_or_telegram_name(
     )
     result = await session.execute(query)
     return result.scalar()
+
+
+async def orm_select_is_out_of_office_by_telegram_id(
+    session: AsyncSession,
+    telegram_id: int):
+    query = select(User.is_out_of_office).where(User.telegram_id == telegram_id)
+    result = await session.execute(query)
+    return result.scalar_one()
+
+# Switching without deleting future bookings
+async def orm_switch_is_out_of_office_by_telegram_id(
+    session: AsyncSession,
+    telegram_id: int):
+    try:
+        # Attempt to update the is_out_of_office status atomically
+        query = (
+            update(User).
+            where(User.telegram_id == telegram_id).
+            values(is_out_of_office=not_(User.is_out_of_office)).
+            execution_options(synchronize_session="fetch")
+        )
+        result = await session.execute(query)
+        if result.rowcount == 0:
+            # No rows were updated, indicating the user does not exist
+            raise ValueError(f"No user found with telegram_id {telegram_id}")
+        await session.commit()
+    except Exception as e:
+        await session.rollback()  # Ensure transaction is rolled back in case of error
+        raise  # Optionally re-raise or handle the exception differently
+
+
+# Switching and deleting future bookings
+async def orm_switch_is_out_of_office_by_telegram_id_and_clear_bookings(
+    session: AsyncSession,
+    telegram_id: int):
+    try:
+        # Check current out-of-office status before updating
+        current_status_query = select(User.is_out_of_office).where(User.telegram_id == telegram_id)
+        current_status_result = await session.execute(current_status_query)
+        current_status = current_status_result.scalar_one()
+
+        # Attempt to update the is_out_of_office status atomically
+        query = (
+            update(User).
+            where(User.telegram_id == telegram_id).
+            values(is_out_of_office=not_(current_status)).
+            execution_options(synchronize_session="fetch")
+        )
+        update_result = await session.execute(query)
+        if update_result.rowcount == 0:
+            # No rows were updated, indicating the user does not exist
+            raise ValueError(f"No user found with telegram_id {telegram_id}")
+        await session.commit()
+
+        # If changing from True to False, check desk assignments for deletions
+        if current_status == True:
+            # Find all desk assignments for this user
+            desk_assignments_query = select(DeskAssignment.desk_id, DeskAssignment.weekday).where(DeskAssignment.telegram_id == telegram_id)
+            desk_assignments_result = await session.execute(desk_assignments_query)
+            desk_assignments = desk_assignments_result.all()
+
+            for desk_id, assigned_weekday in desk_assignments:
+                # Adjust the weekday to match SQL DOW (day of week) expectations
+                sql_dow = (assigned_weekday.value + 1) % 7  # Shift by 1 to accommodate starting the week on Sunday
+
+                # Delete future bookings on these desk IDs where booking date matches the assigned weekday
+                delete_query = (
+                    delete(Booking).
+                    where(
+                        Booking.desk_id == desk_id,
+                        Booking.date >= date.today(),
+                        func.extract('dow', Booking.date) == sql_dow  # Match the adjusted weekday value
+                    )
+                )
+                await session.execute(delete_query)
+            await session.commit()
+
+    except Exception as e:
+        await session.rollback()  # Ensure transaction is rolled back in case of error
 
 
 async def orm_delete_user_by_telegram_id(session: AsyncSession, telegram_id: int):
@@ -293,6 +373,12 @@ async def orm_select_room_plan_by_room_name(session: AsyncSession, room_name: st
     return result.scalar_one()
 
 
+async def orm_select_room_plan_by_room_id(session: AsyncSession, room_id: int):
+    query = select(Room.plan).where(Room.id == room_id)
+    result = await session.execute(query)
+    return result.scalar_one()
+
+
 #* Desk's ORM queries
 async def orm_insert_desk_with_room_id(session: AsyncSession, room_id: int, desk_name: str):
     query = select(Desk).where(Desk.name == desk_name)
@@ -370,7 +456,7 @@ async def orm_select_available_not_booked_desks_by_room_id(session: AsyncSession
     result = await session.execute(query)
     return result.scalars().all()
 
-
+# Doesn't check if users for whom desks are assigned are out of office
 async def orm_select_not_assigned_desks_by_desks_id_and_weekday(session: AsyncSession, desk_ids: list[int], weekday: Weekday):
     logger.info(">>>>>>>>>>>>>>>>>>>>>>>Inside orm_select_not_assigned_desks_by_desks_id_and_weekday()")
     logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Weekday: {weekday}")
@@ -379,6 +465,27 @@ async def orm_select_not_assigned_desks_by_desks_id_and_weekday(session: AsyncSe
         DeskAssignment.desk_id.in_(desk_ids)
     ).distinct()
     # Use the subquery to filter out desks that have been assigned on this weekday
+    query = select(Desk).where(
+        Desk.id.in_(desk_ids),
+        ~Desk.id.in_(subquery)
+    )
+    result = await session.execute(query)
+    return result.scalars().all()
+
+
+async def orm_select_available_desks_by_desks_id_and_weekday(session: AsyncSession, desk_ids: list[int], weekday: Weekday):
+    logger.info(">>>>>>>>>>>>>>>>>>>>>>>Inside orm_select_not_assigned_desks_by_desks_id_and_weekday()")
+    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Weekday: {weekday}")
+    
+    # Create a subquery that selects desk IDs assigned on the given weekday
+    # and joins with the User table to check if the assigned user is out of office
+    subquery = select(DeskAssignment.desk_id).join(User).where(
+        DeskAssignment.weekday == weekday,
+        DeskAssignment.desk_id.in_(desk_ids),
+        User.is_out_of_office.is_(False)  # Only include desks where the user is not out of office
+    ).distinct()
+
+    # The main query selects desks by ID and excludes those in the subquery
     query = select(Desk).where(
         Desk.id.in_(desk_ids),
         ~Desk.id.in_(subquery)
@@ -498,8 +605,14 @@ async def orm_select_desk_assignment_by_telegram_id_and_weekday(session: AsyncSe
         return None
 
 
-async def orm_select_desk_assignments_by_user_id(session: AsyncSession, user_id: int):
-    query = select(DeskAssignment).where(DeskAssignment.user_id == user_id)
+async def orm_select_desk_assignments_by_telegram_id(session: AsyncSession, telegram_id: int):
+    query = select(DeskAssignment).where(DeskAssignment.telegram_id == telegram_id)
+    result = await session.execute(query)
+    return result.scalars().all()
+
+
+async def orm_select_desk_assignments_by_telegram_id_selectinload(session: AsyncSession, telegram_id: int):
+    query = select(DeskAssignment).options(selectinload(DeskAssignment.desk).selectinload(Desk.room)).where(DeskAssignment.telegram_id == telegram_id).order_by(DeskAssignment.weekday)
     result = await session.execute(query)
     return result.scalars().all()
 
@@ -554,7 +667,6 @@ async def orm_insert_booking(
     session: AsyncSession,
     telegram_id: int,
     desk_id: int,
-    room_id: int,
     date: date) -> str:
     query = select(Booking).where(
         Booking.telegram_id == telegram_id,
@@ -568,7 +680,6 @@ async def orm_insert_booking(
         new_booking = Booking(
                 telegram_id=telegram_id,
                 desk_id=desk_id,
-                room_id=room_id,
                 date=date)
         session.add(new_booking)
         try:
@@ -593,19 +704,22 @@ async def orm_select_bookings_by_telegram_id_joined_from_today(session: AsyncSes
     return result.scalars().all()
 
 
-#* In computer terms, we changed the way we asked for the data. We made sure that when we asked for the bookings (Booking), we got not only the bookings themselves but also the user who made each booking (User), and where the booking is for (Desk and Room), all in one go. This is called "eager loading" – like eagerly bringing all the toys you need at once.
 async def orm_select_bookings_by_room_id_joined_from_today(session: AsyncSession, room_id: int):
+    # Use an explicit select() construct for the desk_subquery
+    desk_subquery = select(Desk.id).filter(Desk.room_id == room_id).subquery()
+    
+    # Now explicitly use select() when filtering by desk_id
     query = select(Booking).filter(
-        Booking.room_id == room_id, 
+        Booking.desk_id.in_(select(Desk.id).filter(Desk.room_id == room_id)),  # Explicitly using select() here
         Booking.date >= date.today()
     ).options(
-        joinedload(Booking.desk).joinedload(Desk.room),
+        joinedload(Booking.desk).joinedload(Desk.room),  # Eagerly load Desk and Room relationships
         joinedload(Booking.user)  # Eagerly load User relationship
     ).order_by(Booking.date)
+    
     try:
         result = await session.execute(query)
-        bookings = result.scalars().all()
-        return bookings
+        return result.scalars().all()
     except Exception as e:
         raise e
 
@@ -622,10 +736,19 @@ async def orm_select_booking_by_telegram_id_and_date(session: AsyncSession, tele
     return result.scalar()
 
 
-async def orm_select_booking_by_telegram_id_and_date_selectinload(session: AsyncSession, telegram_id: int, date: date):
-    query = select(Booking).options(selectinload(Booking.room), selectinload(Booking.desk)).where(Booking.telegram_id == telegram_id, Booking.date == date)
-    result = await session.execute(query)
-    return result.scalar()
+async def orm_select_booking_by_telegram_id_and_date_selectinload(session: AsyncSession, telegram_id: int, booking_date: date) -> Optional[Booking]:
+    query = select(Booking).options(
+        selectinload(Booking.desk).selectinload(Desk.room),  # This chains loading of related Desk and its Room
+        selectinload(Booking.user)  # Eagerly load the related User
+    ).where(
+        Booking.telegram_id == telegram_id,
+        Booking.date == booking_date
+    )
+    try:
+        result = await session.execute(query)
+        return result.scalar()
+    except Exception as e:
+        raise e
 
 
 async def orm_select_booking_by_desk_id_and_date(session: AsyncSession, desk_id: int, date: date):

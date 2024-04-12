@@ -3,9 +3,11 @@ from enum import Enum
 class MainMenu(Enum):
     BOOK = ('/book', 'Book a Desk')
     CANCEL_BOOKINGS = ('/cancel', 'Cancel Booking')
-    MY_BOOKINGS = ('/my_bookings', 'View My Bookings')
-    ALL_BOOKINGS = ('/all_bookings', 'View All Bookings')
-    HELP = ('/help', 'Help Information')
+    MY_BOOKINGS = ('/my_bookings', 'My Bookings')
+    # TEAM_BOOKINGS = ('/team_bookings', 'Team Bookings')
+    ALL_BOOKINGS = ('/all_bookings', 'All Bookings')
+    TEAM = ('/team', 'My Team')
+    DESK = ('/desk', 'My Desk')
     ADMIN = ('/admin', 'Admin Commands')
     
     def __str__(self):

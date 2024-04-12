@@ -11,12 +11,17 @@ button-confirm = ✅Confirm
 button-toggle = 🔄Toggle
 
 
-<#-- booking_dialog -->
+<#-- Common -->
 select-date = Select a date:
 selected-date = Date: {$date}
 select-room = Select a room:
 selected-room = Room: {$room_name}
 select-desk = Select a desk:
+selected-desk = Desk: {$desk_name}
+no-rooms = There are no rooms yet
+
+
+<#-- booking_dialog -->
 
 <#-- booking_cheker.py -->
 existing-booking = You already have a booking on {$date} in room: {$room_name}, desk: {$desk_name}
@@ -56,3 +61,25 @@ no-bookings-to-cancel = You have no bookings to cancel
 select-booking-to-cancel = Select a booking to cancel:
 bookings-to-cancel = Desk: {$desk_name} in Room: {$room_name} on {$date}
 cancel-booking-success = Booking has been cancelled
+
+
+<#-- all_bookings_dialog -->
+all-bookings-no-bookings = There are no bookings in this room yet
+all-bookings-greeting = Bookings in Room: {$room_name}
+all-bookings-date = <b>{$date}</b>
+all-bookings-desk-user = Desk: {$desk_name}, {$telegram_name}
+
+
+<#-- desk_dialog -->
+desk-assignment-empty = You don't have an assigned desk
+desk-assignment-exists = Your have an assigned desk: <b>{$desk_name}</b> in room: <b>{$room_name}</b> for following weekdays: <b>{$weekdays}</b>
+
+desk-assignment-active =
+    Your desk assignment is ✅active
+
+    In case you are out of the office (vacation, sick leave, etc.), please press the button below to free the desk until your return
+
+desk-assignment-inactive =
+    Your desk assignment is ❌inactive
+
+    In case you are back to the office, press the button below to activate the desk assignment

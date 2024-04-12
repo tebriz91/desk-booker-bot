@@ -11,6 +11,21 @@ class CancelBookings(StatesGroup):
     select_booking = State()
 
 
+class TeamBookings(StatesGroup):
+    select_team = State()
+    select_subteam = State()
+    view_bookings = State()
+
+
 class AllBookings(StatesGroup):
     select_room = State()
     view_bookings = State()
+
+
+class Team(StatesGroup):
+    main_menu = State()
+    bookings = State()
+
+
+class Desk(StatesGroup):
+    main_menu = State()

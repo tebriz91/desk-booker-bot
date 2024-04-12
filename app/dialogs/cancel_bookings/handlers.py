@@ -34,4 +34,4 @@ async def selected_booking(query: CallbackQuery,
     booking_id = int(item_id)
     await orm_delete_booking_by_id(session, booking_id)
     await query.answer(text=i18n.cancel.booking.success())
-    await dialog_manager.switch_to(CancelBookings.select_booking)
+    await dialog_manager.switch_to(state=CancelBookings.select_booking)

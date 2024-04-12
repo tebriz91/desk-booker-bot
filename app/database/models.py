@@ -130,11 +130,16 @@ class Booking(Base):
     __tablename__ = 'bookings'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    telegram_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('users.telegram_id', ondelete='CASCADE'), nullable=False)
-    desk_id: Mapped[int] = mapped_column(ForeignKey('desks.id', ondelete='CASCADE'), nullable=False)
-    room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id', ondelete='CASCADE'), nullable=False)
-    date: Mapped[Date]= mapped_column(Date, nullable=False) # format: "YYYY-MM-DD"
+    telegram_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('users.telegram_id', ondelete='CASCADE'))
+    desk_id: Mapped[int] = mapped_column(ForeignKey('desks.id', ondelete='CASCADE'))
+    date: Mapped[Date]= mapped_column(Date) # format: "YYYY-MM-DD"
     
     user: Mapped['User'] = relationship(backref='bookings')
-    room: Mapped['Room'] = relationship(backref='bookings')
     desk: Mapped['Desk'] = relationship(backref='bookings')
+    
+    __table_args__ = (
+        # A desk cannot be booked by more than one user on the same date.
+        UniqueConstraint('desk_id', 'date', name='uq_desk_id_date'),
+        # A user cannot book more than one desk on the same date.
+        UniqueConstraint('telegram_id', 'date', name='uq_telegram_id_date'),
+    )

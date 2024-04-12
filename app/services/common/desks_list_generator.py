@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.orm_queries import (
     orm_select_available_desks_by_room_name,
     orm_select_room_id_by_name,
-    orm_select_not_assigned_desks_by_desks_id_and_weekday,
+    orm_select_available_desks_by_desks_id_and_weekday,
     orm_select_team_id_by_telegram_id,
     orm_select_team_preferred_room_id,
     orm_select_available_not_booked_desks_by_room_id,
@@ -42,7 +42,7 @@ async def fetch_desks_list(
         not_booked_desks_id = [desk.id for desk in not_booked_desks_obj]
         logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Not booked desks: {not_booked_desks_id}")
         # Get the desks that are not assigned and not booked by
-        desks_obj = await orm_select_not_assigned_desks_by_desks_id_and_weekday(session, not_booked_desks_id, weekday)
+        desks_obj = await orm_select_available_desks_by_desks_id_and_weekday(session, not_booked_desks_id, weekday)
         for desk in desks_obj:
             logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Desk: {desk}")
             desks = [desk.name for desk in desks_obj]
