@@ -40,7 +40,7 @@ async def check_desk_assignment(i18n, session: AsyncSession, telegram_id: int, d
             #! desk-assignment
             return i18n.desk.assignment(weekday=booking_date.strftime('%A'))
     except Exception as e:
-        return "An unexpected error occurred while checking for desk assignments."
+        return f"An unexpected error {e} occurred while checking for desk assignments."
     
 
 async def check_desk_assignment_by_telegram_id(

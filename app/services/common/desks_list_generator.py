@@ -1,5 +1,5 @@
-from typing import List, Optional, Tuple, Union
-from datetime import datetime
+from typing import List, Optional, Union
+from datetime import datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -70,11 +70,16 @@ async def generate_desks_list(
     weekday_enum = Weekday(booking_date.weekday())
     today = datetime.now().date()
     logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Today: {today}")
-    days_difference = (booking_date - today).days
-    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Days difference: {days_difference}")
+
+    # Calculating workdays delta between today and booking date (excluding weekends)
+    workdays_difference = 0
+    current_day = today
+    while current_day <= booking_date:
+        if current_day.weekday() < 5:  # Weekdays are from 0 (Monday) to 4 (Friday)
+            workdays_difference += 1
+        current_day += timedelta(days=1)
+    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Workdays difference: {workdays_difference}")
     logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Standard access days: {standard_access_days}")
-    if days_difference < 0:
-        return f"Error: Selected date: {booking_date} is in the past"
     
     # Fetch the room ID based on room name
     room_id = await orm_select_room_id_by_name(session, room_name)
@@ -92,15 +97,15 @@ async def generate_desks_list(
             logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Preferred room ID: {preferred_room_id}")
             # User can book if (one of the following conditions is met):
             # - No team_id or preferred_room_id != room_id but within standard access days
-            # - Preferred room matches selected room despite days difference
-            if preferred_room_id != room_id and days_difference > standard_access_days:
-                logger.info(f">>>>>>>>>>>>>>>>>>>>>>>preferred_room_id: {preferred_room_id} != room_id: {room_id} and days_difference: {days_difference} > standard_access_days: {standard_access_days}")
+            # - Preferred room matches selected room despite workdays_difference
+            if preferred_room_id != room_id and workdays_difference > standard_access_days:
+                logger.info(f">>>>>>>>>>>>>>>>>>>>>>>preferred_room_id: {preferred_room_id} != room_id: {room_id} and workdays_difference: {workdays_difference} > standard_access_days: {standard_access_days}")
                 return []
-            elif not team_id and days_difference > standard_access_days:
-                logger.info(f">>>>>>>>>>>>>>>>>>>>>>>No team_id and days_difference: {days_difference} > standard_access_days: {standard_access_days}")
+            elif not team_id and workdays_difference > standard_access_days:
+                logger.info(f">>>>>>>>>>>>>>>>>>>>>>>No team_id and workdays_difference: {workdays_difference} > standard_access_days: {standard_access_days}")
                 return []
-            elif not team_id or preferred_room_id == room_id or days_difference <= standard_access_days:
-                logger.info(f">>>>>>>>>>>>>>>>>>>>>>>No team_id or preferred_room_id == room_id or days_difference: {days_difference} <= standard_access_days: {standard_access_days}. Fetching desks...")
+            elif not team_id or preferred_room_id == room_id or workdays_difference <= standard_access_days:
+                logger.info(f">>>>>>>>>>>>>>>>>>>>>>>No team_id or preferred_room_id == room_id or workdays_difference: {workdays_difference} <= standard_access_days: {standard_access_days}. Fetching desks...")
                 desks = await fetch_desks_list(session, room_id, weekday_enum, booking_date)
                 logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Desks: {desks}")
                 return desks if desks else []
