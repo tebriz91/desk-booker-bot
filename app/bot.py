@@ -120,7 +120,7 @@ async def main():
     9. Start polling for updates to begin processing incoming messages and commands.
     """
     # Initialize the database engine with configuration parameters.
-    initialize_engine(config.db.url, echo=False)
+    initialize_engine(config.db.url, echo=True)
     
     #! Drop the database schema if it exists. This is for development purposes only.
     # await drop_db_cascade()
@@ -145,7 +145,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
