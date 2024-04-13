@@ -5,8 +5,8 @@ import holidays
 async def generate_dates(
     num_days: int | None = 5,
     exclude_weekends: bool | None = True,
-    timezone: str | None = 'UTC',
-    country_code: str | None = 'Europe/Amsterdam',
+    timezone: str | None = 'Europe/Moscow',
+    country_code: str | None = 'RU',
     date_format: str | None = '%d.%m.%Y (%a)'
     ) -> list:
     """

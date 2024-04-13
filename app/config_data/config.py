@@ -1,6 +1,6 @@
 import json
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, List, Optional, Union
 # Attempt to load environment variables from .env file
@@ -80,7 +80,22 @@ class BotOperationConfig:
     country_code: Optional[str] = field(default=None)
     date_format: Optional[str] = field(default="%d.%m.%Y (%a)")
     date_format_short: Optional[str] = field(default="%d.%m.%Y")
+    advanced_mode: Optional[bool] = field(default=False)
+    
+    def to_dict(self) -> dict:
+        """Convert the BotOperationConfig dataclass instance into a dictionary."""
+        return asdict(self)
+ 
 
+# Bot advanced mode configuration
+@dataclass(frozen=True, slots=True)
+class BotAdvancedModeConfig:
+    standard_access_days: Optional[int] = field(default=1)
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    
 # Redis configuration
 @dataclass(frozen=True, slots=True)
 class RedisConfig:
@@ -100,6 +115,7 @@ class Config:
     db: DBConfig
     bot: BotConfig
     bot_operation: BotOperationConfig
+    bot_advanced_mode: BotAdvancedModeConfig
     redis: RedisConfig
 
     @staticmethod
@@ -123,11 +139,11 @@ def load_config() -> Config:
             host=get_env("DB_HOST"),
             port=get_env("DB_PORT", "int"),
             user=get_env("DB_USER"),
-            password=get_env("DB_PASSWORD")
+            password=get_env("DB_PASSWORD"),
         ),
         bot=BotConfig(
             token=get_env("BOT_TOKEN"),
-            admins=get_env("BOT_ADMINS", "json")
+            admins=get_env("BOT_ADMINS", "json"),
         ),
         bot_operation=BotOperationConfig(
             num_days=get_env("NUM_DAYS", "int"),
@@ -135,10 +151,14 @@ def load_config() -> Config:
             timezone=get_env("TIMEZONE"),
             country_code=get_env("COUNTRY_CODE"),
             date_format=get_env("DATE_FORMAT"),
-            date_format_short=get_env("DATE_FORMAT_SHORT")
+            date_format_short=get_env("DATE_FORMAT_SHORT"),
+            advanced_mode=get_env("ADVANCED_MODE", "bool"),
+        ),
+        bot_advanced_mode=BotAdvancedModeConfig(
+            standard_access_days=get_env("STANDARD_ACCESS_DAYS", "int"),
         ),
         redis=RedisConfig(
             host=get_env("REDIS_HOST"),
-            port=get_env("REDIS_PORT", "int")
+            port=get_env("REDIS_PORT", "int"),
         ),
     )
