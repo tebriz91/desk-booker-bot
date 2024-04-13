@@ -59,7 +59,7 @@ my-bookings-list =
 <#-- cancel_bookings_dialog -->
 no-bookings-to-cancel = You have no 🚩bookings to cancel
 select-booking-to-cancel = Select a 🚩booking to cancel:
-bookings-to-cancel = Desk: {$desk_name} in Room: {$room_name} on {$date}
+bookings-to-cancel = {$date}, Desk: {$desk_name}, Room: {$room_name}
 cancel-booking-success = Booking has been cancelled
 
 

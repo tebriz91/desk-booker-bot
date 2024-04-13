@@ -59,7 +59,7 @@ my-bookings-list =
 <#-- cancel_bookings_dialog -->
 no-bookings-to-cancel = У вас нет 🚩броней для отмены
 select-booking-to-cancel = Выберите 🚩бронь для отмены:
-bookings-to-cancel = Стол: {$desk_name} в каб.: {$room_name} на {$date}
+bookings-to-cancel = {$date}, cтол: {$desk_name}, каб.: {$room_name}
 cancel-booking-success = Бронь отмена
 
 

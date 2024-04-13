@@ -96,7 +96,7 @@ class Desk:
 
 class DeskAssignment:
     @staticmethod
-    def __call__(*, weekday) -> Literal["""You have an 🔒assigned desk for the selected weekday ({ $weekday }). To see your permanent assinments use command: /desk"""]: ...
+    def __call__(*, weekday) -> Literal["""You have an 🔒assigned desk for the selected weekday ({ $weekday }). To see your permanent desk assinments use command: /desk"""]: ...
 
     @staticmethod
     def empty() -> Literal["""You don&#39;t have an 🔒assigned desk"""]: ...
@@ -194,7 +194,7 @@ class Bookings:
 
 class BookingsTo:
     @staticmethod
-    def cancel(*, desk_name, room_name, date) -> Literal["""Desk: { $desk_name } in Room: { $room_name } on { $date }"""]: ...
+    def cancel(*, date, desk_name, room_name) -> Literal["""{ $date }, Desk: { $desk_name }, Room: { $room_name }"""]: ...
 
 
 class Cancel:
