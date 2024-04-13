@@ -72,14 +72,17 @@ all-bookings-desk-user = Desk: {$desk_name}, {$telegram_name}
 
 <#-- desk_dialog -->
 desk-assignment-empty = You don't have an assigned desk
-desk-assignment-exists = Your have an assigned desk: <b>{$desk_name}</b> in room: <b>{$room_name}</b> for following weekdays: <b>{$weekdays}</b>
+desk-assignment-greeting = Your desk assignment(s):
+desk-assignment-info =
+    <b>{$weekday}</b>
+        Room: <b>{$room_name}</b>, Desk: <b>{$desk_name}</b>
 
 desk-assignment-active =
-    Your desk assignment is ✅active
+    Desk assignment(s) is ✅active
 
-    In case you are out of the office (vacation, sick leave, etc.), please press the button below to free the desk until your return
+    In case you are out of the office (vacation, sick leave, etc.), please press the button below to free the desk(s) until your return
 
 desk-assignment-inactive =
-    Your desk assignment is ❌inactive
+    Desk assignment(s) is ❌inactive
 
-    In case you are back to the office, press the button below to activate the desk assignment
+    In case you are back to the office, press the button below to activate desk assignment(s)

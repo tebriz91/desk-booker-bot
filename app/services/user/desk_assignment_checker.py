@@ -52,28 +52,29 @@ async def check_desk_assignment_by_telegram_id(
     Returns a tuple of two strings: the first string a tag for the response, and the second string is the response message.
     '''
     i18n: TranslatorRunner = i18n
-    desk_assignment = await orm_select_desk_assignments_by_telegram_id_selectinload(session, telegram_id)
-    if not desk_assignment:
+    assignments = await orm_select_desk_assignments_by_telegram_id_selectinload(session, telegram_id)
+    if not assignments:
         #! desk-assignment-empty
         return ("empty", i18n.desk.assignment.empty())
     else:
-        # Iterate over the desk assignments to get the string of ordered weekdays
-        weekdays = ', '.join([assignment.weekday.name for assignment in desk_assignment])
-        #! desk-assignment-exists
-        result: str = i18n.desk.assignment.exists(
-            desk_name=desk_assignment[0].desk.name,
-            room_name=desk_assignment[0].desk.room.name,
-            weekdays=weekdays,
-        )
+        #! desk-assignment-greeting
+        result: str = i18n.desk.assignment.greeting() + '\n\n'
+        for assignment in assignments:
+            #! desk-assignment-info
+            result += i18n.desk.assignment.info(
+                weekday=assignment.weekday.name,
+                room_name=assignment.desk.room.name,
+                desk_name=assignment.desk.name,
+            ) + '\n\n'
     try:
         is_out_of_office: bool = await orm_select_is_out_of_office_by_telegram_id(session, telegram_id)
         if is_out_of_office:
             #! desk-assignment-inactive
-            result += '\n\n' + i18n.desk.assignment.inactive()
+            result += i18n.desk.assignment.inactive()
             return ("inactive", result)
         else:
             #! desk-assignment-active
-            result += '\n\n' + i18n.desk.assignment.active()
+            result += i18n.desk.assignment.active()
             return ("active", result)
     except Exception as e:
         return ("error", str(e))
