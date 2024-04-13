@@ -42,10 +42,12 @@ all_bookings_dialog = Dialog(
         getter=get_rooms,
     ),
     Window(
-        Format(text='{bookings}'),
+        Format(text='{empty}', when='empty'),
+        Format(text='{error}', when='error'),
+        Format(text='{bookings}', when='bookings'),
         Row(
-            Back(Format(text='{button-back}')),
-            Cancel(Format(text='{button-exit}')),
+            Back(Format(text='{button-back}'), when='button-back'),
+            Cancel(Format(text='{button-exit}'), when='button-exit'),
         ),
         state=AllBookings.view_bookings,
         getter=get_bookings,

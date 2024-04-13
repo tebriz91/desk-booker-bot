@@ -617,6 +617,23 @@ async def orm_select_desk_assignments_by_telegram_id_selectinload(session: Async
     return result.scalars().all()
 
 
+# Returns desk assignments joined with desk and room data where the user is not out of office
+async def orm_select_desk_assignments_by_room_id_selectinload(session: AsyncSession, room_id: int):
+    query = select(DeskAssignment).join(User).options(
+        selectinload(DeskAssignment.desk).selectinload(Desk.room),  # Eagerly load Desk and Room relationships
+        selectinload(DeskAssignment.user)  # Eagerly load User relationship
+    ).where(
+        DeskAssignment.desk.has(Desk.room_id == room_id),  # Filter by room_id
+        User.is_out_of_office.is_(False)  # Only include users that are not out of office
+    ).order_by(DeskAssignment.weekday)
+    
+    try:
+        result = await session.execute(query)
+        return result.scalars().all()
+    except Exception as e:
+        raise e
+
+
 async def orm_select_desk_assignments_by_desk_id(session: AsyncSession, desk_id: int):
     query = select(DeskAssignment).where(DeskAssignment.desk_id == desk_id)
     result = await session.execute(query)

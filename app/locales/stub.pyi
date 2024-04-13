@@ -86,7 +86,7 @@ class No:
 
 class Existing:
     @staticmethod
-    def booking(*, date, room_name, desk_name) -> Literal["""You already have a booking on { $date } in room: { $room_name }, desk: { $desk_name }"""]: ...
+    def booking(*, date, room_name, desk_name) -> Literal["""You already have a 🚩booking on { $date } in room: { $room_name }, desk: { $desk_name }"""]: ...
 
 
 class Desk:
@@ -96,17 +96,17 @@ class Desk:
 
 class DeskAssignment:
     @staticmethod
-    def __call__(*, weekday) -> Literal["""You have an assigned desk for the selected weekday ({ $weekday })"""]: ...
+    def __call__(*, weekday) -> Literal["""You have an 🔒assigned desk for the selected weekday ({ $weekday }). To see your permanent assinments use command: /desk"""]: ...
 
     @staticmethod
-    def empty() -> Literal["""You don&#39;t have an assigned desk"""]: ...
+    def empty() -> Literal["""You don&#39;t have an 🔒assigned desk"""]: ...
 
     @staticmethod
-    def greeting() -> Literal["""Your desk assignment(s):"""]: ...
+    def greeting() -> Literal["""Your 🔒desk assignment(s):"""]: ...
 
     @staticmethod
-    def info(*, weekday, room_name, desk_name) -> Literal["""Weekday: { $weekday }
-Room: &lt;b&gt;{ $room_name }&lt;/b&gt;, Desk: &lt;b&gt;{ $desk_name }&lt;/b&gt;"""]: ...
+    def info(*, weekday, room_name, desk_name) -> Literal["""&lt;b&gt;{ $weekday }&lt;/b&gt;
+    Room: &lt;b&gt;{ $room_name }&lt;/b&gt;, Desk: &lt;b&gt;{ $desk_name }&lt;/b&gt;"""]: ...
 
     @staticmethod
     def active() -> Literal["""Desk assignment(s) is ✅active
@@ -137,7 +137,7 @@ class DeskBooker:
     def error() -> Literal["""Oops... Someone has booked the desk before you. Please select another desk"""]: ...
 
     @staticmethod
-    def success(*, desk_name, room_name, date) -> Literal["""Successfully booked desk: { $desk_name } in room: { $room_name } for { $date }"""]: ...
+    def success(*, desk_name, room_name, date) -> Literal["""Successfully 🚩booked desk: { $desk_name } in room: { $room_name } for { $date }"""]: ...
 
 
 class My:
@@ -148,7 +148,7 @@ class MyBookings:
     no: MyBookingsNo
 
     @staticmethod
-    def greeting(*, telegram_name) -> Literal["""Your bookings, { $telegram_name }:"""]: ...
+    def greeting(*, telegram_name) -> Literal["""Your 🚩bookings, { $telegram_name }:"""]: ...
 
     @staticmethod
     def date(*, date) -> Literal["""&lt;b&gt;{ $date }&lt;/b&gt;"""]: ...
@@ -167,7 +167,7 @@ class MyBookings:
 
 class MyBookingsNo:
     @staticmethod
-    def bookings() -> Literal["""You have no bookings yet"""]: ...
+    def bookings() -> Literal["""You have no 🚩bookings yet"""]: ...
 
 
 class NoBookings:
@@ -176,7 +176,7 @@ class NoBookings:
 
 class NoBookingsTo:
     @staticmethod
-    def cancel() -> Literal["""You have no bookings to cancel"""]: ...
+    def cancel() -> Literal["""You have no 🚩bookings to cancel"""]: ...
 
 
 class SelectBooking:
@@ -185,7 +185,7 @@ class SelectBooking:
 
 class SelectBookingTo:
     @staticmethod
-    def cancel() -> Literal["""Select a booking to cancel:"""]: ...
+    def cancel() -> Literal["""Select a 🚩booking to cancel:"""]: ...
 
 
 class Bookings:
@@ -215,18 +215,39 @@ class AllBookings:
     desk: AllBookingsDesk
 
     @staticmethod
-    def greeting(*, room_name) -> Literal["""Bookings in Room: { $room_name }"""]: ...
+    def greeting(*, room_name) -> Literal["""&lt;b&gt;🚩Bookings in Room: { $room_name }&lt;/b&gt;"""]: ...
 
     @staticmethod
     def date(*, date) -> Literal["""&lt;b&gt;{ $date }&lt;/b&gt;"""]: ...
 
 
 class AllBookingsNo:
+    bookings: AllBookingsNoBookings
+
+
+class AllBookingsNoBookings:
     @staticmethod
-    def bookings() -> Literal["""There are no bookings in this room yet"""]: ...
+    def __call__() -> Literal["""There are no 🚩bookings in this room yet"""]: ...
+
+    @staticmethod
+    def assignments() -> Literal["""There are no 🚩bookings and 🔒permanent desk assignments in this room yet"""]: ...
 
 
 class AllBookingsDesk:
+    assignments: AllBookingsDeskAssignments
+
     @staticmethod
     def user(*, desk_name, telegram_name) -> Literal["""Desk: { $desk_name }, { $telegram_name }"""]: ...
+
+
+class AllBookingsDeskAssignments:
+    first: AllBookingsDeskAssignmentsFirst
+
+    @staticmethod
+    def weekday(*, weekday) -> Literal["""{ $weekday }"""]: ...
+
+
+class AllBookingsDeskAssignmentsFirst:
+    @staticmethod
+    def line(*, room_name) -> Literal["""&lt;b&gt;Active 🔒permanent desk assignments in Room: { $room_name }&lt;/b&gt;"""]: ...
 
