@@ -84,7 +84,6 @@ class RoomEditMenu(Enum):
     EDIT_ROOM_NAME = 'Edit Name'
     TOGGLE_AVAILABILITY = 'Toggle Availability'
     EDIT_ROOM_PLAN = 'Edit Room Plan'
-    EDIT_ADDITIONAL_INFO = 'Edit Additional Info'
     ADD_DESK = 'Add Desk'
     DELETE_DESK = 'Delete Desk'
     EDIT_DESK = 'Edit Desk'
@@ -96,7 +95,6 @@ class RoomEditMenu(Enum):
 class DeskEditMenu(Enum):
     EDIT_DESK_NAME = 'Edit Desk Name'
     TOGGLE_AVAILABILITY = 'Toggle Availability'
-    EDIT_ADDITIONAL_INFO = 'Edit Additional Info'
 
 #* Submenus for Booking Management Menu (submenu of Admin Menu)
 class BookingBrowseMenu(Enum):

@@ -9,6 +9,13 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage, Redis, DefaultKeyBuilder
 from aiogram.fsm.storage.memory import SimpleEventIsolation
 
+from fluentogram import TranslatorHub
+from middlewares.i18n import TranslatorRunnerMiddleware
+from utils.i18n import create_translator_hub
+
+from aiogram_dialog import setup_dialogs
+from dialogs import register_dialogs
+
 from config_data.config import load_config
 from keyboards.set_menu import set_main_menu
 from scenes.setup import register_scenes
@@ -19,7 +26,7 @@ from database.engine import (
     initialize_engine,
     get_session_maker,
     create_db,
-    drop_db #! For development purposes only
+    drop_db_cascade, #! For development purposes only
     )
 from utils.logger import Logger
 from routers import router
@@ -63,6 +70,8 @@ def setup_dispatcher(bot, storage):
         events_isolation=SimpleEventIsolation(),
     )
     dp.include_router(router)
+    register_dialogs(router) # Initialize all dialog modules
+    setup_dialogs(dp) # Initialize DialogManager and register dialogs
     register_scenes(dp) # Initialize SceneRegistry and register scenes
     dp.workflow_data.update(config=config) # Make config available globally through dispatcher
     return dp
@@ -77,6 +86,7 @@ def setup_middlewares(dp):
     dp.message.outer_middleware(UserMiddleware(session_pool=session_maker)) # This middleware checks if the user is registered in the database
     dp.callback_query.outer_middleware(UserMiddleware(session_pool=session_maker))
     dp.update.middleware(DataBaseSession(session_pool=session_maker)) # This middleware provides a database session to the handler
+    dp.update.middleware(TranslatorRunnerMiddleware())
     # dp.update.middleware(ConfigMiddleware(config=config))
 
 
@@ -110,10 +120,10 @@ async def main():
     9. Start polling for updates to begin processing incoming messages and commands.
     """
     # Initialize the database engine with configuration parameters.
-    initialize_engine(config.db.url, echo=True)
+    initialize_engine(config.db.url, echo=False)
     
     #! Drop the database schema if it exists. This is for development purposes only.
-    # await drop_db()
+    # await drop_db_cascade()
     
     # Create the database schema based on defined models.
     # It doesn't affect existing tables that match the schema.
@@ -121,12 +131,17 @@ async def main():
     
     bot, storage = initialize_bot()
     dp = setup_dispatcher(bot, storage)
+    translator_hub: TranslatorHub = create_translator_hub()
     setup_middlewares(dp)
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
     await bot.delete_webhook(drop_pending_updates=True) # Remove any existing webhooks before starting to poll for updates
     await set_main_menu(bot) # Setup the bot's main menu
-    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    await dp.start_polling(
+        bot,
+        _translator_hub=translator_hub,
+        allowed_updates=dp.resolve_used_update_types(),
+    )
 
 
 if __name__ == "__main__":

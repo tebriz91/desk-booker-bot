@@ -18,8 +18,7 @@ class DeskEditScene(Scene, state="desk_edit_scene"):
         keyboard = create_reply_kb(
             buttons=[
                 DeskEditMenu.EDIT_DESK_NAME.value,
-                DeskEditMenu.TOGGLE_AVAILABILITY.value,
-                DeskEditMenu.EDIT_ADDITIONAL_INFO.value],
+                DeskEditMenu.TOGGLE_AVAILABILITY.value],
             width=3,
             util_buttons=[
                 ButtonLabel.TO_MAIN_MENU.value,
@@ -66,10 +65,3 @@ class DeskEditScene(Scene, state="desk_edit_scene"):
     async def to_desk_availability_toggle(self, message: Message):
         await message.delete()
         await self.wizard.goto("desk_availability_toggle_scene")
-        
-    @on.message(F.text == DeskEditMenu.EDIT_ADDITIONAL_INFO.value)
-    async def to_desk_additional_info_edit(self, message: Message):
-        await message.delete()
-        await message.answer("Not implemented yet") # TODO: Implement desk additional info edit scene
-        await self.wizard.retake()
-        # await self.wizard.goto("desk_additional_info_edit_scene")

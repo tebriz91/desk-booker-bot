@@ -10,6 +10,7 @@ docker-compose*.yml
 !README.md
 logs/
 tests/
+versions/
 ### Python template
 # Byte-compiled / optimized / DLL files
 __pycache__/
