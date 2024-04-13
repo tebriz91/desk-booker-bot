@@ -37,11 +37,9 @@ async def fetch_desks_list(
         not_booked_desks_id = [desk.id for desk in not_booked_desks_obj]
         # Get the desks that are not assigned and not booked by
         desks_obj = await orm_select_available_desks_by_desks_id_and_weekday(session, not_booked_desks_id, weekday)
-        for desk in desks_obj:
-            desks = [desk.name for desk in desks_obj]
-        return desks if desks else []
+        return [desk.name for desk in desks_obj if desks_obj] or []
     except Exception as e:
-        raise RuntimeError(f"Error retrieving desks: {e}")
+        raise RuntimeError(f"Error retrieving desks: {e}") from e
 
 
 async def generate_desks_list(

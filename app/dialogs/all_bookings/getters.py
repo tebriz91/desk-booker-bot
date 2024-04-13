@@ -66,5 +66,4 @@ async def get_bookings(dialog_manager: DialogManager,
                     'button-exit': i18n.button.exit()}
     
     except Exception as e:
-        logger.info(f"Error in get_bookings: {e}")
         return str(e)
