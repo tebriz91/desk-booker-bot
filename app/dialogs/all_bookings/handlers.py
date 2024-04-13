@@ -5,10 +5,6 @@ from aiogram.types import CallbackQuery
 from states.states import AllBookings
 
 
-from utils.logger import Logger
-logger = Logger()
-
-
 async def selected_room(query: CallbackQuery,
                         widget: Select,
                         dialog_manager: DialogManager,

@@ -11,43 +11,9 @@ from database.orm_queries import (
 if TYPE_CHECKING:
     from locales.stub import TranslatorRunner
 
-from utils.logger import Logger
-
-logger = Logger()
-
 
 class AllBookingsError(Exception):
     pass
-
-
-# async def generate_list_of_current_bookings_by_telegram_id(
-#     i18n,
-#     session: AsyncSession,
-#     date_format: str,
-#     date_format_short: str,
-#     telegram_id: int,
-#     telegram_name: str | None = "Anonymous user"
-# ) -> str:
-#     i18n: TranslatorRunner = i18n
-#     bookings_obj = await orm_select_bookings_by_telegram_id_joined_from_today(session, telegram_id)
-#     try:
-#         if not bookings_obj:
-#             #! my-bookings-no-bookings
-#             return i18n.my.bookings.no.bookings()
-#         else:
-#             #! my-bookings-greeting
-#             list_of_bookings: str = i18n.my.bookings.greeting(telegram_name=f'@{telegram_name}') + "\n\n"
-#             for booking in bookings_obj:
-#                 #! my-bookings-date
-#                 date = i18n.my.bookings.date(date=booking.date.strftime(date_format))
-#                 #! my-bookings-desk
-#                 desk = i18n.my.bookings.desk(room_name=booking.room.name, desk_name=booking.desk.name)
-#                 #! my-bookings-bookedOn
-#                 booked_on = i18n.my.bookings.bookedOn(booked_on=booking.created_at.strftime(date_format_short))
-#                 list_of_bookings += f"{date}\n{desk}\n{booked_on}\n\n"
-#             return list_of_bookings
-#     except Exception as e:
-#         return f"Error: {e}"
 
 
 async def generate_list_of_current_bookings_by_telegram_id(
@@ -155,7 +121,6 @@ async def generate_current_bookings_list_by_room_id(
     Returns a tuple of two strings: the first string a tag for the response, and the second string is the response message.
     '''
     i18n: TranslatorRunner = i18n
-    logger.info('Inside generate_current_bookings_list_by_room_id')
     # Fetch bookings for the given room from the database
     bookings = await orm_select_bookings_by_room_id_joined_from_today(session, room_id)
     assignments = await orm_select_desk_assignments_by_room_id_selectinload(session, room_id)
@@ -311,11 +276,9 @@ async def generate_current_bookings_by_telegram_id(
     """
     i18n: TranslatorRunner = i18n
     bookings_list: List[Tuple[int, str]] = []
-    logger.info(f"Generating current bookings by telegram ID: {telegram_id}")
     bookings_obj = await orm_select_bookings_by_telegram_id_joined_from_today(session, telegram_id)
     try:
         if not bookings_obj:
-            logger.info("No bookings found")
             return []
         else:
             for booking in bookings_obj:
@@ -324,8 +287,6 @@ async def generate_current_bookings_by_telegram_id(
                 desk_name = booking.desk.name
                 booking_data = i18n.bookings.to.cancel(date=date, room_name=room_name, desk_name=desk_name)
                 bookings_list.append((booking.id, booking_data))
-            logger.info(f"Result of generate_current_bookings_by_telegram_id: {bookings_list}")
             return bookings_list
     except Exception as e:
-        logger.info(f"Error: {e}")
         return f"Error: {e}"

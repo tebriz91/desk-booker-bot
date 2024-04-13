@@ -20,11 +20,6 @@ from database.models import (
 
 from database.enums.weekdays import Weekday
 
-from utils.logger import Logger
-
-
-logger = Logger()
-
 
 class DeskBookerError(Exception):
     pass
@@ -198,20 +193,14 @@ async def get_user_teams_and_roles(session, telegram_id):
 
 
 async def orm_select_team_id_by_telegram_id(session: AsyncSession, telegram_id: int):
-    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Inside orm_select_team_id_by_telegram_id()")
-    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Telegram ID: {telegram_id}")
     query = select(UserRoleAssignment.team_id).where(UserRoleAssignment.telegram_id == telegram_id)
     result = await session.execute(query)
-    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Result of ORM query: {result}")
     return result.scalar_one()
 
 
 async def orm_select_team_preferred_room_id(session: AsyncSession, team_id: int):
-    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Inside orm_select_team_preferred_room_id()")
-    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Team ID: {team_id}")
     query = select(Team.room_id).where(Team.id == team_id)
     result = await session.execute(query)
-    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Result of ORM query: {result}")
     return result.scalar_one()
 
 
@@ -458,8 +447,6 @@ async def orm_select_available_not_booked_desks_by_room_id(session: AsyncSession
 
 # Doesn't check if users for whom desks are assigned are out of office
 async def orm_select_not_assigned_desks_by_desks_id_and_weekday(session: AsyncSession, desk_ids: list[int], weekday: Weekday):
-    logger.info(">>>>>>>>>>>>>>>>>>>>>>>Inside orm_select_not_assigned_desks_by_desks_id_and_weekday()")
-    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Weekday: {weekday}")
     subquery = select(DeskAssignment.desk_id).where(
         DeskAssignment.weekday == weekday,
         DeskAssignment.desk_id.in_(desk_ids)
@@ -474,9 +461,6 @@ async def orm_select_not_assigned_desks_by_desks_id_and_weekday(session: AsyncSe
 
 
 async def orm_select_available_desks_by_desks_id_and_weekday(session: AsyncSession, desk_ids: list[int], weekday: Weekday):
-    logger.info(">>>>>>>>>>>>>>>>>>>>>>>Inside orm_select_not_assigned_desks_by_desks_id_and_weekday()")
-    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Weekday: {weekday}")
-    
     # Create a subquery that selects desk IDs assigned on the given weekday
     # and joins with the User table to check if the assigned user is out of office
     subquery = select(DeskAssignment.desk_id).join(User).where(
@@ -495,10 +479,6 @@ async def orm_select_available_desks_by_desks_id_and_weekday(session: AsyncSessi
 
 
 async def orm_select_available_not_assigned_desks_by_room_id(session: AsyncSession, room_id: int, weekday: int):
-    logger.info(">>>>>>>>>>>>>>>>>>>>>>>Inside orm_select_available_not_assigned_desks_by_room_id()")
-    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Room ID: {room_id}")
-    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Weekday: {weekday}")
-    
     # Subquery to find desk ids that have been assigned on the given weekday
     assigned_desk_ids_subquery = (
         select(DeskAssignment.desk_id)
@@ -512,15 +492,9 @@ async def orm_select_available_not_assigned_desks_by_room_id(session: AsyncSessi
         .join(Room, Room.id == Desk.room_id)
         .where(Room.id == room_id, Desk.is_available == True, Desk.id.notin_(assigned_desk_ids_subquery))
     )
-    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Main query: {query}")
 
     result = await session.execute(query)
     desks = result.scalars().all()
-
-    if desks:
-        logger.info(f"Available desks: {desks}")
-    else:
-        logger.info("No available desks found.")
 
     return desks
 
@@ -586,9 +560,6 @@ async def orm_insert_desk_assignment():
 
 
 async def orm_select_desk_assignment_by_telegram_id_and_weekday(session: AsyncSession, telegram_id: int, weekday: Weekday):
-    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Telegram ID: {telegram_id}")
-    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Weekday: {weekday}")
-    
     # Directly query DeskAssignment by telegram_id and weekday, joining with User to access telegram_id
     query = select(DeskAssignment).join(User).where(
         User.telegram_id == telegram_id,
@@ -598,10 +569,8 @@ async def orm_select_desk_assignment_by_telegram_id_and_weekday(session: AsyncSe
     desk_assignment = result.scalars().first()  # Using first() as we're now handling potentially multiple matches in one step
     
     if desk_assignment:
-        logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Desk assignment ID: {desk_assignment.id}")
         return desk_assignment
     else:
-        logger.info("No desk assignment found for the given Telegram ID and weekday.")
         return None
 
 

@@ -8,9 +8,6 @@ from database.orm_queries import orm_select_booking_by_telegram_id_and_date_sele
 if TYPE_CHECKING:
     from locales.stub import TranslatorRunner
 
-from utils.logger import Logger
-logger = Logger()
-
 
 async def check_existing_booking(i18n, session: AsyncSession, telegram_id: int, date: str, date_format: str) -> bool | str:
     """
@@ -46,5 +43,4 @@ async def check_existing_booking(i18n, session: AsyncSession, telegram_id: int, 
                 desk_name=existing_booking.desk.name,
             )
     except Exception as e:
-        logger.error(f"An unexpected error: {e} occurred while checking for existing bookings.")
         return f"An unexpected error: {e} occurred while checking for existing bookings."

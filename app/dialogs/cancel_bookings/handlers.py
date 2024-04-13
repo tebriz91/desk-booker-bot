@@ -12,9 +12,6 @@ from states.states import CancelBookings
 if TYPE_CHECKING:
     from locales.stub import TranslatorRunner
 
-from utils.logger import Logger
-logger = Logger()
-
 
 async def selected_booking(query: CallbackQuery,
                         widget: Select,

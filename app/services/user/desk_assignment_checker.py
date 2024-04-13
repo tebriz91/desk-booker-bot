@@ -14,10 +14,6 @@ from database.enums.weekdays import Weekday
 if TYPE_CHECKING:
     from locales.stub import TranslatorRunner
 
-from utils.logger import Logger
-
-logger = Logger()
-
 
 async def check_desk_assignment(i18n, session: AsyncSession, telegram_id: int, date: str, date_format: str) -> bool | str:
     i18n: TranslatorRunner = i18n
@@ -28,12 +24,10 @@ async def check_desk_assignment(i18n, session: AsyncSession, telegram_id: int, d
         return "Error: Incorrect date format. Parsing date to datetime.date failed."
     # Convert integer weekday to Weekday enum
     weekday = Weekday(booking_date.weekday())
-    logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Weekday: {weekday}")
     # Check if the user has assigned desk for the weekday of the selected date
     try:
         # To avoid lazy loading, use selectinload to load the related objects (room and desk) in one query.
         desk_assignment = await orm_select_desk_assignment_by_telegram_id_and_weekday(session, telegram_id, weekday)
-        logger.info(f">>>>>>>>>>>>>>>>>>>>>>>Desk assignment: {desk_assignment}")
         if not desk_assignment:
             return False
         else:

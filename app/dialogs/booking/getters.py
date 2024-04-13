@@ -8,9 +8,6 @@ from services.common.rooms_list_generator import generate_available_rooms_list
 if TYPE_CHECKING:
     from locales.stub import TranslatorRunner
 
-from utils.logger import Logger
-logger = Logger()
-
 
 async def get_dates(dialog_manager: DialogManager, i18n: TranslatorRunner, **kwargs):
     config = dialog_manager.start_data['bot_operation_config']

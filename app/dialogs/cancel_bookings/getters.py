@@ -8,10 +8,6 @@ from services.bookings_list_generator import generate_current_bookings_by_telegr
 if TYPE_CHECKING:
     from locales.stub import TranslatorRunner
 
-from utils.logger import Logger
-
-logger = Logger()
-
 
 async def get_bookings(dialog_manager: DialogManager, i18n: TranslatorRunner, event_from_user, **kwargs):
     # Get session from DataBaseSession middleware
@@ -34,18 +30,14 @@ async def get_bookings(dialog_manager: DialogManager, i18n: TranslatorRunner, ev
     try:
         if isinstance(bookings, str):
             # Log and return the error while maintaining structure
-            logger.info(f"Inside getter. Error: {bookings}")
             response_data['cancel-booking-error'] = bookings
         elif not bookings:
             # No bookings case
-            logger.info("No bookings found")
             response_data['no-bookings-to-cancel'] = i18n.no.bookings.to.cancel()
         else:
             # Bookings exist, update the list
-            logger.info(f"Inside getter. Bookings List: {bookings}")
             response_data['bookings-to-cancel'] = bookings
     except Exception as e:
-        logger.info(f"Error in get_bookings: {e}")
         response_data['cancel-booking-error'] = str(e)
     
     return response_data

@@ -9,9 +9,6 @@ from services.user.desk_assignment_checker import check_desk_assignment_by_teleg
 if TYPE_CHECKING:
     from locales.stub import TranslatorRunner
 
-from utils.logger import Logger
-logger = Logger()
-
 
 async def get_desk_assignment(dialog_manager: DialogManager,
                               i18n: TranslatorRunner,
@@ -38,5 +35,4 @@ async def get_desk_assignment(dialog_manager: DialogManager,
             return {'desk-assignment-error': message}
     
     except Exception as e:
-        logger.info(f"Error in get_desk_assignment: {e}")
         return str(e)

@@ -9,10 +9,6 @@ from services.bookings_list_generator import AllBookingsError, generate_current_
 if TYPE_CHECKING:
     from locales.stub import TranslatorRunner
 
-from utils.logger import Logger
-
-logger = Logger()
-
 
 async def get_rooms(dialog_manager: DialogManager,
                     i18n: TranslatorRunner,

@@ -18,9 +18,6 @@ from database.orm_queries import DeskBookerError
 if TYPE_CHECKING:
     from locales.stub import TranslatorRunner
 
-from utils.logger import Logger
-logger = Logger()
-
 
 async def selected_date(query: CallbackQuery,
                         widget: Select,
@@ -63,7 +60,6 @@ async def selected_date(query: CallbackQuery,
         if existing_booking:
             await query.answer(text=f"{existing_booking}", show_alert=True)
             await dialog_manager.switch_to(state=Booking.select_date)
-            logger.info(f">>>>>>>>>>>>>existing_booking: {existing_booking}")
         # If no existing booking, check for desk assignment
         if not existing_booking:
             # Get the desk assignment for the selected date, if any
@@ -77,7 +73,6 @@ async def selected_date(query: CallbackQuery,
             if desk_assignment:
                 await query.answer(text=f"{desk_assignment}", show_alert=True)
                 await dialog_manager.switch_to(state=Booking.select_date)
-                logger.info(f">>>>>>>>>>>>>desk_assignment: {desk_assignment}")
             else:
                 # Save the selected date to the dialog data
                 dialog_manager.dialog_data['date'] = date
