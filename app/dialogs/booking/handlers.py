@@ -100,6 +100,8 @@ async def selected_room(query: CallbackQuery,
     Returns:
         None
     """
+    # Initialize desk variable
+    desks = None
     # Get TranslatorRunner from i18n middleware
     i18n: TranslatorRunner = dialog_manager.middleware_data['i18n']
     # Get session from DataBaseSession middleware

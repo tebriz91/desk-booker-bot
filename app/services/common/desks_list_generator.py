@@ -66,29 +66,45 @@ async def generate_desks_list(
         if current_day.weekday() < 5:  # Weekdays are from 0 (Monday) to 4 (Friday)
             workdays_difference += 1
         current_day += timedelta(days=1)
-    
     # Fetch the room ID based on room name
     room_id = await orm_select_room_id_by_name(session, room_name)
     if not room_id:
         return f"Error: Room '{room_name}' not found"
-
     # Advanced mode logic
     try:
         if advanced_mode:
-            team_id = await orm_select_team_id_by_telegram_id(session, telegram_id)
-            preferred_room_id = await orm_select_team_preferred_room_id(session, team_id) if team_id else None
             # User can book if (one of the following conditions is met):
-            # - No team_id or preferred_room_id != room_id but within standard access days
-            # - Preferred room matches selected room despite workdays_difference
+            # - no team_id but within standard access days
+            # - preferred_room_id != room_id but within standard access days
+            # - preferred room matches selected room despite workdays_difference
+            team_id = await orm_select_team_id_by_telegram_id(session, telegram_id)
+            
+            if team_id is None:
+                if workdays_difference > standard_access_days:
+                    return []
+                elif workdays_difference <= standard_access_days:
+                    desks = await fetch_desks_list(session, room_id, weekday_enum, booking_date)
+                    return desks if desks else []
+            
+            preferred_room_id = await orm_select_team_preferred_room_id(session, team_id)
+            
+            if preferred_room_id is None:
+                if workdays_difference > standard_access_days:
+                    return []
+                elif workdays_difference <= standard_access_days:
+                    desks = await fetch_desks_list(session, room_id, weekday_enum, booking_date)
+                    return desks if desks else []
+            
             if preferred_room_id != room_id and workdays_difference > standard_access_days:
                 return []
-            elif not team_id and workdays_difference > standard_access_days:
-                return []
-            elif not team_id or preferred_room_id == room_id or workdays_difference <= standard_access_days:
+            
+            elif preferred_room_id == room_id or workdays_difference <= standard_access_days:
                 desks = await fetch_desks_list(session, room_id, weekday_enum, booking_date)
                 return desks if desks else []
+            
             else:
                 raise RuntimeError("Error: Unknown advanced mode logic")
+    
     except Exception as e:
         raise RuntimeError(f"Error in advanced mode logic: {e}")
     
