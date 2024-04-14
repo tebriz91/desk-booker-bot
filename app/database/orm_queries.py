@@ -195,13 +195,13 @@ async def get_user_teams_and_roles(session, telegram_id):
 async def orm_select_team_id_by_telegram_id(session: AsyncSession, telegram_id: int):
     query = select(UserRoleAssignment.team_id).where(UserRoleAssignment.telegram_id == telegram_id)
     result = await session.execute(query)
-    return result.scalar_one()
+    return result.scalar_one_or_none()
 
 
 async def orm_select_team_preferred_room_id(session: AsyncSession, team_id: int):
     query = select(Team.room_id).where(Team.id == team_id)
     result = await session.execute(query)
-    return result.scalar_one()
+    return result.scalar_one_or_none()
 
 
 #* TeamTree's ORM queries
