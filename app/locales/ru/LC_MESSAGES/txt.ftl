@@ -70,7 +70,7 @@ all-bookings-date = <b>{$date}</b>
 all-bookings-desk-user = Стол: {$desk_name}, {$telegram_name}
 all-bookings-no-bookings-assignments = В кабинете нет 🚩забронированных столов и действующих 🔒постоянных броней
 all-bookings-desk-assignments-first-line = <b>Действующие 🔒постоянные брони в кабинете: {$room_name}</b>
-all-bookings-desk-assignments-weekday = <b>{$weekday}</b>
+all-bookings-desk-assignments-weekday = {$weekday}
 
 
 <#-- desk_dialog -->

@@ -6,8 +6,10 @@ from aiogram_dialog.widgets.kbd import (
     Cancel,
     Back,
     Group,
+    Button,
+    ScrollingGroup,
 )
-from aiogram_dialog.widgets.text import Format, Multi
+from aiogram_dialog.widgets.text import Format, Multi, Const
 
 from states.states import Booking
 
@@ -49,7 +51,7 @@ booking_dialog = Dialog(
             Format(text='{select-room}'),
             when='rooms',
         ),
-        Column(
+        Group(
             Select(
                 Format('{item}'),
                 id='room_name',
@@ -57,6 +59,7 @@ booking_dialog = Dialog(
                 item_id_getter=lambda item: item,
                 on_click=selected_room,
             ),
+            width=1,
             when='rooms',
         ),
         Row(
@@ -67,10 +70,11 @@ booking_dialog = Dialog(
         state=Booking.select_room,
     ),
     Window(
+        # TODO: Split desks into columns if there are too many
         # FIX: Replace '📋' with something
         Format(text='{selected-date}\n{selected-room}<a href="{room_plan}">📋</a>'),
         Format(text='{select-desk}'),
-        Column(
+        Group(
             Select(
                 Format('{item}'),
                 id='desk_name',
@@ -78,6 +82,7 @@ booking_dialog = Dialog(
                 item_id_getter=lambda item: item,
                 on_click=selected_desk,
             ),
+            width=1,
         ),
         Row(
             Back(Format(text='{button-back}')),
