@@ -89,3 +89,11 @@ desk-assignment-inactive =
     Бронь стола(-ов) сейчас ❌неактивна
 
     Если вы возвращаетесь в офис, нажмите кнопку ниже, чтобы активировать её
+
+
+<#-- team_dialog -->
+team-empty = Ваша команда пока не определена
+team-no-info = Отсутствует информация о вашей команде
+team-name = Команда: {$team_name}
+team-room-name = Кабинет: {$room_name}
+team-member-info = {$telegram_name}, роль: {$role}

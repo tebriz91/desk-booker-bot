@@ -16,7 +16,7 @@ def create_translator_hub() -> TranslatorHub:
                     locale="en-US",
                     filenames=[
                         "app/locales/en/LC_MESSAGES/txt.ftl",
-                        # "app/locales/ru/LC_MESSAGES/my_bookings_dialog.ftl",
+                        # "app/locales/ru/LC_MESSAGES/txt.ftl",
                         ])),
             FluentTranslator(
                 locale="ru",
@@ -24,11 +24,11 @@ def create_translator_hub() -> TranslatorHub:
                     locale="ru-RU",
                     filenames=[
                         "app/locales/ru/LC_MESSAGES/txt.ftl",
-                        # "app/locales/ru/LC_MESSAGES/my_bookings_dialog.ftl",
+                        # "app/locales/ru/LC_MESSAGES/txt.ftl",
                         ])),
         ],
     )
     return translator_hub
 
 # To compile the translations, run the following command:
-# i18n -ftl locales/en/LC_MESSAGES/booking_dialog.ftl -stub locales/stub.pyi
+# i18n -ftl locales/en/LC_MESSAGES/txt.ftl -stub locales/stub.pyi

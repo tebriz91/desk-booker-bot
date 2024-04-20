@@ -10,9 +10,18 @@ from states.states import Team
 # from dialogs.team.handlers import (
 #     ...
 # )
-# from dialogs.team.getters import (
-#     ...
-# )
+from dialogs.team.getters import (
+    get_team_info
+)
 
 
-# team_dialog
+team_dialog = Dialog(
+    Window(
+        Format(text='{empty}', when='empty'),
+        Format(text='{no-info}', when='no-info'),
+        Format(text='{team-info}', when='team-info'),
+        Cancel(Format(text='{button-exit}'), when='button-exit'),
+        state=Team.main_menu,
+        getter=get_team_info,
+    ),
+)

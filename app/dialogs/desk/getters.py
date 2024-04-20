@@ -22,7 +22,8 @@ async def get_desk_assignment(dialog_manager: DialogManager,
         telegram_id=event_from_user.id)
     
         if status == "empty":
-            return {'desk-assignment-empty': message}
+            return {'desk-assignment-empty': message,
+                    'button-exit': i18n.button.exit()}
         elif status == "active":
             return {'desk-assignment-active': message,
                     'button-toggle': i18n.button.toggle(),
