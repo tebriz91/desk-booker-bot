@@ -2,12 +2,9 @@ from typing import TYPE_CHECKING, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import Team
-
 from database.orm_queries import (
     orm_select_team_id_by_telegram_id,
     orm_select_team_info_by_team_id,
-    orm_select_team_by_telegram_id_joined_with_team_users_ids_and_room_name,
 )
 
 if TYPE_CHECKING:
@@ -22,7 +19,6 @@ async def get_team_info_service(i18n, session: AsyncSession, telegram_id: int) -
         Tuple[str, str]: A tuple containing the status and response message. 
     """
     i18n: TranslatorRunner = i18n
-    
     team_id = await orm_select_team_id_by_telegram_id(session, telegram_id)
     if not team_id:
         #! team-empty
