@@ -89,3 +89,11 @@ desk-assignment-inactive =
     Desk assignment(s) is ❌inactive
 
     In case you are back to the office, press the button below to activate desk assignment(s)
+
+
+<#-- team_dialog -->
+team-empty = Your team is not defined yet
+team-no-info = There is no information about your team yet
+team-name = Team: {$team_name}
+team-room-name = Room: {$room_name}
+team-member-info = {$telegram_name}, role: {$role}

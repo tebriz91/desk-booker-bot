@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Optional
 
-from sqlalchemy import Integer, and_, func, literal, not_, or_, select, update, delete
+from sqlalchemy import Integer, String, and_, func, literal, not_, or_, select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload, aliased
 from sqlalchemy.exc import SQLAlchemyError
@@ -202,6 +202,25 @@ async def orm_select_team_preferred_room_id(session: AsyncSession, team_id: int)
     query = select(Team.room_id).where(Team.id == team_id)
     result = await session.execute(query)
     return result.scalar_one_or_none()
+
+
+async def orm_select_team_info_by_team_id(session: AsyncSession, team_id: int):
+    # Query the Team table for the team name and room ID, than join with the Room table to get the room name, than join with the UserRoleAssignment table to get the user IDs and roles, and finally join with the User table to get the user names
+    query = (
+        select(
+            Team.name.label("team_name"),
+            Room.name.label("room_name"),
+            User.telegram_name.label("user_name"),
+            func.cast(UserRoleAssignment.role, String).label("role")  # Cast UserRole enum to String
+        )
+        .join(Room, Team.room_id == Room.id)
+        .join(UserRoleAssignment, Team.id == UserRoleAssignment.team_id)
+        .join(User, UserRoleAssignment.telegram_id == User.telegram_id)
+        .where(Team.id == team_id)
+        .order_by(UserRoleAssignment.role)  # Order by role for consistent output
+    )
+    result = await session.execute(query)
+    return result.all()
 
 
 #* TeamTree's ORM queries

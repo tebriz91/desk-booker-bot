@@ -15,6 +15,7 @@ class TranslatorRunner:
     bookings: Bookings
     cancel: Cancel
     all: All
+    team: Team
 
 
 class Button:
@@ -250,4 +251,31 @@ class AllBookingsDeskAssignments:
 class AllBookingsDeskAssignmentsFirst:
     @staticmethod
     def line(*, room_name) -> Literal["""&lt;b&gt;Active 🔒permanent desk assignments in Room: { $room_name }&lt;/b&gt;"""]: ...
+
+
+class Team:
+    no: TeamNo
+    room: TeamRoom
+    member: TeamMember
+
+    @staticmethod
+    def empty() -> Literal["""Your team is not defined yet"""]: ...
+
+    @staticmethod
+    def name(*, team_name) -> Literal["""Team: { $team_name }"""]: ...
+
+
+class TeamNo:
+    @staticmethod
+    def info() -> Literal["""There is no information about your team yet"""]: ...
+
+
+class TeamRoom:
+    @staticmethod
+    def name(*, room_name) -> Literal["""Room: { $room_name }"""]: ...
+
+
+class TeamMember:
+    @staticmethod
+    def info(*, telegram_name, role) -> Literal["""{ $telegram_name }, role: { $role }"""]: ...
 
