@@ -17,6 +17,7 @@ from aiogram_dialog import setup_dialogs
 from dialogs import register_dialogs
 
 from config_data.config import load_config
+from utils.bot_description import set_bot_description
 from keyboards.set_menu import set_main_menu
 from scenes.setup import register_scenes
 from middlewares.user_middleware import UserMiddleware
@@ -136,6 +137,7 @@ async def main():
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
     await bot.delete_webhook(drop_pending_updates=True) # Remove any existing webhooks before starting to poll for updates
+    await set_bot_description(bot)
     await set_main_menu(bot) # Setup the bot's main menu
     await dp.start_polling(
         bot,
