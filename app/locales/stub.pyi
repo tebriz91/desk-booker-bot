@@ -8,6 +8,7 @@ class TranslatorRunner:
     select: Select
     selected: Selected
     no: No
+    booking: Booking
     existing: Existing
     desk: Desk
     there: There
@@ -85,6 +86,15 @@ class No:
     def rooms() -> Literal["""There are no rooms yet"""]: ...
 
 
+class Booking:
+    random: BookingRandom
+
+
+class BookingRandom:
+    @staticmethod
+    def button() -> Literal["""🎲Random Booking🎲"""]: ...
+
+
 class Existing:
     @staticmethod
     def booking(*, date, room_name, desk_name) -> Literal["""You already have a 🚩booking on { $date } in room: { $room_name }, desk: { $desk_name }"""]: ...
@@ -134,11 +144,22 @@ class ThereAreNo:
 
 
 class DeskBooker:
+    random: DeskBookerRandom
+
     @staticmethod
     def error() -> Literal["""Oops... Someone has booked the desk before you. Please select another desk"""]: ...
 
     @staticmethod
     def success(*, desk_name, room_name, date) -> Literal["""Successfully 🚩booked desk: { $desk_name } in room: { $room_name } for { $date }"""]: ...
+
+
+class DeskBookerRandom:
+    no: DeskBookerRandomNo
+
+
+class DeskBookerRandomNo:
+    @staticmethod
+    def desks(*, date) -> Literal["""There are no available desks on: { $date }"""]: ...
 
 
 class My:

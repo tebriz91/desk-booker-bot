@@ -7,9 +7,8 @@ from aiogram_dialog.widgets.kbd import (
     Back,
     Group,
     Button,
-    ScrollingGroup,
 )
-from aiogram_dialog.widgets.text import Format, Multi, Const
+from aiogram_dialog.widgets.text import Format, Multi
 
 from states.states import Booking
 
@@ -17,6 +16,7 @@ from dialogs.booking.handlers import (
     selected_date,
     selected_room,
     selected_desk,
+    selected_random_booking,
 )
 from dialogs.booking.getters import (
     get_dates,
@@ -61,6 +61,12 @@ booking_dialog = Dialog(
             ),
             width=1,
             when='rooms',
+        ),
+        Button(
+            Format(text='{booking-random-button}'),
+            id='random',
+            on_click=selected_random_booking,
+            when='booking-random-button',
         ),
         Row(
             Back(Format(text='{button-back}', when='button-back')),
