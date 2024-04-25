@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from aiogram_dialog import DialogManager
 from fluentogram import TranslatorRunner
 from services.common.rooms_list_generator import generate_available_rooms_as_list_of_tuples
-from services.bookings_list_generator import AllBookingsError, generate_current_bookings_list_by_room_id
+from services.bookings_list_generator import  generate_current_bookings_list_by_room_id
 
 
 if TYPE_CHECKING:
@@ -25,8 +25,8 @@ async def get_rooms(dialog_manager: DialogManager,
 
 
 async def get_bookings(dialog_manager: DialogManager,
-                    i18n: TranslatorRunner,
-                    **kwargs):
+                       i18n: TranslatorRunner,
+                       **kwargs):
     session = dialog_manager.middleware_data['session']
     room_id = int(dialog_manager.dialog_data['room_id'])
     c = dialog_manager.start_data['bot_operation_config']

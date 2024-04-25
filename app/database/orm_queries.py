@@ -192,6 +192,12 @@ async def get_user_teams_and_roles(session, telegram_id):
 #     return result.scalar_one()
 
 
+async def orm_select_team_name_by_id(session: AsyncSession, team_id: int):
+    query = select(Team.name).where(Team.id == team_id)
+    result = await session.execute(query)
+    return result.scalar_one_or_none()
+
+
 async def orm_select_team_id_by_telegram_id(session: AsyncSession, telegram_id: int):
     query = select(UserRoleAssignment.team_id).where(UserRoleAssignment.telegram_id == telegram_id)
     result = await session.execute(query)
@@ -622,6 +628,30 @@ async def orm_select_desk_assignments_by_room_id_selectinload(session: AsyncSess
         raise e
 
 
+async def orm_select_desk_assignments_by_team_id_selectinload(session: AsyncSession, team_id: int):
+    query = (
+        select(DeskAssignment)
+        .join(Desk)
+        .join(Room)
+        .join(User)
+        .options(
+            selectinload(DeskAssignment.desk).selectinload(Desk.room),
+            selectinload(DeskAssignment.user)
+        )
+        .where(
+            User.user_role_assignments.any(UserRoleAssignment.team_id == team_id),
+            User.is_out_of_office.is_(False)
+        )
+        .order_by(DeskAssignment.weekday)
+    )
+
+    try:
+        result = await session.execute(query)
+        return result.scalars().all()
+    except Exception as e:
+        raise e
+
+
 async def orm_select_desk_assignments_by_desk_id(session: AsyncSession, desk_id: int):
     query = select(DeskAssignment).where(DeskAssignment.desk_id == desk_id)
     result = await session.execute(query)
@@ -722,6 +752,30 @@ async def orm_select_bookings_by_room_id_joined_from_today(session: AsyncSession
         joinedload(Booking.user)  # Eagerly load User relationship
     ).order_by(Booking.date)
     
+    try:
+        result = await session.execute(query)
+        return result.scalars().all()
+    except Exception as e:
+        raise e
+
+
+async def orm_select_bookings_by_team_id_joined_from_today(session: AsyncSession, team_id: int):
+    query = (
+        select(Booking)
+        .join(Desk)
+        .join(Room)
+        .join(User)
+        .options(
+            joinedload(Booking.desk).joinedload(Desk.room),
+            joinedload(Booking.user)
+        )
+        .where(
+            User.user_role_assignments.any(UserRoleAssignment.team_id == team_id),
+            Booking.date >= date.today()
+        )
+        .order_by(Booking.date)
+    )
+
     try:
         result = await session.execute(query)
         return result.scalars().all()
