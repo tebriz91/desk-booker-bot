@@ -328,7 +328,7 @@ async def generate_current_bookings_list_by_team_id(
         return ("only-bookings", response_bookings)
     
     if not bookings and assignments:
-        #! team-bookings-no-bookings
+        #! team-bookings-no-bookings-message
         final_response = i18n.team.bookings.no.bookings.message(team_name=team_name) + '\n\n' + response_assignments
         return ("only-assignments", final_response)
 

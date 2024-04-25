@@ -12,7 +12,7 @@ from services.user.booking_checker import check_existing_booking
 from services.user.desk_assignment_checker import check_desk_assignment
 from services.common.room_plan_getter import get_room_plan_by_room_name
 from services.common.desks_list_generator import generate_desks_list
-from services.user.desk_booker import desk_booker
+from services.user.desk_booker import desk_booker, desk_booker_random
 from database.orm_queries import DeskBookerError
 
 if TYPE_CHECKING:
@@ -214,6 +214,51 @@ async def selected_desk(query: CallbackQuery,
         # In case of a race condition, answer user with the DeskBookerError message and switch to the select_room window
         await query.answer(text=f'{no_desk}', show_alert=True)
         await dialog_manager.switch_to(state=Booking.select_room)
+    except Exception as e:
+        await query.message.edit_text(f"An error occurred: {e} while processing the booking. Please try again later.")
+        await dialog_manager.done()
+    
+
+async def selected_random_booking(query: CallbackQuery,
+                                  widget: Select,
+                                  dialog_manager: DialogManager,
+                                  ) -> None:
+    """
+    Handles the selection of a random booking in the booking dialog.
+    
+    """
+    # Get TranslatorRunner from i18n middleware
+    i18n: TranslatorRunner = dialog_manager.middleware_data['i18n']
+    # Get session from DataBaseSession middleware
+    session: AsyncSession = dialog_manager.middleware_data['session']
+    # Get the selected date from the dialog data
+    date = dialog_manager.dialog_data['date']
+    # Get telegram_id from callback query
+    telegram_id = query.from_user.id
+    # Get the bot operation configuration
+    c_ops = dialog_manager.start_data['bot_operation_config']
+    # Get the bot advanced mode configuration
+    c_adv = dialog_manager.start_data['bot_advanced_mode_config']
+    # Get the date format from the configuration
+    date_format = str(c_ops['date_format'])
+    # Get the advanced mode (boolean value) from the configuration
+    advanced_mode = bool(c_ops['advanced_mode'])
+    # Get room_plan from the database
+    try:
+        # If advanced mode is enabled, get standard access days number
+        standard_access_days = int(c_adv['standard_access_days']) if advanced_mode else None
+        result = await desk_booker_random(
+            i18n,
+            session,
+            telegram_id,
+            date,
+            date_format,
+            advanced_mode,
+            standard_access_days,
+        )
+        # Answer user with the booking result
+        await query.answer(text=result, show_alert=True)
+        await dialog_manager.switch_to(state=Booking.select_date)
     except Exception as e:
         await query.message.edit_text(f"An error occurred: {e} while processing the booking. Please try again later.")
         await dialog_manager.done()

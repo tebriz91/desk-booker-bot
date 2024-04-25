@@ -22,6 +22,7 @@ no-rooms = There are no rooms yet
 
 
 <#-- booking_dialog -->
+booking-random-button = 🎲Random Booking🎲
 
 <#-- booking_cheker.py -->
 existing-booking = You already have a 🚩booking on {$date} in room: {$room_name}, desk: {$desk_name}
@@ -35,7 +36,7 @@ there-are-no-desks = For now there are no available desks in room: {$room_name} 
 <#-- desk_booker.py -->
 desk-booker-error = Oops... Someone has booked the desk before you. Please select another desk
 desk-booker-success = Successfully 🚩booked desk: {$desk_name} in room: {$room_name} for {$date}
-
+desk-booker-random-no-desks = There are no available desks on: {$date}
 
 <#-- my_bookings_handler -->
 

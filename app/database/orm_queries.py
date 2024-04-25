@@ -210,6 +210,16 @@ async def orm_select_team_preferred_room_id(session: AsyncSession, team_id: int)
     return result.scalar_one_or_none()
 
 
+async def orm_select_team_preferred_room_id_by_telegram_id(session: AsyncSession, telegram_id: int):
+    query = (
+        select(Team.room_id)
+        .join(UserRoleAssignment, Team.id == UserRoleAssignment.team_id)
+        .where(UserRoleAssignment.telegram_id == telegram_id)
+    )
+    result = await session.execute(query)
+    return result.scalar_one_or_none()
+
+
 async def orm_select_team_info_by_team_id(session: AsyncSession, team_id: int):
     # Query the Team table for the team name and room ID, than join with the Room table to get the room name, than join with the UserRoleAssignment table to get the user IDs and roles, and finally join with the User table to get the user names
     query = (
@@ -470,6 +480,7 @@ async def orm_select_available_not_booked_desks_by_room_id(session: AsyncSession
     result = await session.execute(query)
     return result.scalars().all()
 
+
 # Doesn't check if users for whom desks are assigned are out of office
 async def orm_select_not_assigned_desks_by_desks_id_and_weekday(session: AsyncSession, desk_ids: list[int], weekday: Weekday):
     subquery = select(DeskAssignment.desk_id).where(
@@ -543,6 +554,30 @@ async def orm_select_available_not_booked_desks_by_room_name(session: AsyncSessi
                 Desk.is_available == True,
                 not_(booking_subquery)  # Not booked on the specified date
             )
+        )
+    )
+    result = await session.execute(query)
+    return result.scalars().all()
+
+
+async def orm_select_available_desks_by_date(session: AsyncSession, date: date):
+    """
+    Selects desks that are available and not booked on the given date.
+    """
+    booking_alias = aliased(Booking)
+    desk_booked_subquery = (
+        select(1)
+        .where(
+            booking_alias.desk_id == Desk.id,
+            booking_alias.date == date,
+        )
+        .exists()
+    )
+    query = (
+        select(Desk).options(selectinload(Desk.room))
+        .where(
+            Desk.is_available == True,
+            ~desk_booked_subquery
         )
     )
     result = await session.execute(query)

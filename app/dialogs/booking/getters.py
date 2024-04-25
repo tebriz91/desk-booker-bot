@@ -39,6 +39,7 @@ async def get_rooms(dialog_manager: DialogManager,
         return {'rooms': rooms,
                 'selected-date': i18n.selected.date(date=date),
                 'select-room': i18n.select.room(),
+                'booking-random-button': i18n.booking.random.button(),
                 'button-back': i18n.button.back(),
                 'button-exit': i18n.button.exit()}
 
