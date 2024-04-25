@@ -11,12 +11,14 @@ if TYPE_CHECKING:
     from locales.stub import TranslatorRunner
 
 
-async def get_team_info_service(i18n, session: AsyncSession, telegram_id: int) -> Tuple[str, str]:
+async def get_team_info_service(i18n, session: AsyncSession, telegram_id: int) -> Tuple[str, str] | Tuple[str, str, int]:
     """
     Get team information from the database.
 
     Returns:
-        Tuple[str, str]: A tuple containing the status and response message. 
+        Tuple[str, str]: A tuple containing the status and response message
+        or
+        Tuple[str, str, int]: A tuple containing the status, response message and team_id
     """
     i18n: TranslatorRunner = i18n
     team_id = await orm_select_team_id_by_telegram_id(session, telegram_id)
@@ -38,4 +40,4 @@ async def get_team_info_service(i18n, session: AsyncSession, telegram_id: int) -
     for item in team_info:
         #! team-member-info
         response_message += i18n.team.member.info(telegram_name=f'@{item.user_name}', role=item.role) + '\n'
-    return "team-info", response_message
+    return "team-info", response_message, team_id

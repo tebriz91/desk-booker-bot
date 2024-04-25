@@ -257,6 +257,8 @@ class Team:
     no: TeamNo
     room: TeamRoom
     member: TeamMember
+    button: TeamButton
+    bookings: TeamBookings
 
     @staticmethod
     def empty() -> Literal["""Your team is not defined yet"""]: ...
@@ -278,4 +280,61 @@ class TeamRoom:
 class TeamMember:
     @staticmethod
     def info(*, telegram_name, role) -> Literal["""{ $telegram_name }, role: { $role }"""]: ...
+
+
+class TeamButton:
+    @staticmethod
+    def bookings() -> Literal["""Team Bookings"""]: ...
+
+
+class TeamBookings:
+    no: TeamBookingsNo
+    first: TeamBookingsFirst
+    room: TeamBookingsRoom
+    desk: TeamBookingsDesk
+
+    @staticmethod
+    def date(*, date) -> Literal["""&lt;b&gt;{ $date }&lt;/b&gt;"""]: ...
+
+
+class TeamBookingsNo:
+    bookings: TeamBookingsNoBookings
+
+
+class TeamBookingsNoBookings:
+    @staticmethod
+    def message(*, team_name) -> Literal["""Team: &lt;b&gt;{ $team_name }&lt;/b&gt; has no 🚩bookings"""]: ...
+
+    @staticmethod
+    def assignments(*, team_name) -> Literal["""Team: &lt;b&gt;{ $team_name }&lt;/b&gt; has no 🚩bookings and active 🔒permanent desk assignments"""]: ...
+
+
+class TeamBookingsFirst:
+    @staticmethod
+    def line(*, team_name) -> Literal["""&lt;b&gt;🚩Bookings (Team: { $team_name }):&lt;/b&gt;"""]: ...
+
+
+class TeamBookingsRoom:
+    desk: TeamBookingsRoomDesk
+
+
+class TeamBookingsRoomDesk:
+    @staticmethod
+    def user(*, room_name, desk_name, telegram_name) -> Literal["""Room: { $room_name }, Desk: { $desk_name }, { $telegram_name }"""]: ...
+
+
+class TeamBookingsDesk:
+    assignments: TeamBookingsDeskAssignments
+
+
+class TeamBookingsDeskAssignments:
+    first: TeamBookingsDeskAssignmentsFirst
+
+    @staticmethod
+    def weekday(*, weekday) -> Literal["""{ $weekday }"""]: ...
+
+
+class TeamBookingsDeskAssignmentsFirst:
+    @staticmethod
+    def line(*, team_name) -> Literal["""&lt;b&gt;Active 🔒permanent desk assignments (Team: { $team_name }):&lt;/b&gt;"""]: ...
 
