@@ -5,6 +5,7 @@ from aiogram_dialog.widgets.kbd import (
     Row,
     Cancel,
     Back,
+    ScrollingGroup,
     Group,
     Button,
 )
@@ -51,7 +52,7 @@ booking_dialog = Dialog(
             Format(text='{select-room}'),
             when='rooms',
         ),
-        Group(
+        ScrollingGroup(
             Select(
                 Format('{item}'),
                 id='room_name',
@@ -59,7 +60,10 @@ booking_dialog = Dialog(
                 item_id_getter=lambda item: item,
                 on_click=selected_room,
             ),
-            width=1,
+            id='scroll_rooms',
+            width=2,
+            height=7,
+            hide_on_single_page=True,
             when='rooms',
         ),
         Button(
@@ -76,11 +80,10 @@ booking_dialog = Dialog(
         state=Booking.select_room,
     ),
     Window(
-        # TODO: Split desks into columns if there are too many
         # FIX: Replace '📋' with something
         Format(text='{selected-date}\n{selected-room}<a href="{room_plan}">📋</a>'),
         Format(text='{select-desk}'),
-        Group(
+        ScrollingGroup(
             Select(
                 Format('{item}'),
                 id='desk_name',
@@ -88,7 +91,10 @@ booking_dialog = Dialog(
                 item_id_getter=lambda item: item,
                 on_click=selected_desk,
             ),
-            width=1,
+            id='scroll_rooms',
+            width=2,
+            height=5,
+            hide_on_single_page=True,
         ),
         Row(
             Back(Format(text='{button-back}')),
