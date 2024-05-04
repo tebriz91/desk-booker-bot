@@ -2,11 +2,11 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram_dialog import DialogManager
-from fluentogram import TranslatorRunner
-from services.bookings_list_generator import generate_current_bookings_by_telegram_id
+from fluentogram import TranslatorRunner # type: ignore
+from app.services.bookings_list_generator import generate_current_bookings_by_telegram_id
 
 if TYPE_CHECKING:
-    from locales.stub import TranslatorRunner
+    from app.locales.stub import TranslatorRunner # type: ignore
 
 
 async def get_bookings(dialog_manager: DialogManager, i18n: TranslatorRunner, event_from_user, **kwargs):

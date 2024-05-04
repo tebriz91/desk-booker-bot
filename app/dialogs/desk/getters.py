@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
 
 from aiogram_dialog import DialogManager
-from fluentogram import TranslatorRunner
+from fluentogram import TranslatorRunner # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services.user.desk_assignment_checker import check_desk_assignment_by_telegram_id
+from app.services.user.desk_assignment_checker import check_desk_assignment_by_telegram_id
 
 if TYPE_CHECKING:
-    from locales.stub import TranslatorRunner
+    from app.locales.stub import TranslatorRunner # type: ignore
 
 
 async def get_desk_assignment(dialog_manager: DialogManager,

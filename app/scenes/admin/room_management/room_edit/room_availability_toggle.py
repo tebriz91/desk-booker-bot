@@ -6,16 +6,18 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.scene import Scene, on
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from services.admin.room_availability_toggle import room_availability_toggle_service
 
-from misc.const.button_labels import ButtonLabel
-from keyboards.reply import create_reply_kb
+from app.services.admin.room_availability_toggle import room_availability_toggle_service
+from app.misc.const.button_labels import ButtonLabel
+from app.keyboards.reply import get_reply_keyboard
+
 
 class RoomAvailabilityToggleScene(Scene, state="room_availability_toggle_scene"):
 
+
     @on.message.enter()
     async def on_enter(self, message: Message) -> Any:       
-        keyboard = create_reply_kb(
+        keyboard = get_reply_keyboard(
             util_buttons=[
                 ButtonLabel.TOGGLE.value,
                 ButtonLabel.BACK.value,
@@ -29,21 +31,25 @@ class RoomAvailabilityToggleScene(Scene, state="room_availability_toggle_scene")
             text=f'Press "Toggle" to change the availability of the room: {room_name}',
             reply_markup=keyboard)
 
+
     @on.message.exit()
     async def on_exit(self, message: Message) -> None:
         await message.delete()
         await message.answer(
             text="You've exited Room Toggle Availability Menu",
             reply_markup=ReplyKeyboardRemove())
+
     
     @on.message(F.text == ButtonLabel.EXIT.value)
     async def exit(self, message: Message):
         await self.wizard.exit()
+
     
     @on.message(F.text == ButtonLabel.BACK.value)
     async def back(self, message: Message):
         await message.delete()
         await self.wizard.back()
+
 
     @on.message(F.text == ButtonLabel.TOGGLE.value)
     async def toggle_room_availability(self, message: Message, session: AsyncSession):

@@ -1,7 +1,8 @@
 from aiogram import Bot
 from aiogram.types import BotCommand
 
-from misc.const.main_menu import MainMenu
+from app.misc.const.main_menu import MainMenu
+
 
 async def set_main_menu(bot: Bot):
     main_menu_commands = [

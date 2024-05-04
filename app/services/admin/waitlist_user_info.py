@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import orm_select_user_from_waitlist_by_telegram_name
+from app.database.orm_queries import orm_select_user_from_waitlist_by_telegram_name
+
 
 async def waitlist_user_info_service(session: AsyncSession, telegram_name: str) -> str:
     try:

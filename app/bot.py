@@ -1,6 +1,10 @@
+import sys
+from pathlib import Path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
 import asyncio
 import logging
-import sys
 from datetime import datetime
 
 from aiogram import Bot, Dispatcher
@@ -9,28 +13,28 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage, Redis, DefaultKeyBuilder
 from aiogram.fsm.storage.memory import SimpleEventIsolation
 
-from fluentogram import TranslatorHub
-from middlewares.i18n import TranslatorRunnerMiddleware
-from utils.i18n import create_translator_hub
+from fluentogram import TranslatorHub # type: ignore
+from app.middlewares.i18n import TranslatorRunnerMiddleware
+from app.utils.i18n import create_translator_hub
 
 from aiogram_dialog import setup_dialogs
-from dialogs import register_dialogs
+from app.dialogs import register_dialogs
 
-from config_data.config import load_config
-from utils.bot_description import set_bot_description
-from keyboards.set_menu import set_main_menu
-from scenes.setup import register_scenes
-from middlewares.user_middleware import UserMiddleware
-# from middlewares.config_middleware import ConfigMiddleware
-from middlewares.db_middleware import DataBaseSession
-from database.engine import (
+from app.config_data.config import load_config
+from app.utils.bot_description import set_bot_description
+from app.keyboards.set_menu import set_main_menu
+from app.scenes.setup import register_scenes
+from app.middlewares.user_middleware import UserMiddleware
+# from app.middlewares.config_middleware import ConfigMiddleware
+from app.middlewares.db_middleware import DataBaseSession
+from app.database.engine import (
     initialize_engine,
     get_session_maker,
     create_db,
     drop_db_cascade, #! For development purposes only
     )
-from utils.logger import Logger
-from routers import router
+from app.utils.logger import Logger
+from app.routers import router
 
 
 # Configuration Loading
@@ -132,7 +136,7 @@ async def main():
     
     bot, storage = initialize_bot()
     dp = setup_dispatcher(bot, storage)
-    translator_hub: TranslatorHub = create_translator_hub()
+    translator_hub: TranslatorHub = create_translator_hub() # type: ignore
     setup_middlewares(dp)
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)

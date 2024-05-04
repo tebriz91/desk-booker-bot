@@ -6,16 +6,18 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.scene import Scene, on
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from services.admin.room_add import InputError, room_add_service
 
-from misc.const.button_labels import ButtonLabel
-from keyboards.reply import create_reply_kb
+from app.services.admin.room_add import InputError, room_add_service
+from app.misc.const.button_labels import ButtonLabel
+from app.keyboards.reply import get_reply_keyboard
+
 
 class RoomAddScene(Scene, state="room_add_scene"):
 
+
     @on.message.enter()
     async def on_enter(self, message: Message) -> Any:       
-        keyboard = create_reply_kb(
+        keyboard = get_reply_keyboard(
             util_buttons=[
                 ButtonLabel.TO_MAIN_MENU.value,
                 ButtonLabel.BACK.value,
@@ -28,6 +30,7 @@ class RoomAddScene(Scene, state="room_add_scene"):
             text='Enter room name',
             reply_markup=keyboard)
 
+
     @on.message.exit()
     async def on_exit(self, message: Message) -> None:
         await message.delete()
@@ -35,20 +38,24 @@ class RoomAddScene(Scene, state="room_add_scene"):
             text="You've exited Room Add Menu",
             reply_markup=ReplyKeyboardRemove())
     
+    
     @on.message(F.text == ButtonLabel.EXIT.value)
     async def exit(self, message: Message):
         await self.wizard.exit()
+    
     
     @on.message(F.text == ButtonLabel.BACK.value)
     async def back(self, message: Message):
         await message.delete()
         await self.wizard.back()
 
+
     @on.message(F.text == ButtonLabel.TO_MAIN_MENU.value)
     async def to_main_menu(self, message: Message):
         await message.delete()
         await self.wizard.clear_data()
         await self.wizard.goto("admin_menu")
+    
     
     @on.message(F.text)
     async def process_input(self, message: Message, session: AsyncSession):

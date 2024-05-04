@@ -4,7 +4,7 @@ from typing import Callable, Any, Awaitable
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
 
-from config_data.config import Config
+from app.config_data.config import Config
 
 class ConfigMiddleware(BaseMiddleware):
     def __init__(self, config: Config):

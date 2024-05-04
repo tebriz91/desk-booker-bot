@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload, aliased
 from sqlalchemy.exc import SQLAlchemyError
 
-from database.models import (
+from app.database.models import (
     User,
     UserRoleAssignment,
     Team,
@@ -18,7 +18,7 @@ from database.models import (
     Booking,
 )
 
-from database.enums.weekdays import Weekday
+from app.database.enums.weekdays import Weekday
 
 
 class DeskBookerError(Exception):

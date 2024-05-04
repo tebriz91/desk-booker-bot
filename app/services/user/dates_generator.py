@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import pytz
 import holidays
 
+
 async def generate_dates(
     num_days: int | None = 5,
     exclude_weekends: bool | None = True,

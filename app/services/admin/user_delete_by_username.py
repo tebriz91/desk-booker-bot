@@ -1,10 +1,12 @@
 import re
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import orm_select_user_by_telegram_name, orm_delete_user_by_telegram_name
+from app.database.orm_queries import orm_select_user_by_telegram_name, orm_delete_user_by_telegram_name
+
 
 class UserInputError(Exception):
     pass
+
 
 async def user_delete_by_username_service(session: AsyncSession, user_input: str) -> str:
     # Validate input is not empty

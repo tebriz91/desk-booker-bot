@@ -2,7 +2,7 @@ from typing import Union
 from aiogram.filters import BaseFilter
 from aiogram.types import Message, CallbackQuery
 
-from config_data.config import Config
+from app.config_data.config import Config
 
 class AdminFilter(BaseFilter):
     is_admin: bool = True

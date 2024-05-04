@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import (
+from app.database.orm_queries import (
     orm_select_room_plan_by_room_name,
     orm_select_room_plan_by_room_id,
 )

@@ -1,6 +1,6 @@
-from fluent_compiler.bundle import FluentBundle
+from fluent_compiler.bundle import FluentBundle # type: ignore
 
-from fluentogram import FluentTranslator, TranslatorHub
+from fluentogram import FluentTranslator, TranslatorHub # type: ignore
 
 
 def create_translator_hub() -> TranslatorHub:

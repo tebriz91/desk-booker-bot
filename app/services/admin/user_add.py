@@ -1,16 +1,19 @@
 import re
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import (
+from app.database.orm_queries import (
     orm_select_user_by_telegram_id_or_telegram_name,
     orm_insert_user,
     orm_select_user_from_waitlist_by_telegram_name)
 
+
 class UserInputError(Exception):
     pass
 
+
 class InputError(Exception):
     pass
+
 
 # User add service with string parsing and input validation
 async def user_add_service_with_string_parsing(session: AsyncSession, user_input: str) -> str:
@@ -41,6 +44,7 @@ async def user_add_service_with_string_parsing(session: AsyncSession, user_input
 
     await orm_insert_user(session, telegram_id, telegram_name)
     return f"User @{telegram_name} has been added"
+
 
 # User add service by telegram_name from the waitlist table
 async def user_add_service_by_telegram_name_from_wl(session: AsyncSession, telegram_name: str) -> str:

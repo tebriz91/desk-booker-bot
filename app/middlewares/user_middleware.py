@@ -3,14 +3,15 @@ from typing import Any, Awaitable, Callable, Dict
 from aiogram import BaseMiddleware
 from aiogram.types import User, TelegramObject
 
-from database.orm_queries import (
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from app.database.orm_queries import (
     orm_insert_user_to_waitlist,
     orm_select_user_by_telegram_id,
     orm_select_user_from_waitlist_by_telegram_id)
 
-from config_data.config import Config
+from app.config_data.config import Config
 
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
 class UserMiddleware(BaseMiddleware):
     """
@@ -18,6 +19,7 @@ class UserMiddleware(BaseMiddleware):
     """
     def __init__(self, session_pool: async_sessionmaker):
         self.session_pool = session_pool
+
 
     async def __call__(
         self,

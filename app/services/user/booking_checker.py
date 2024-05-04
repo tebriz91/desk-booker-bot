@@ -3,10 +3,10 @@ from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import orm_select_booking_by_telegram_id_and_date_selectinload
+from app.database.orm_queries import orm_select_booking_by_telegram_id_and_date_selectinload
 
 if TYPE_CHECKING:
-    from locales.stub import TranslatorRunner
+    from app.locales.stub import TranslatorRunner # type: ignore
 
 
 async def check_existing_booking(i18n, session: AsyncSession, telegram_id: int, date: str, date_format: str) -> bool | str:

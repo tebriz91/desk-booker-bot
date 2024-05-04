@@ -7,12 +7,14 @@ from aiogram.fsm.scene import Scene, on
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services.admin.room_browse import room_browse_service
-from misc.const.admin_menu import RoomManagementMenu
-from misc.const.button_labels import ButtonLabel
-from keyboards.reply import create_reply_kb
+from app.services.admin.room_browse import room_browse_service
+from app.misc.const.admin_menu import RoomManagementMenu
+from app.misc.const.button_labels import ButtonLabel
+from app.keyboards.reply import get_reply_keyboard
+
 
 class RoomBrowseScene(Scene, state="room_browse_scene"):
+    
     
     @on.message.enter()
     async def on_enter(self, message: Message, session: AsyncSession) -> Any:
@@ -26,7 +28,7 @@ class RoomBrowseScene(Scene, state="room_browse_scene"):
         except Exception as e:
             result_message = f"Error: {e}"
         
-        keyboard = create_reply_kb(
+        keyboard = get_reply_keyboard(
             buttons=[
                 RoomManagementMenu.EDIT_ROOM.value],
             width=1,
@@ -41,6 +43,7 @@ class RoomBrowseScene(Scene, state="room_browse_scene"):
             text=f"{result_message}",
             reply_markup=keyboard)
     
+    
     @on.message.exit()
     async def on_exit(self, message: Message) -> None:
         await message.delete()
@@ -48,9 +51,11 @@ class RoomBrowseScene(Scene, state="room_browse_scene"):
             text="You've exited Room Browse Menu",
             reply_markup=ReplyKeyboardRemove())
     
+    
     @on.message(F.text == ButtonLabel.EXIT.value)
     async def exit(self, message: Message):
         await self.wizard.exit()
+
 
     @on.message(F.text == ButtonLabel.TO_MAIN_MENU.value)
     async def to_main_menu(self, message: Message):
@@ -58,12 +63,14 @@ class RoomBrowseScene(Scene, state="room_browse_scene"):
         await self.wizard.clear_data()
         await self.wizard.goto("admin_menu")
     
+    
     #* Back to SelectRoomScene
     @on.message(F.text == ButtonLabel.BACK.value)
     async def back(self, message: Message, session: AsyncSession):
         await message.delete()
         # RoomSelectScene.on_enter() requires database session
         await self.wizard.back(session=session)
+    
     
     #* GOTO other scenes handlers
     @on.message(F.text == RoomManagementMenu.EDIT_ROOM.value)

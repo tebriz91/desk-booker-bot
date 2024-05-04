@@ -2,7 +2,7 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Select
 from aiogram.types import CallbackQuery
 
-from states.states import AllBookings
+from app.states.states import AllBookings
 
 
 async def selected_room(query: CallbackQuery,

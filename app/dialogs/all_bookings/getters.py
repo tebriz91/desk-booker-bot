@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
 
 from aiogram_dialog import DialogManager
-from fluentogram import TranslatorRunner
-from services.common.rooms_list_generator import generate_available_rooms_as_list_of_tuples
-from services.bookings_list_generator import  generate_current_bookings_list_by_room_id
+from fluentogram import TranslatorRunner # type: ignore
+from app.services.common.rooms_list_generator import generate_available_rooms_as_list_of_tuples
+from app.services.bookings_list_generator import  generate_current_bookings_list_by_room_id
 
 
 if TYPE_CHECKING:
-    from locales.stub import TranslatorRunner
+    from app.locales.stub import TranslatorRunner # type: ignore
 
 
 async def get_rooms(dialog_manager: DialogManager,

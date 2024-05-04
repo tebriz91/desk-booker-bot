@@ -2,7 +2,7 @@ from typing import List, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import orm_select_available_rooms
+from app.database.orm_queries import orm_select_available_rooms
 
 
 async def generate_available_rooms_list(session: AsyncSession) -> List[str]:

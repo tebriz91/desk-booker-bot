@@ -1,11 +1,8 @@
-import logging
 from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, User
-from fluentogram import TranslatorHub
-
-logger = logging.getLogger(__name__)
+from fluentogram import TranslatorHub # type: ignore
 
 
 class TranslatorRunnerMiddleware(BaseMiddleware):

@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import orm_get_room_availability_by_name, orm_update_room_availability_by_name
+from app.database.orm_queries import orm_get_room_availability_by_name, orm_update_room_availability_by_name
+
 
 async def room_availability_toggle_service(
     session: AsyncSession,

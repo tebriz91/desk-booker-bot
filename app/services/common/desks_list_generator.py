@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import (
+from app.database.orm_queries import (
     orm_select_available_desks_by_room_name,
     orm_select_room_id_by_name,
     orm_select_available_desks_by_desks_id_and_weekday,
@@ -11,7 +11,7 @@ from database.orm_queries import (
     orm_select_team_preferred_room_id,
     orm_select_available_not_booked_desks_by_room_id,
 )
-from database.enums.weekdays import Weekday
+from app.database.enums.weekdays import Weekday
 
 
 async def generate_available_desks_list(session: AsyncSession, room_name: str) -> List[str]:

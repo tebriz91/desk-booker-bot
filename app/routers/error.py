@@ -2,7 +2,7 @@
 from aiogram import types, F, Router
 from aiogram.fsm.context import FSMContext
 
-from utils.logger import Logger
+from app.utils.logger import Logger
 
 error_router = Router()
 logger = Logger('error')
