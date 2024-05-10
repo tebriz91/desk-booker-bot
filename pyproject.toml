@@ -20,13 +20,15 @@ aiogram-dialog = "^2.1.0"
 environs = "^11.0.0"
 fluentogram = "^1.1.6"
 alembic = "^1.13.1"
-pytest = "^8.2.0"
-pytest-asyncio = "^0.23.6"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "==0.0.240"
 pyright = "==1.1.291"
 black = "==23.1.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.2.0"
+pytest-asyncio = "^0.23.6"
 
 [build-system]
 requires = ["poetry-core"]
