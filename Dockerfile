@@ -28,9 +28,8 @@ WORKDIR /app
 # Copy only pyproject.toml and poetry.lock to cache dependencies
 COPY poetry.lock pyproject.toml ./
 
-# Install dependencies from pyproject.toml and poetry.lock
-# Use the --no-root option if your project is a package and you don't want to install it
-RUN poetry install $(test "$YOUR_ENV" = "production" && echo "--only=main") --no-interaction --no-ansi
+# Install dependencies from pyproject.toml and poetry.lock excluding dev and test dependencies
+RUN poetry install --no-interaction --no-ansi --without dev,test
 
 # Copy the rest of the project
 COPY . .
