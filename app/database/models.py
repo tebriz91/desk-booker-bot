@@ -14,7 +14,7 @@ class Base(DeclarativeBase):
     updated_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
 
     repr_cols_num = 3 # Number of columns to include in the __repr__ method
-    repr_cols = tuple()
+    repr_cols: tuple = tuple()
     
     # This method is used to represent the object as a string
     def __repr__(self):
@@ -75,7 +75,9 @@ class TeamTree(Base):
         backref='parent_teams',
     )
     
-    __table_args__ = (UniqueConstraint('parent_team_id', 'child_team_id', name='uq_team_tree'),)
+    __table_args__ = (
+        UniqueConstraint('parent_team_id', 'child_team_id', name='uq_team_tree'),
+    )
 
 
 class Waitlist(Base):
