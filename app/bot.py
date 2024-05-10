@@ -15,7 +15,7 @@ from aiogram.fsm.storage.memory import SimpleEventIsolation
 
 from fluentogram import TranslatorHub # type: ignore
 from app.middlewares.i18n import TranslatorRunnerMiddleware
-from app.utils.i18n import create_translator_hub
+from app.utils.i18n import Translator
 
 from aiogram_dialog import setup_dialogs
 from app.dialogs import register_dialogs
@@ -91,7 +91,7 @@ def setup_middlewares(dp):
     dp.message.outer_middleware(UserMiddleware(session_pool=session_maker)) # This middleware checks if the user is registered in the database
     dp.callback_query.outer_middleware(UserMiddleware(session_pool=session_maker))
     dp.update.middleware(DataBaseSession(session_pool=session_maker)) # This middleware provides a database session to the handler
-    dp.update.middleware(TranslatorRunnerMiddleware())
+    dp.update.middleware(TranslatorRunnerMiddleware(translator=Translator())) # This middleware provides translation services to the handler
     # dp.update.middleware(ConfigMiddleware(config=config))
 
 
@@ -136,7 +136,7 @@ async def main():
     
     bot, storage = initialize_bot()
     dp = setup_dispatcher(bot, storage)
-    translator_hub: TranslatorHub = create_translator_hub() # type: ignore
+    translator_hub: TranslatorHub = Translator() # type: ignore
     setup_middlewares(dp)
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
