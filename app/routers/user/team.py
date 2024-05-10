@@ -2,9 +2,9 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram_dialog import DialogManager, StartMode
 
-from config_data.config import Config
-from states.states import Team
-from routers.user.router import user_router
+from app.config_data.config import Config
+from app.states.states import Team
+from app.routers.user.router import user_router
 
 
 @user_router.message(Command('team'))

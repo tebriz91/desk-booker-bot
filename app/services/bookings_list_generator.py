@@ -2,9 +2,9 @@ from typing import Dict, List, TYPE_CHECKING, Tuple, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import Booking, DeskAssignment
+from app.database.models import Booking, DeskAssignment
 
-from database.orm_queries import (
+from app.database.orm_queries import (
     orm_select_bookings_by_room_id_joined_from_today, orm_select_bookings_by_telegram_id_joined_from_today,orm_select_desk_assignments_by_room_id_selectinload,
     orm_select_team_name_by_id,
     orm_select_bookings_by_team_id_joined_from_today,
@@ -12,7 +12,7 @@ from database.orm_queries import (
 )
 
 if TYPE_CHECKING:
-    from locales.stub import TranslatorRunner
+    from app.locales.stub import TranslatorRunner # type: ignore
 
 
 class AllBookingsError(Exception):

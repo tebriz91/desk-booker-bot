@@ -8,6 +8,7 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.scene import Scene, on
 
+
 class AnalyticsScene(Scene, state="analytics_scene"):
     
     #* The scene's entry point is designed to handle callback queries.

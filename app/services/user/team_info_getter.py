@@ -2,13 +2,13 @@ from typing import TYPE_CHECKING, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import (
+from app.database.orm_queries import (
     orm_select_team_id_by_telegram_id,
     orm_select_team_info_by_team_id,
 )
 
 if TYPE_CHECKING:
-    from locales.stub import TranslatorRunner
+    from app.locales.stub import TranslatorRunner # type: ignore
 
 
 async def get_team_info_service(i18n, session: AsyncSession, telegram_id: int) -> Tuple[str, str] | Tuple[str, str, int]:

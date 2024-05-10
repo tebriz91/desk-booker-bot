@@ -2,12 +2,13 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
 
-from config_data.config import load_config
+from app.config_data.config import load_config
 
-from database.models import (
+from app.database.models import (
     User,
     UserRoleAssignment,
     Team,
@@ -18,7 +19,7 @@ from database.models import (
     DeskAssignment,
     Booking,
 )
-from database.models import Base
+from app.database.models import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -67,31 +68,34 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
+async def run_migrations_online() -> None:
+    """Run migrations in 'online' mode using an asynchronous engine."""
+    # Configuration for an async engine
+    config.set_main_option("sqlalchemy.url", load_config().db.url)
+    async_engine = create_async_engine(
+        config.get_main_option("sqlalchemy.url"),
+        echo=True,
     )
 
-    with connectable.connect() as connection:
-        context.configure(
+    async with async_engine.connect() as connection:
+        await connection.run_sync(context.configure,  # Use run_sync to run synchronous Alembic config in async mode
             connection=connection,
             target_metadata=target_metadata,
             compare_server_default=True,
+            render_as_batch=True,  # Use this if you're working with SQLite or need batch operations
         )
 
-        with context.begin_transaction():
-            context.run_migrations()
+        async with context.begin_transaction():
+            await context.run_migrations_async()  # Ensure migrations are run asynchronously
 
 
-if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    run_migrations_online()
+def main():
+    if context.is_offline_mode():
+        run_migrations_offline()
+    else:
+        import asyncio
+        asyncio.run(run_migrations_online())
+
+
+if __name__ == "__main__":
+    main()

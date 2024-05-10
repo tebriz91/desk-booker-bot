@@ -2,9 +2,9 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram_dialog import DialogManager, StartMode
 
-from config_data.config import Config
-from states.states import AllBookings
-from routers.user.router import user_router
+from app.config_data.config import Config
+from app.states.states import AllBookings
+from app.routers.user.router import user_router
 
 
 @user_router.message(Command('all_bookings'))

@@ -1,7 +1,9 @@
 .git*
+.github/
 .vscode
 .*ignore
 *.db
+.env*
 __pycache__
 venv/
 cache/
@@ -9,7 +11,8 @@ docker-compose*.yml
 Dockerfile*
 Makefile
 *.md
-!README.md
+README.md
 logs/
 **/*_test.py
 **/tests/
+pytest.ini

@@ -6,16 +6,18 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.scene import Scene, on
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from services.admin.user_add import UserInputError, user_add_service_with_string_parsing
 
-from misc.const.button_labels import ButtonLabel
-from keyboards.reply import create_reply_kb
+from app.services.admin.user_add import UserInputError, user_add_service_with_string_parsing
+from app.misc.const.button_labels import ButtonLabel
+from app.keyboards.reply import get_reply_keyboard
+
 
 class UserAddScene(Scene, state="user_add_scene"):
     
+    
     @on.message.enter()
     async def on_enter(self, message: Message) -> Any:
-        keyboard = create_reply_kb(
+        keyboard = get_reply_keyboard(
             util_buttons=[
                 ButtonLabel.TO_MAIN_MENU.value,
                 ButtonLabel.BACK.value,
@@ -28,6 +30,7 @@ class UserAddScene(Scene, state="user_add_scene"):
             text="Enter telegram ID and telegram username",
             reply_markup=keyboard)
     
+    
     @on.message.exit()
     async def on_exit(self, message: Message) -> None:
         await message.delete()
@@ -35,10 +38,12 @@ class UserAddScene(Scene, state="user_add_scene"):
             text="You've exited User Add Menu",
             reply_markup=ReplyKeyboardRemove())
     
+    
     @on.message(F.text == ButtonLabel.EXIT.value)
     async def exit(self, message: Message):
         await self.wizard.clear_data()
         await self.wizard.exit()
+    
     
     @on.message(F.text == ButtonLabel.BACK.value)
     async def back(self, message: Message):
@@ -46,11 +51,13 @@ class UserAddScene(Scene, state="user_add_scene"):
         await self.wizard.clear_data()
         await self.wizard.back()
 
+
     @on.message(F.text == ButtonLabel.TO_MAIN_MENU.value)
     async def to_main_menu(self, message: Message):
         await message.delete()
         await self.wizard.clear_data()
         await self.wizard.goto("admin_menu")
+    
     
     # Handler to process the user's input
     @on.message(F.text)

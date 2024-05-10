@@ -3,6 +3,8 @@ import os
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, List, Optional, Union
+
+
 # Attempt to load environment variables from .env file
 try:
     from dotenv import find_dotenv, load_dotenv
@@ -10,8 +12,11 @@ try:
     load_dotenv(find_dotenv())
 except ImportError:
     pass
+
+
 # Define a type alias for file paths
 _PathLike = Union[os.PathLike[str], Path, str]
+
 
 # Function to fetch environment variables with optional type casting
 def get_env(value: str, cast_to_type: Optional[str] = None) -> Any:
@@ -40,6 +45,7 @@ def get_env(value: str, cast_to_type: Optional[str] = None) -> Any:
             return v
     return v
 
+
 # Database configuration
 @dataclass(frozen=True, slots=True)
 class DBConfig:
@@ -65,11 +71,13 @@ class DBConfig:
         else:
             raise ValueError("Unsupported database type")
 
+
 # Bot authentication configuration
 @dataclass(frozen=True, slots=True)
 class BotConfig:
     token: str
     admins: List[int]
+
 
 # Bot operation configuration
 @dataclass(frozen=True, slots=True)
@@ -109,6 +117,7 @@ class RedisConfig:
 
         return {"host": self.host, "port": self.port}
 
+
 # Main configuration aggregator
 @dataclass(frozen=True, slots=True)
 class Config:
@@ -118,9 +127,11 @@ class Config:
     bot_advanced_mode: BotAdvancedModeConfig
     redis: RedisConfig
 
+
     @staticmethod
     def root_dir() -> Path:
         return Path(__file__).resolve().parent.parent.parent
+
 
     @classmethod
     def path(cls, *paths: _PathLike, base_path: Optional[_PathLike] = None) -> str:
@@ -128,6 +139,7 @@ class Config:
             base_path = cls.root_dir()
 
         return os.path.join(base_path, *paths)
+
 
 # Function to load configuration from environment variables
 def load_config() -> Config:

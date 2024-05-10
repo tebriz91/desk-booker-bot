@@ -3,7 +3,8 @@ from typing import List, Optional
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
-def create_reply_kb(
+
+def get_reply_keyboard(
     buttons: Optional[List[str]] = None,
     width: int = 2,
     util_buttons: Optional[List[str]] = None,

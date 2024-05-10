@@ -8,7 +8,6 @@ docker-compose*.yml
 *.md
 !README.md
 logs/
-tests/
 versions/
 ### Python template
 # Byte-compiled / optimized / DLL files

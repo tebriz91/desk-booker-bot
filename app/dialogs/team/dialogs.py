@@ -7,12 +7,12 @@ from aiogram_dialog.widgets.kbd import (
 )
 from aiogram_dialog.widgets.text import Format
 
-from states.states import Team
+from app.states.states import Team
 
-from dialogs.team.handlers import (
+from app.dialogs.team.handlers import (
     selected_team_bookings
 )
-from dialogs.team.getters import (
+from app.dialogs.team.getters import (
     get_team_info,
     get_team_bookings,
 )

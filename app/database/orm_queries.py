@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload, aliased
 from sqlalchemy.exc import SQLAlchemyError
 
-from database.models import (
+from app.database.models import (
     User,
     UserRoleAssignment,
     Team,
@@ -18,7 +18,7 @@ from database.models import (
     Booking,
 )
 
-from database.enums.weekdays import Weekday
+from app.database.enums.weekdays import Weekday
 
 
 class DeskBookerError(Exception):
@@ -847,6 +847,12 @@ async def orm_select_booking_by_telegram_id_and_date_selectinload(session: Async
 
 async def orm_select_booking_by_desk_id_and_date(session: AsyncSession, desk_id: int, date: date):
     query = select(Booking).where(Booking.desk_id == desk_id, Booking.date == date)
+    result = await session.execute(query)
+    return result.scalar()
+
+
+async def orm_select_booking_by_id(session: AsyncSession, booking_id: int):
+    query = select(Booking).where(Booking.id == booking_id)
     result = await session.execute(query)
     return result.scalar()
 

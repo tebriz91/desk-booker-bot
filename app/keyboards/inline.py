@@ -3,6 +3,7 @@ from typing import List, Optional
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+
 def get_inline_keyboard(
     buttons: Optional[List[str]] = None,
     width: int = 1,

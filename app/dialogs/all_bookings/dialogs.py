@@ -9,12 +9,12 @@ from aiogram_dialog.widgets.kbd import (
 )
 from aiogram_dialog.widgets.text import Format
 
-from states.states import AllBookings
+from app.states.states import AllBookings
 
-from dialogs.all_bookings.handlers import (
+from app.dialogs.all_bookings.handlers import (
     selected_room,
 )
-from dialogs.all_bookings.getters import (
+from app.dialogs.all_bookings.getters import (
     get_rooms,
     get_bookings,
 )

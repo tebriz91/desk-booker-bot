@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import pytz
 import holidays
 
+
 async def generate_dates(
     num_days: int | None = 5,
     exclude_weekends: bool | None = True,
@@ -29,7 +30,7 @@ async def generate_dates(
             continue
 
         # Check for public holidays (optional)
-        if country_code and current_date in holidays.CountryHoliday(country_code):  # Skip public holidays
+        if country_code and current_date in holidays.country_holidays(country_code):  # Skip public holidays
             current_date += timedelta(days=1)
             continue
         

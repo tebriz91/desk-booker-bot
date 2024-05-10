@@ -2,8 +2,8 @@ import enum
 from sqlalchemy import Date, DateTime, Enum, ForeignKey, BigInteger, String, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from database.enums.user_roles import UserRole
-from database.enums.weekdays import Weekday
+from app.database.enums.user_roles import UserRole
+from app.database.enums.weekdays import Weekday
 
 
 class Base(DeclarativeBase):

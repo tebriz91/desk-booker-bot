@@ -1,9 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import orm_delete_user_from_waitlist_by_telegram_name
+from app.database.orm_queries import orm_delete_user_from_waitlist_by_telegram_name
+
 
 class InputError(Exception):
     pass
+
 
 async def waitlist_user_delete_by_username_service(session: AsyncSession, telegram_name: str) -> str:
 

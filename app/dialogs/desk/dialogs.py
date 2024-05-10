@@ -5,12 +5,12 @@ from aiogram_dialog.widgets.kbd import (
 )
 from aiogram_dialog.widgets.text import Format
 
-from states.states import Desk
+from app.states.states import Desk
 
-from dialogs.desk.handlers import (
+from app.dialogs.desk.handlers import (
     toggle_is_out_of_office_status,
 )
-from dialogs.desk.getters import (
+from app.dialogs.desk.getters import (
     get_desk_assignment,
 )
 

@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
 
 from aiogram_dialog import DialogManager
-from fluentogram import TranslatorRunner
-from services.user.team_info_getter import get_team_info_service
-from services.bookings_list_generator import generate_current_bookings_list_by_team_id
+from fluentogram import TranslatorRunner # type: ignore
+from app.services.user.team_info_getter import get_team_info_service
+from app.services.bookings_list_generator import generate_current_bookings_list_by_team_id
 
 
 if TYPE_CHECKING:
-    from locales.stub import TranslatorRunner
+    from app.locales.stub import TranslatorRunner # type: ignore
 
 
 async def get_team_info(dialog_manager: DialogManager,

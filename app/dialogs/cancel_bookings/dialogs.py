@@ -7,12 +7,12 @@ from aiogram_dialog.widgets.kbd import (
 )
 from aiogram_dialog.widgets.text import Format
 
-from states.states import CancelBookings
+from app.states.states import CancelBookings
 
-from dialogs.cancel_bookings.handlers import (
+from app.dialogs.cancel_bookings.handlers import (
     selected_booking,
 )
-from dialogs.cancel_bookings.getters import (
+from app.dialogs.cancel_bookings.getters import (
     get_bookings,
 )
 

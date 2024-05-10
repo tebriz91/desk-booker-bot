@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import orm_get_room_data_by_name, orm_select_desks_by_room_id
+from app.database.orm_queries import orm_get_room_data_by_name, orm_select_desks_by_room_id
+
 
 async def room_browse_service(
     session: AsyncSession,

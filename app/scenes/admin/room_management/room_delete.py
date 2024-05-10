@@ -7,15 +7,16 @@ from aiogram.fsm.scene import Scene, on
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services.admin.room_delete import room_delete_service
-from misc.const.button_labels import ButtonLabel
-from keyboards.reply import create_reply_kb
+from app.services.admin.room_delete import room_delete_service
+from app.misc.const.button_labels import ButtonLabel
+from app.keyboards.reply import get_reply_keyboard
+
 
 class RoomDeleteScene(Scene, state="room_delete_scene"):
     
     @on.message.enter()
     async def on_enter(self, message: Message) -> Any:
-        keyboard = create_reply_kb(
+        keyboard = get_reply_keyboard(
             util_buttons=[
                 ButtonLabel.CONFIRM.value,
                 ButtonLabel.CANCEL.value,
@@ -27,6 +28,7 @@ class RoomDeleteScene(Scene, state="room_delete_scene"):
             text="Are you sure you want to delete the room?\nDeleting the room will also delete all associated desks and bookings.",
             reply_markup=keyboard)
     
+    
     @on.message.exit()
     async def on_exit(self, message: Message) -> None:
         await message.delete()
@@ -34,9 +36,11 @@ class RoomDeleteScene(Scene, state="room_delete_scene"):
             text="You've exited Room Delete Menu",
             reply_markup=ReplyKeyboardRemove())
     
+    
     @on.message(F.text == ButtonLabel.EXIT.value)
     async def exit(self, message: Message):
         await self.wizard.exit()
+
 
     #* Back to SelectRoomScene
     @on.message(F.text == ButtonLabel.CANCEL.value)
@@ -44,6 +48,7 @@ class RoomDeleteScene(Scene, state="room_delete_scene"):
         await message.delete()
         # RoomSelectScene.on_enter() requires database session
         await self.wizard.back(session=session)
+
 
     @on.message(F.text == ButtonLabel.CONFIRM.value)
     async def confirm_room_deletion(self, message: Message, session: AsyncSession):

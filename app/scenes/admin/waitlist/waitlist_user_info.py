@@ -7,14 +7,15 @@ from aiogram.fsm.scene import Scene, on
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services.admin.waitlist_user_info import waitlist_user_info_service
-from services.admin.user_add import user_add_service_by_telegram_name_from_wl
-from services.admin.waitlist_user_delete import waitlist_user_delete_by_username_service
+from app.services.admin.waitlist_user_info import waitlist_user_info_service
+from app.services.admin.user_add import user_add_service_by_telegram_name_from_wl
+from app.services.admin.waitlist_user_delete import waitlist_user_delete_by_username_service
+from app.misc.const.button_labels import ButtonLabel
+from app.keyboards.reply import get_reply_keyboard
 
-from misc.const.button_labels import ButtonLabel
-from keyboards.reply import create_reply_kb
 
 class WaitlistUserInfoScene(Scene, state="waitlist_user_info_scene"):
+    
     
     @on.message.enter()
     async def on_enter(self, message: Message, session: AsyncSession) -> Any:
@@ -25,7 +26,7 @@ class WaitlistUserInfoScene(Scene, state="waitlist_user_info_scene"):
         except Exception as e:
             user_info = f"Error: {e}"
         
-        keyboard = create_reply_kb(
+        keyboard = get_reply_keyboard(
             buttons=[
                 ButtonLabel.YES.value,
                 ButtonLabel.NO.value],
@@ -41,6 +42,7 @@ class WaitlistUserInfoScene(Scene, state="waitlist_user_info_scene"):
             text=f"{user_info}",
             reply_markup=keyboard)
 
+
     @on.message.exit()
     async def on_exit(self, message: Message) -> None:
         await message.delete()
@@ -48,10 +50,12 @@ class WaitlistUserInfoScene(Scene, state="waitlist_user_info_scene"):
             text="You've exited Waitlist User Info Menu",
             reply_markup=ReplyKeyboardRemove())
     
+    
     @on.message(F.text == ButtonLabel.EXIT.value)
     async def exit(self, message: Message):
         await self.wizard.clear_data()
         await self.wizard.exit()
+
 
     @on.message(F.text == ButtonLabel.TO_MAIN_MENU.value)
     async def to_main_menu(self, message: Message):
@@ -59,12 +63,14 @@ class WaitlistUserInfoScene(Scene, state="waitlist_user_info_scene"):
         await self.wizard.clear_data()
         await self.wizard.goto("admin_menu")
 
+
     @on.message(F.text == ButtonLabel.BACK.value)
     async def back(self, message: Message, session: AsyncSession):
         await message.delete()
         await self.wizard.clear_data()
         # WaitlistScene.on_enter() requires database session
         await self.wizard.back(session=session)
+
 
     @on.message(F.text == ButtonLabel.YES.value)
     async def process_yes_button(self, message: Message, session: AsyncSession):
@@ -81,7 +87,8 @@ class WaitlistUserInfoScene(Scene, state="waitlist_user_info_scene"):
             await message.answer(f"Failed to add user: {str(e)}")
             await self.wizard.clear_data()
             await self.wizard.back(session=session)
-    
+
+
     @on.message(F.text == ButtonLabel.NO.value)
     async def process_no_button(self, message: Message, session: AsyncSession):
         await message.delete()

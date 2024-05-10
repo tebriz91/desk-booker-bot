@@ -1,10 +1,12 @@
 import re
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import orm_select_room_by_name, orm_insert_room
+from app.database.orm_queries import orm_select_room_by_name, orm_insert_room
+
 
 class InputError(Exception):
     pass
+
 
 async def room_add_service(session: AsyncSession, room_name: str) -> str:
     room_name = room_name.strip()

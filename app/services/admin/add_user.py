@@ -1,10 +1,12 @@
 import re
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import orm_select_user_by_telegram_id_or_telegram_name, orm_insert_user
+from app.database.orm_queries import orm_select_user_by_telegram_id_or_telegram_name, orm_insert_user
+
 
 class UserInputError(Exception):
     pass
+
 
 async def add_user_service(session: AsyncSession, user_input: str) -> str:
     if not user_input or " " not in user_input:

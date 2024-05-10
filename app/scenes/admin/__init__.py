@@ -28,6 +28,7 @@ from .booking_management.main import BookingManagementScene
 
 from .analytics.main import AnalyticsScene
 
+
 __all__ = [
     AdminMenuScene,
     UserManagementScene,

@@ -6,11 +6,11 @@ from aiogram.types import CallbackQuery
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import orm_delete_booking_by_id
-from states.states import CancelBookings
+from app.database.orm_queries import orm_delete_booking_by_id
+from app.states.states import CancelBookings
 
 if TYPE_CHECKING:
-    from locales.stub import TranslatorRunner
+    from app.locales.stub import TranslatorRunner # type: ignore
 
 
 async def selected_booking(query: CallbackQuery,

@@ -7,9 +7,10 @@ from aiogram.fsm.scene import Scene, on
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from misc.const.admin_menu import RoomEditMenu
-from misc.const.button_labels import ButtonLabel
-from keyboards.reply import create_reply_kb
+from app.misc.const.admin_menu import RoomEditMenu
+from app.misc.const.button_labels import ButtonLabel
+from app.keyboards.reply import get_reply_keyboard
+
 
 class RoomEditScene(Scene, state="room_edit_scene"):
     """
@@ -17,7 +18,7 @@ class RoomEditScene(Scene, state="room_edit_scene"):
     """
     @on.message.enter()
     async def on_enter(self, message: Message) -> Any:
-        keyboard = create_reply_kb(
+        keyboard = get_reply_keyboard(
             buttons=[
                 RoomEditMenu.EDIT_ROOM_NAME.value,
                 RoomEditMenu.TOGGLE_AVAILABILITY.value,
@@ -37,6 +38,7 @@ class RoomEditScene(Scene, state="room_edit_scene"):
             text="Room Edit Menu",
             reply_markup=keyboard)
     
+    
     @on.message.exit()
     async def on_exit(self, message: Message) -> None:
         await message.delete()
@@ -44,9 +46,11 @@ class RoomEditScene(Scene, state="room_edit_scene"):
             text="You've exited Room Edit Menu",
             reply_markup=ReplyKeyboardRemove())
     
+    
     @on.message(F.text == ButtonLabel.EXIT.value)
     async def exit(self, message: Message):
         await self.wizard.exit()
+
 
     #* Back to SelectRoomScene
     @on.message(F.text == ButtonLabel.BACK.value)
@@ -55,11 +59,13 @@ class RoomEditScene(Scene, state="room_edit_scene"):
         # RoomSelectScene.on_enter() requires database session
         await self.wizard.back(session=session)
 
+
     @on.message(F.text == ButtonLabel.TO_MAIN_MENU.value)
     async def to_main_menu(self, message: Message):
         await message.delete()
         await self.wizard.clear_data()
         await self.wizard.goto("admin_menu")
+    
     
     #* GOTO other scenes handlers
     @on.message(F.text == RoomEditMenu.EDIT_ROOM_NAME.value)
@@ -67,10 +73,12 @@ class RoomEditScene(Scene, state="room_edit_scene"):
         await message.delete()
         await self.wizard.goto("room_name_edit_scene")
     
+    
     @on.message(F.text == RoomEditMenu.TOGGLE_AVAILABILITY.value)
     async def to_room_availability_toggle(self, message: Message):
         await message.delete()
         await self.wizard.goto("room_availability_toggle_scene")
+        
         
     @on.message(F.text == RoomEditMenu.EDIT_ROOM_PLAN.value)
     async def to_room_plan_edit(self, message: Message):
@@ -78,10 +86,12 @@ class RoomEditScene(Scene, state="room_edit_scene"):
         await message.answer("Not implemented yet") # TODO: Implement room plan edit scene
         # await self.wizard.goto("room_plan_edit_scene")
     
+    
     @on.message(F.text == RoomEditMenu.ADD_DESK.value)
     async def to_desk_add(self, message: Message):
         await message.delete()
         await self.wizard.goto("desk_add_scene")
+    
     
     #* GOTO DeskSelectScene scenes handlers
     @on.message(F.text == RoomEditMenu.DELETE_DESK.value)
@@ -90,6 +100,7 @@ class RoomEditScene(Scene, state="room_edit_scene"):
         await self.wizard.update_data(flag_desk_act=RoomEditMenu.DELETE_DESK.value)
         # DeskSelectScene.on_enter() requires database session
         await self.wizard.goto("desk_select_scene", session=session)
+    
     
     @on.message(F.text == RoomEditMenu.EDIT_DESK.value)
     async def to_desk_edit(self, message: Message, session: AsyncSession):

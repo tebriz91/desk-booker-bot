@@ -6,17 +6,17 @@ from aiogram.types import CallbackQuery
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from states.states import Booking
+from app.states.states import Booking
 
-from services.user.booking_checker import check_existing_booking
-from services.user.desk_assignment_checker import check_desk_assignment
-from services.common.room_plan_getter import get_room_plan_by_room_name
-from services.common.desks_list_generator import generate_desks_list
-from services.user.desk_booker import desk_booker, desk_booker_random
-from database.orm_queries import DeskBookerError
+from app.services.user.booking_checker import check_existing_booking
+from app.services.user.desk_assignment_checker import check_desk_assignment
+from app.services.common.room_plan_getter import get_room_plan_by_room_name
+from app.services.common.desks_list_generator import generate_desks_list
+from app.services.user.desk_booker import desk_booker, desk_booker_random
+from app.database.orm_queries import DeskBookerError
 
 if TYPE_CHECKING:
-    from locales.stub import TranslatorRunner
+    from app.locales.stub import TranslatorRunner # type: ignore
 
 
 async def selected_date(query: CallbackQuery,

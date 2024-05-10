@@ -11,15 +11,15 @@ from aiogram_dialog.widgets.kbd import (
 )
 from aiogram_dialog.widgets.text import Format, Multi
 
-from states.states import Booking
+from app.states.states import Booking
 
-from dialogs.booking.handlers import (
+from app.dialogs.booking.handlers import (
     selected_date,
     selected_room,
     selected_desk,
     selected_random_booking,
 )
-from dialogs.booking.getters import (
+from app.dialogs.booking.getters import (
     get_dates,
     get_rooms,
     get_desks,

@@ -1,10 +1,12 @@
 import re
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import orm_select_desk_by_name, orm_update_desk_name_by_name
+from app.database.orm_queries import orm_select_desk_by_name, orm_update_desk_name_by_name
+
 
 class InputError(Exception):
     pass
+
 
 async def desk_name_edit_service(
     session: AsyncSession,

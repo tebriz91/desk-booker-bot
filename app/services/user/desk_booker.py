@@ -4,7 +4,7 @@ import random
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import (
+from app.database.orm_queries import (
     orm_select_desk_id_by_name,
     orm_select_booking_by_desk_id_and_date,
     orm_insert_booking,
@@ -13,10 +13,10 @@ from database.orm_queries import (
     orm_select_team_preferred_room_id_by_telegram_id,
     DeskBookerError,
 )
-from database.enums.weekdays import Weekday
+from app.database.enums.weekdays import Weekday
 
 if TYPE_CHECKING:
-    from locales.stub import TranslatorRunner
+    from app.locales.stub import TranslatorRunner # type: ignore
 
 
 async def desk_booker(

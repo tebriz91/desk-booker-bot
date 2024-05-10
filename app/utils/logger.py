@@ -4,7 +4,8 @@ from logging import Handler
 from logging.handlers import RotatingFileHandler
 from typing import Any, Dict
 
-from config_data.config import Config
+from app.config_data.config import Config
+
 
 LOGGING_EXCEPTIONS: Dict[str, Any] = {
     # you can actually use this if you want to disable all of loggers.
@@ -13,6 +14,7 @@ LOGGING_EXCEPTIONS: Dict[str, Any] = {
 
 
 class Logger(logging.Logger):
+
 
     def __init__(
         self,
@@ -26,6 +28,7 @@ class Logger(logging.Logger):
         self.set_logging_exceptions(logging_exceptions)
         if use_default_handlers:
             self.set_default_handlers()
+
 
     def set_default_handlers(self) -> None:
         file: Handler = RotatingFileHandler(
@@ -49,6 +52,7 @@ class Logger(logging.Logger):
         )
         for handler in (stream, file):
             self.handlers.append(handler)
+
 
     @staticmethod
     def set_logging_exceptions(exceptions: Dict[str, int]) -> None:

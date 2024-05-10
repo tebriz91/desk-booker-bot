@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class MainMenu(Enum):
     BOOK = ('/book', 'Book a Desk')
     CANCEL_BOOKINGS = ('/cancel', 'Cancel Booking')
@@ -9,9 +10,11 @@ class MainMenu(Enum):
     TEAM = ('/team', 'My Team')
     DESK = ('/desk', 'My Desk')
     ADMIN = ('/admin', 'Admin Commands')
+
     
     def __str__(self):
         return self.value[0]  # Command
+
     
     @property
     def description(self):

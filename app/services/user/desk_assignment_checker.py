@@ -3,16 +3,16 @@ from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import (
+from app.database.orm_queries import (
     orm_select_desk_assignment_by_telegram_id_and_weekday,
     orm_select_desk_assignments_by_telegram_id_selectinload,
     orm_select_is_out_of_office_by_telegram_id,
 )
 
-from database.enums.weekdays import Weekday
+from app.database.enums.weekdays import Weekday
 
 if TYPE_CHECKING:
-    from locales.stub import TranslatorRunner
+    from app.locales.stub import TranslatorRunner # type: ignore
 
 
 async def check_desk_assignment(i18n, session: AsyncSession, telegram_id: int, date: str, date_format: str) -> bool | str:

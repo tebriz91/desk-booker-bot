@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_queries import orm_select_desk_id_by_name, orm_delete_desk_by_id
+from app.database.orm_queries import orm_select_desk_id_by_name, orm_delete_desk_by_id
+
 
 async def desk_delete_service(
     session: AsyncSession,
