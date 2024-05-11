@@ -9,6 +9,8 @@ docker-compose*.yml
 *.md
 !README.md
 logs/
+postgres_data/
+redis_data/
 
 ### Python template
 # Byte-compiled / optimized / DLL files
