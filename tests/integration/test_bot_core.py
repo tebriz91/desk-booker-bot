@@ -1,10 +1,11 @@
+import random
 import sys
 from pathlib import Path
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from datetime import datetime
 import pytest
 from unittest.mock import patch, AsyncMock
@@ -75,23 +76,35 @@ async def test_booking_dialog(
     
     logger.info("Adding test data to the database...")
     async with session.begin():
-        if not await safe_insert(session, orm_insert_users, TEST_USERS, "users"):
-            logger.error("Failed to add users.")
+        if not await safe_insert(
+            session,
+            orm_insert_users,
+            TEST_USERS,
+            "users"):
             return
         
     async with session.begin():
-        if not await safe_insert(session, orm_insert_rooms, TEST_ROOMS, "rooms"):
-            logger.error("Failed to add rooms.")
+        if not await safe_insert(
+            session,
+            orm_insert_rooms,
+            TEST_ROOMS,
+            "rooms"):
             return
         
     async with session.begin():
-        if not await safe_insert(session, orm_insert_desks_by_room_name, TEST_DESKS, "desks"):
-            logger.error("Failed to add desks.")
+        if not await safe_insert(
+            session,
+            orm_insert_desks_by_room_name,
+            TEST_DESKS,
+            "desks"):
             return
     
     logger.info(f"Setting up test user with ID: {TEST_USERS[0][0]} and name: {TEST_USERS[0][1]}.")
     telegram_id: int = TEST_USERS[0][0]
-    user_client = BotClient(dp, user_id=telegram_id)
+    user_client = BotClient(
+        dp,
+        user_id=telegram_id,
+        chat_id=telegram_id)
     
     message_manager.reset_history() # Reset the message manager history. This is necessary to avoid interference from previous tests.
     
@@ -109,16 +122,17 @@ async def test_booking_dialog(
     logger.info(f"{i18n.select.date()}\n")
     
     logger.info("Generating dates using generate_dates function.")
+    c = config.bot_operation
     dates = await generate_dates(
-        config.bot_operation.num_days,
-        config.bot_operation.exclude_weekends,
-        config.bot_operation.timezone,
-        config.bot_operation.country_code,
-        config.bot_operation.date_format,
+        c.num_days,
+        c.exclude_weekends,
+        c.timezone,
+        c.country_code,
+        c.date_format,
     )
     
-    assert len(dates) == config.bot_operation.num_days
-    logger.info(f"Number of dates generated: {len(dates)} equals to config num_days: {config.bot_operation.num_days}")
+    assert len(dates) == c.num_days
+    logger.info(f"Number of dates generated: {len(dates)} equals to config num_days: {c.num_days}")
         
     # Loop through each date and its corresponding button
     for i, date in enumerate(dates):
@@ -313,6 +327,76 @@ async def test_booking_dialog(
 
 
 @pytest.mark.asyncio
+async def test_booking_dialog_random_desk(
+    i18n: TranslatorRunner,
+    user_client: BotClient,
+    bot: MockedBot,
+    dp: Dispatcher,
+    message_manager: MockMessageManager,
+    config: Config,
+    session: AsyncSession,
+):
+    logger.info("Test of test_booking_dialog_random_desk started.")
+    logger.info("Setting up test users:")
+    # Iterating through the test users starting from the second user and create a BotClient for each user, where user_id=telegram_id and chat_id=telegram_id
+    for user in TEST_USERS[1:]:
+        logger.info(f"User: {user[1]} with ID: {user[0]} is being set up.")
+        test_user_1 = BotClient(
+            dp,
+            user_id=user[0],
+            chat_id=user[0])
+        
+        message_manager.reset_history()
+        
+        logger.info(f"User: {user[1]} is sending '/book' command.")
+        await test_user_1.send(text="/book")
+        
+        date_selection_message = message_manager.one_message()
+        
+        # Get location of the random date button
+        row: int = random.randint(0, int(config.bot_operation.num_days) - 1) # type: ignore
+        column: int = 0
+        
+        logger.info(f"Attempting to click on random date button located at ({row},{column}).")
+        try:
+            message_manager.reset_history()
+            rndm_date_btn_callback_id = await test_user_1.click(date_selection_message, InlineButtonPositionLocator(row, column))
+        except ValueError as e:
+            logger.error(f"Failed to simulate button click: {e}")
+            raise
+        
+        message_manager.assert_answered(rndm_date_btn_callback_id)
+        logger.info(f"Callback message has been answered. Callback ID: {rndm_date_btn_callback_id}")
+        
+        room_selection_message = message_manager.one_message()
+        rndm_desk_btn = i18n.booking.random.button()
+
+        # Mocking the answer method in CallbackQuery
+        with patch.object(CallbackQuery, 'answer', new_callable=AsyncMock) as mock_answer:
+            
+            logger.info("Attempting to click on random desk button.")
+            try:
+                message_manager.reset_history()
+                rndm_desk_btn_callback_id = await test_user_1.click(room_selection_message, InlineButtonTextLocator(rndm_desk_btn))
+            
+                message_manager.assert_answered(rndm_desk_btn_callback_id)
+                logger.info(f"Callback message has been answered. Callback ID: {rndm_desk_btn_callback_id}")
+                
+                mock_answer.assert_called_once()
+                assert mock_answer.call_args[1]['show_alert'] is True
+                
+                logger.info("Callback message text:\n")
+                logger.info(f"{mock_answer.call_args[1]['text']}\n")
+                logger.info(f"Show alert flag is set to {mock_answer.call_args[1]['show_alert']}. Alert was displayed.\n")
+            
+            except ValueError as e:
+                logger.error(f"Failed to simulate button click: {e}")
+                raise
+            
+    logger.info("Test of test_booking_dialog_random_desk completed successfully.")
+
+
+@pytest.mark.asyncio
 async def test_all_bookings_dialog(
     i18n: TranslatorRunner,
     user_client: BotClient,
@@ -325,7 +409,10 @@ async def test_all_bookings_dialog(
     logger.info("Test of all_bookings_dialog started.")
     logger.info(f"Setting up test user with ID: {TEST_USERS[0][0]} and name: {TEST_USERS[0][1]}.")
     telegram_id: int = TEST_USERS[0][0]
-    user_client = BotClient(dp, user_id=telegram_id)
+    user_client = BotClient(
+        dp,
+        user_id=telegram_id,
+        chat_id=telegram_id)
     
     message_manager.reset_history() # Reset the message manager history. This is necessary to avoid interference from previous tests.
     
@@ -453,7 +540,10 @@ async def test_cancel_bookings_dialog(
     logger.info("Test of cancel_bookings_dialog started.")
     logger.info(f"Setting up test user with ID: {TEST_USERS[0][0]} and name: {TEST_USERS[0][1]}.")
     telegram_id: int = TEST_USERS[0][0]
-    user_client = BotClient(dp, user_id=telegram_id)
+    user_client = BotClient(
+        dp,
+        user_id=telegram_id,
+        chat_id=telegram_id)
     
     message_manager.reset_history() # Reset the message manager history. This is necessary to avoid interference from previous tests.
     
