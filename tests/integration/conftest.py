@@ -69,7 +69,7 @@ def i18n():
 
 @pytest.fixture(scope="session")
 def engine(config: Config):
-    logger.info("Creating engine.")
+    logger.info(f"Creating engine using DB URL: {config.db.url}.")
     engine = create_async_engine(config.db.url, echo=False)
     yield engine
     # engine.sync_engine.dispose()
