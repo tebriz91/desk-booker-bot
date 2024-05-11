@@ -1,4 +1,3 @@
-import asyncio
 import sys
 from pathlib import Path
 
@@ -22,6 +21,8 @@ from tests.integration.utils import (
     TEST_ROOMS,
     TEST_DESKS,
     safe_insert,
+    create_db,
+    truncate_db_cascade,
 )
 from app.config_data.config import Config
 from app.services.user.dates_generator import generate_dates
@@ -35,7 +36,6 @@ from app.services.bookings_list_generator import (
     generate_current_bookings_by_telegram_id,
     generate_current_bookings_list_by_room_id,
 )
-from app.database.models import User
 from app.database.orm_queries import (
     orm_insert_users,
     orm_insert_rooms,
@@ -54,6 +54,7 @@ logger = Logger()
 
 @pytest.mark.asyncio
 async def test_booking_dialog(
+    engine,
     i18n: TranslatorRunner,
     user_client: BotClient,
     bot: MockedBot,
@@ -64,14 +65,29 @@ async def test_booking_dialog(
 ):
     logger.info("Test of booking_dialog started.")
     
-    #* TEST DATA SETUP
+    #* DATABASE SETUP
     
-    async with session.begin():
-        if not await safe_insert(session, orm_insert_users, data=TEST_USERS, entity_name="users"):
-            return  # Exit if unable to add users
+    logger.info("Creating database tables, if they do not exist...")
+    await create_db(engine)
 
-        if await safe_insert(session, orm_insert_rooms, data=TEST_ROOMS, entity_name="rooms"):
-            await safe_insert(session, orm_insert_desks_by_room_name, data=TEST_DESKS, entity_name="desks")
+    logger.info("Truncating database tables...")
+    await truncate_db_cascade(session)
+    
+    logger.info("Adding test data to the database...")
+    async with session.begin():
+        if not await safe_insert(session, orm_insert_users, TEST_USERS, "users"):
+            logger.error("Failed to add users.")
+            return
+        
+    async with session.begin():
+        if not await safe_insert(session, orm_insert_rooms, TEST_ROOMS, "rooms"):
+            logger.error("Failed to add rooms.")
+            return
+        
+    async with session.begin():
+        if not await safe_insert(session, orm_insert_desks_by_room_name, TEST_DESKS, "desks"):
+            logger.error("Failed to add desks.")
+            return
     
     logger.info(f"Setting up test user with ID: {TEST_USERS[0][0]} and name: {TEST_USERS[0][1]}.")
     telegram_id: int = TEST_USERS[0][0]
@@ -555,3 +571,8 @@ async def test_cancel_bookings_dialog(
         )
 
     logger.info("Test of cancel_bookings_dialog completed successfully.")
+    
+    #* TRUNCATE DATABASE TABLES
+    
+    logger.info("Truncating database tables...")
+    await truncate_db_cascade(session)
