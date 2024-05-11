@@ -71,7 +71,7 @@ docker-network-rm:
 
 docker-volume-rm:
 	@echo Removing all Docker volumes...
-	@docker volume rm $(docker volume ls -q) || echo Failed to remove Docker volumes"
+	@docker volume rm $(docker volume ls -qf dangling=true)
 
 docker-logs:
 	@echo Following logs for the app container...
