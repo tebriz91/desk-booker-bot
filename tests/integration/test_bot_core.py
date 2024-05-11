@@ -17,7 +17,7 @@ from fluentogram import TranslatorRunner # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.integration.mocked_bot import MockedBot
-from tests.utils.utils_integration import (
+from tests.integration.utils import (
     TEST_USERS,
     TEST_ROOMS,
     TEST_DESKS,
