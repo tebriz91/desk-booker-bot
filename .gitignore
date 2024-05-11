@@ -5,7 +5,6 @@
 .dockerenv
 *.db
 .VSCodeCounter
-docker-compose*.yml
 *.md
 !README.md
 logs/
