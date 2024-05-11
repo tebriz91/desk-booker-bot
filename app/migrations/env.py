@@ -9,17 +9,6 @@ from alembic import context
 
 from app.config_data.config import load_config
 
-from app.database.models import (
-    User,
-    UserRoleAssignment,
-    Team,
-    TeamTree,
-    Waitlist,
-    Room,
-    Desk,
-    DeskAssignment,
-    Booking,
-)
 from app.database.models import Base
 
 # this is the Alembic Config object, which provides
