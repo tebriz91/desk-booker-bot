@@ -1,3 +1,4 @@
+import asyncio
 import sys
 from pathlib import Path
 
@@ -12,10 +13,16 @@ from aiogram import Dispatcher
 from aiogram.types import CallbackQuery
 from aiogram_dialog.test_tools import MockMessageManager, BotClient
 from aiogram_dialog.test_tools.keyboard import InlineButtonTextLocator, InlineButtonPositionLocator
-from tests.integration.mocked_bot import MockedBot
 from fluentogram import TranslatorRunner # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tests.integration.mocked_bot import MockedBot
+from tests.integration.utils import (
+    TEST_USERS,
+    TEST_ROOMS,
+    TEST_DESKS,
+    safe_insert,
+)
 from app.config_data.config import Config
 from app.services.user.dates_generator import generate_dates
 from app.services.common.rooms_list_generator import (
@@ -28,8 +35,11 @@ from app.services.bookings_list_generator import (
     generate_current_bookings_by_telegram_id,
     generate_current_bookings_list_by_room_id,
 )
-
+from app.database.models import User
 from app.database.orm_queries import (
+    orm_insert_users,
+    orm_insert_rooms,
+    orm_insert_desks_by_room_name,
     # orm_delete_booking_by_id,
     orm_select_booking_by_telegram_id_and_date_selectinload,
     orm_select_booking_by_id,
@@ -53,8 +63,18 @@ async def test_booking_dialog(
     session: AsyncSession,
 ):
     logger.info("Test of booking_dialog started.")
-    logger.info("Setting up user ID to first admin ID in config.")
-    telegram_id: int = config.bot.admins[0]
+    
+    #* TEST DATA SETUP
+    
+    async with session.begin():
+        if not await safe_insert(session, orm_insert_users, data=TEST_USERS, entity_name="users"):
+            return  # Exit if unable to add users
+
+        if await safe_insert(session, orm_insert_rooms, data=TEST_ROOMS, entity_name="rooms"):
+            await safe_insert(session, orm_insert_desks_by_room_name, data=TEST_DESKS, entity_name="desks")
+    
+    logger.info(f"Setting up test user with ID: {TEST_USERS[0][0]} and name: {TEST_USERS[0][1]}.")
+    telegram_id: int = TEST_USERS[0][0]
     user_client = BotClient(dp, user_id=telegram_id)
     
     message_manager.reset_history() # Reset the message manager history. This is necessary to avoid interference from previous tests.
@@ -287,8 +307,8 @@ async def test_all_bookings_dialog(
     session: AsyncSession,
 ):
     logger.info("Test of all_bookings_dialog started.")
-    logger.info("Setting up user ID to first admin ID in config.")
-    telegram_id: int = config.bot.admins[0]
+    logger.info(f"Setting up test user with ID: {TEST_USERS[0][0]} and name: {TEST_USERS[0][1]}.")
+    telegram_id: int = TEST_USERS[0][0]
     user_client = BotClient(dp, user_id=telegram_id)
     
     message_manager.reset_history() # Reset the message manager history. This is necessary to avoid interference from previous tests.
@@ -415,8 +435,8 @@ async def test_cancel_bookings_dialog(
     session: AsyncSession,
 ):
     logger.info("Test of cancel_bookings_dialog started.")
-    logger.info("Setting up user ID to first admin ID in config.")
-    telegram_id: int = config.bot.admins[0]
+    logger.info(f"Setting up test user with ID: {TEST_USERS[0][0]} and name: {TEST_USERS[0][1]}.")
+    telegram_id: int = TEST_USERS[0][0]
     user_client = BotClient(dp, user_id=telegram_id)
     
     message_manager.reset_history() # Reset the message manager history. This is necessary to avoid interference from previous tests.
