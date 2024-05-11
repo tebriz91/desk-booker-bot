@@ -13,6 +13,3 @@ Makefile
 *.md
 README.md
 logs/
-**/*_test.py
-**/tests/
-pytest.ini
