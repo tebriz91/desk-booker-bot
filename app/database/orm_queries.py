@@ -1,5 +1,4 @@
-from datetime import date, timedelta
-from random import randint
+from datetime import date
 from typing import Optional
 
 from sqlalchemy import Integer, String, and_, func, literal, not_, or_, select, update, delete
@@ -354,9 +353,9 @@ async def orm_insert_rooms(session: AsyncSession, rooms: list[str]) -> None:
         new_rooms = [Room(name=room_name) for room_name in rooms]
         session.add_all(new_rooms)
         await session.commit()
-    except SQLAlchemyError:
+    except Exception as e:
         await session.rollback()
-        raise SQLAlchemyError("Failed to insert rooms into the database.")
+        raise Exception("Failed to insert rooms into the database.")
 
 
 async def orm_select_rooms(session: AsyncSession):
@@ -441,12 +440,14 @@ async def orm_insert_desks_by_room_name(session: AsyncSession, desks: dict[str, 
     try:
         for room_name, desk_names in desks.items():
             room_id = await orm_select_room_id_by_name(session, room_name)
+            if room_id is None:
+                continue  # Skip to the next room if no valid room ID was found
             new_desks = [Desk(room_id=room_id, name=desk_name) for desk_name in desk_names]
             session.add_all(new_desks)
         await session.commit()
-    except SQLAlchemyError:
+    except Exception as e:
         await session.rollback()
-        raise SQLAlchemyError("Failed to insert desks into the database.")
+        raise
 
 
 async def orm_select_desk_id_by_name(session: AsyncSession, desk_name: str):
