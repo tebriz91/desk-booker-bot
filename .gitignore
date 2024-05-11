@@ -4,10 +4,12 @@
 .env
 *.db
 .VSCodeCounter
-docker-compose*.yml
 *.md
 !README.md
 logs/
+postgres_data/
+pg_backups/
+redis_data/
 
 ### Python template
 # Byte-compiled / optimized / DLL files
@@ -150,4 +152,4 @@ dmypy.json
 cython_debug/
 
 .idea
-.vscode
+# .vscode

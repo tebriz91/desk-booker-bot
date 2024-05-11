@@ -1,0 +1,84 @@
+services:
+
+  db:
+    container_name: postgres_db
+    image: postgres:latest
+    env_file:
+      - .env
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+      - ./pg_backups:/var/backups/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    container_name: redis_db
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    restart: always
+    volumes:
+      - ./redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+  
+  app:
+    container_name: desk-booker-bot
+    image: tebriz91/desk-booker-bot:latest
+    restart: always
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    env_file:
+      - .env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PG_ADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PG_ADMIN_PASSWORD}
+    restart: always
+    ports:
+      - "5050:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  watchtower:
+    container_name: watchtower
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    command: --rolling-restart --cleanup --label-enable --debug --schedule "0 0 3 * * 6"
+
+volumes:
+  postgres_data:
+    driver: local
+  pg_backups:
+    driver: local
+  redis_data:
+    driver: local
