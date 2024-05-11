@@ -9,6 +9,7 @@
 !README.md
 logs/
 postgres_data/
+pg_backups/
 redis_data/
 
 ### Python template
