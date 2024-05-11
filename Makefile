@@ -69,9 +69,11 @@ docker-network-rm:
 	@echo Removing all Docker networks...
 	@docker network rm $(docker network ls -q) || echo Failed to remove Docker networks"
 
+# The for loop iterates over the output of the docker volume ls -q --filter "dangling=true" command.
+# Each volume ID output from the docker volume ls command is temporarily held in the %%i variable and passed to docker volume rm.
 docker-volume-rm:
 	@echo Removing all Docker volumes...
-	@docker volume rm $(docker volume ls -qf dangling=true)
+	@for /f "delims=" %%i in ('docker volume ls -q --filter "dangling=true"') do @docker volume rm %%i
 
 docker-logs:
 	@echo Following logs for the app container...
