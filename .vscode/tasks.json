@@ -28,6 +28,19 @@
             "problemMatcher": []
         },
         {
+            "label": "Test",
+            "type": "shell",
+            "command": "make test",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "reveal": "always"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "Help",
             "type": "shell",
             "command": "make help",
