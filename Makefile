@@ -26,7 +26,7 @@ stop-dev:
 # Remove all containers, networks, images, and volumes
 clean-dev:
 	@echo Removing all containers, networks, images, and volumes for the development environment...
-	@${compose} ${dev} down --v --rmi all
+	@${compose} ${dev} down -v --rmi all
 
 start-prod:
 	@echo Starting the production environment...
