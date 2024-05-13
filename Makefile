@@ -159,15 +159,15 @@ redis-monitor:
 	@docker exec -it ${redis} redis-cli monitor || echo Failed to monitor Redis"
 
 #* Pytest commands
-test:
+pytest:
 	@echo Running tests...
 	@docker exec -it ${app} pytest || echo Failed to run tests"
 
-test-coverage:
+pytest-coverage:
 	@echo Running tests with coverage...
 	@docker exec -it ${app} pytest --cov=app || echo Failed to run tests with coverage"
 
-test-cov-html:
+pytest-cov-html:
 	@echo Running tests with coverage and generating HTML report...
 	@docker exec -it ${app} pytest --cov=app --cov-report html || echo Failed to run tests with coverage and generate HTML report"
 
