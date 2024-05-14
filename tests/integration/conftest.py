@@ -6,9 +6,12 @@ sys.path.insert(0, str(project_root))
 import asyncio
 import pytest
 import pytest_asyncio
+from typing import Any, Dict, Optional
 
-from tests.integration.mocked_bot import MockedBot
 from aiogram_dialog.test_tools import MockMessageManager, BotClient
+from tests.integration.mocked_bot import MockedBot
+from tests.integration.config import Config, load_config
+from tests.integration.utils import BOT_CONFIGURATIONS
 
 from aiogram import Dispatcher
 from aiogram_dialog import setup_dialogs
@@ -17,11 +20,14 @@ from aiogram.fsm.storage.memory import (
     # DisabledEventIsolation,
     # SimpleEventIsolation,
 )
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 # from redis.asyncio.connection import parse_url as parse_redis_url
 # from aiogram.fsm.storage.redis import RedisEventIsolation, RedisStorage
 
-from app.config_data.config import Config, load_config
 from app.utils.i18n import Translator
 
 from app.dialogs import register_dialogs
@@ -30,46 +36,46 @@ from app.middlewares.db_middleware import DataBaseSession
 from app.middlewares.user_middleware import UserMiddleware
 from app.routers import router
 
-
 from app.utils.logger import Logger
-logger = Logger()
+logger = Logger(level=20)
 
 
 @pytest.fixture(scope="session")
-def config():
-    logger.info("Loading config.")
-    config = load_config()
-    if not config:
-        logger.error("Failed to load configuration.")
-    else:
-        logger.info("Configuration loaded successfully:")
-        logger.info(f"Database URL: {config.db.url}")
-        logger.info(f"Redis Host: {config.redis.host}")
-        logger.info(f"Redis Port: {config.redis.port}")
-        logger.info(f"Bot Token: {config.bot.token}")
-        logger.info(f"Operation Days: {config.bot_operation.num_days}, Exclude Weekends: {config.bot_operation.exclude_weekends}")
-        logger.info(f"Advanced Mode: {config.bot_operation.advanced_mode}")
-        logger.info(f"Timezone: {config.bot_operation.timezone}, Country code: {config.bot_operation.country_code}")
-        logger.info(f"Date format: {config.bot_operation.date_format}")
+def config(request: pytest.FixtureRequest) -> Config:
+    logger.debug("Loading configuration.")
+    config_name: str = request.config.getoption("config", default="default")
+    selected_config: Optional[Dict[str, Any]] = BOT_CONFIGURATIONS.get(config_name)
     
-    return config
+    if selected_config:
+        return load_config(overrides=selected_config)
+    
+    logger.debug("Using default configuration. No overrides.")
+    return load_config()
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Add a command line option to the pytest parser."""
+    parser.addoption(
+        "--config", action="store", default="default",
+        help="Defines the test bot configuration to use: default, 1, 2, or 3, etc."
+    )
 
 
 @pytest.fixture(scope="session")
 def bot(config: Config) -> MockedBot:
-    logger.info("Creating bot with token: %s", config.bot.token)
+    logger.debug("Creating bot with token: %s", config.bot.token)
     return MockedBot(token=config.bot.token)
 
 
 @pytest.fixture()
-def i18n():
+def i18n() -> Translator:
     translator_hub = Translator()
     return translator_hub.translator_hub.get_translator_by_locale(locale="en")
 
 
 @pytest.fixture(scope="session")
 def engine(config: Config):
-    logger.info(f"Creating engine using DB URL: {config.db.url}.")
+    logger.debug(f"Creating engine using DB URL: {config.db.url}.")
     engine = create_async_engine(config.db.url, echo=False)
     yield engine
     # engine.sync_engine.dispose()
@@ -81,15 +87,10 @@ def dp(engine,
        bot: MockedBot,
        config: Config,
        ) -> Dispatcher:
-    logger.info("Creating session pool.")
-    sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
+    logger.debug("Creating dispatcher.")
     
-    logger.info("Creating dispatcher.")
     dispatcher = Dispatcher(storage=MemoryStorage(),
                             bot=bot)
-    
-    logger.info("Creating translator and setting global language.")
-    tranlator = Translator(global_lang="en")
     
     dispatcher['config'] = config
     # dispatcher['i18n'] = mock_translator
@@ -97,7 +98,12 @@ def dp(engine,
     dispatcher.include_router(router)
     register_dialogs(router)
     setup_dialogs(dispatcher, message_manager=message_manager)
+    
+    tranlator = Translator(global_lang="en")
     dispatcher.update.middleware(TranslatorRunnerMiddleware(translator=tranlator))
+        
+    sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
+    
     dispatcher.message.outer_middleware(UserMiddleware(session_pool=sessionmaker))
     dispatcher.callback_query.outer_middleware(UserMiddleware(session_pool=sessionmaker))
     dispatcher.update.middleware(DataBaseSession(session_pool=sessionmaker))
@@ -107,16 +113,18 @@ def dp(engine,
 
 @pytest_asyncio.fixture(scope="function")
 async def session(engine):
-    logger.info("Creating database session.")
+    logger.debug("Creating database session.")
     async with AsyncSession(engine) as s:
         yield s
 
 
 @pytest.fixture(scope="session")
 def message_manager():
-    logger.info("Creating message manager.")
-    return MockMessageManager()
-
+    logger.debug("Creating message manager.")
+    manager = MockMessageManager()
+    yield manager
+    logger.debug("Resetting message manager.")
+    manager.reset_history()
 
 # Commented it out because manually set it up in the test functions
 # @pytest.fixture(autouse=True) # autouse=True means that this fixture will be automatically used by all test functions
@@ -125,9 +133,9 @@ def message_manager():
 #     message_manager.reset_history()
 
 
-@pytest.fixture
-def user_client(dp: Dispatcher, bot: MockedBot):
-    logger.info("Creating user client for testing.")
+@pytest.fixture(scope="session")
+def user_client(dp: Dispatcher, bot: MockedBot) -> BotClient:
+    logger.debug("Creating user client for testing.")
     return BotClient(dp, bot=bot)
 
 
