@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional
 from aiogram_dialog.test_tools import MockMessageManager, BotClient
 from tests.integration.mocked_bot import MockedBot
 from tests.integration.config import Config, load_config
-from tests.integration.utils import BOT_CONFIGURATIONS
+from tests.integration.const import BOT_CONFIGURATIONS
 
 from aiogram import Dispatcher
 from aiogram_dialog import setup_dialogs
