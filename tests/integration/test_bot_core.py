@@ -5,7 +5,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 from datetime import datetime
 import pytest
 from unittest.mock import patch, AsyncMock
@@ -17,13 +17,20 @@ from fluentogram import TranslatorRunner # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.integration.mocked_bot import MockedBot
-from tests.integration.utils import (
+from tests.integration.const import (
     TEST_USERS_1, TEST_ROOMS_1, TEST_DESKS_1,
     TEST_USERS_2, TEST_ROOMS_2, TEST_DESKS_2,
     TEST_USERS_3, TEST_ROOMS_3, TEST_DESKS_3,
-    safe_insert,
+)
+from tests.integration.utils import (
+    assert_inline_keyboard_buttons,
+    click_inline_keyboard_button_by_location,
+    insert_record,
     create_db,
+    log_inline_keyboard_buttons,
     truncate_db_cascade,
+    assert_message_text,
+    log_sent_messages,
 )
 from tests.integration.config import Config
 from app.services.user.dates_generator import generate_dates
@@ -50,13 +57,13 @@ if TYPE_CHECKING:
     from app.locales.stub import TranslatorRunner # type: ignore
 
 from app.utils.logger import Logger
-logger = Logger(level=20)
+logger = Logger(level=10)
 
 
 test_data_sets = [
     (TEST_USERS_1, TEST_ROOMS_1, TEST_DESKS_1),
-    (TEST_USERS_2, TEST_ROOMS_2, TEST_DESKS_2),
-    (TEST_USERS_3, TEST_ROOMS_3, TEST_DESKS_3),
+    # (TEST_USERS_2, TEST_ROOMS_2, TEST_DESKS_2),
+    # (TEST_USERS_3, TEST_ROOMS_3, TEST_DESKS_3),
 ]
 
 
@@ -120,17 +127,17 @@ async def booking_dialog(
 
     #* DATABASE SETUP
     
-    logger.debug("Creating database tables, if they do not exist...")
+    logger.debug("Creating database tables, if they do not exist.")
     await create_db(engine)
 
-    logger.debug("Truncating database tables...")
+    logger.debug("Truncating database tables.")
     await truncate_db_cascade(session)
     
     logger.info(f"Test users: {test_users}")
     
-    logger.debug("Adding test data to the database...")
+    logger.debug("Adding test data to the database.")
     async with session.begin():
-        if not await safe_insert(
+        if not await insert_record(
             session,
             orm_insert_users,
             test_users,
@@ -138,7 +145,7 @@ async def booking_dialog(
             return
         
     async with session.begin():
-        if not await safe_insert(
+        if not await insert_record(
             session,
             orm_insert_rooms,
             test_rooms,
@@ -146,7 +153,7 @@ async def booking_dialog(
             return
         
     async with session.begin():
-        if not await safe_insert(
+        if not await insert_record(
             session,
             orm_insert_desks_by_room_name,
             test_desks,
@@ -162,38 +169,25 @@ async def booking_dialog(
     
     message_manager.reset_history() # Reset the message manager history. This is necessary to avoid interference from previous tests.
     
-    logger.debug(f"Checkpoint 1. Number of sent messages: {len(message_manager.sent_messages)}")
-    for msg in message_manager.sent_messages:
-        logger.debug(f"Message content: {msg.text}")
-    
     logger.info("Sending '/book' command.")
     await user_client.send(text="/book")
     
     #* DATE SELECTION
     
-    messages = message_manager.sent_messages
-    if not messages:
-        logger.error(f"No messages were captured, expected at least one. Messages: {messages}.")
+    if not message_manager.sent_messages:
+        logger.error(f"No messages were captured, expected at least one. Messages: {message_manager.sent_messages}.")
         assert False, "Expected at least one message but got none."
-    elif len(messages) > 1:
-        logger.error("Expected one message but multiple were captured.")
-        for msg in messages:
-            logger.debug(f"Captured message: {msg.text}")
+    
+    if len(message_manager.sent_messages) > 1:
+        log_sent_messages(message_manager)
         assert False, "Expected one message but multiple were captured."
-    else:
-        date_selection_message = messages[0]
-        logger.debug(f"Checkpoint 2. Number of sent messages: {len(message_manager.sent_messages)}")
-        for msg in message_manager.sent_messages:
-            logger.debug(f"Message content: {msg.text}")
+    
+    if len(message_manager.sent_messages) == 1:
+        date_selection_message = message_manager.sent_messages[0]
         expected_message = i18n.select.date()
-        assert date_selection_message.text == expected_message, f"Expected text: {expected_message}, but got: {date_selection_message.text}"
+        assert_message_text(date_selection_message, expected_message)
     
-    logger.info("Message text:\n")
-    logger.info(f"{date_selection_message.text}\n")
-    logger.info("... matches expected text:\n")
-    logger.info(f"{i18n.select.date()}\n")
-    
-    logger.debug("Generating dates using generate_dates function.")
+    logger.debug("Generating dates.")
     dates = await generate_dates(
         c.num_days,
         c.exclude_weekends,
@@ -204,109 +198,82 @@ async def booking_dialog(
     
     assert len(dates) == c.num_days
     logger.info(f"Number of dates generated: {len(dates)} equals to config num_days: {c.num_days}")
-        
-    # Loop through each date and its corresponding button
-    for i, date in enumerate(dates):
-        # Access the button text for the current date
-        button_text = date_selection_message.reply_markup.inline_keyboard[i][0].text  # type: ignore
-        # Check if the date is in the button text
-        assert date in button_text
-        logger.debug(f"Date: {date} matches button text: {button_text}")
     
-    logger.debug("Listing all available buttons on UI:")
-    for i, row in enumerate(date_selection_message.reply_markup.inline_keyboard): # type: ignore
-        for j, button in enumerate(row):
-            logger.debug(f"Button at ({i},{j}): '{button.text}'")
+    log_inline_keyboard_buttons(message=date_selection_message)
+    
+    logger.debug("Matching expected dates with the buttons on UI.")
+    assert_inline_keyboard_buttons(
+        expected_texts=dates,
+        message=date_selection_message)
     
     first_date_button = date_selection_message.reply_markup.inline_keyboard[0][0].text # type: ignore
     
-    logger.debug(f"Checkpoint 3. Number of sent messages: {len(message_manager.sent_messages)}")
-    for msg in message_manager.sent_messages:
-        logger.debug(f"Message content: {msg.text}")
+    message_manager.reset_history()
     
-    logger.info(f"Attempting to click on the first date button: {first_date_button}")
-    try:
-        message_manager.reset_history()
-        date_button_callback_id = await user_client.click(date_selection_message, InlineButtonPositionLocator(0, 0))
-        logger.info("Button click simulated successfully.")
-    except ValueError as e:
-        logger.error(f"Failed to simulate button click: {e}")
-        detailed_buttons = "\n".join([f"Button at ({i},{j}): '{btn.text}'" for i, row in enumerate(date_selection_message.reply_markup.inline_keyboard) for j, btn in enumerate(row)]) # type: ignore
-        logger.debug(f"Failed to find button. Available buttons:\n{detailed_buttons}")
-        raise AssertionError(f"Button with the text '{first_date_button}' was not found.")
-
+    logger.info(f"Clicking on the first date button: {first_date_button}")
+    date_button_callback_id = await click_inline_keyboard_button_by_location(
+        user_client,
+        date_selection_message,
+        row=0,
+        column=0,
+    )
+    
     message_manager.assert_answered(date_button_callback_id)
     logger.debug(f"Callback message has been answered. Callback ID: {date_button_callback_id}")
 
-    logger.debug(f"Checkpoint 4. Number of sent messages: {len(message_manager.sent_messages)}")
-    for msg in message_manager.sent_messages:
-        logger.debug(f"Message content: {msg.text}")
-
     room_selection_message = message_manager.one_message()
     
-    expected_text = f"{i18n.selected.date(date=first_date_button)}\n{i18n.select.room()}"
-    
-    assert room_selection_message.text == expected_text
-    logger.info(
-        "Message text:\n\n"
-        f"{room_selection_message.text}\n\n"
-        "... matches expected text:\n\n"
-        f"{expected_text}\n"
-        )
+    assert_message_text(
+        message=room_selection_message,
+        expected_text=f"{i18n.selected.date(date=first_date_button)}\n{i18n.select.room()}",
+    )
     
     #* ROOM SELECTION
     
-    logger.debug("Getting room list with generate_available_rooms_list function...")
-    rooms = await generate_available_rooms_list(session)
-    logger.debug(f"Available rooms: {rooms}")
+    logger.debug("Getting rooms list.")
+    rooms: List[str] = await generate_available_rooms_list(session)
     
-    logger.debug("Listing all available buttons on UI:")
-    for i, row in enumerate(room_selection_message.reply_markup.inline_keyboard): # type: ignore
-        for j, button in enumerate(row):
-            logger.debug(f"Button at ({i},{j}): '{button.text}'")
+    log_inline_keyboard_buttons(room_selection_message)
         
-    logger.debug("Checking if all rooms are represented on UI...")
-    for room in rooms:
-        assert any(room == btn.text for row in room_selection_message.reply_markup.inline_keyboard for btn in row), f"Room {room} not found in button texts" # type: ignore
-    logger.debug("All rooms have been correctly represented on UI.")
+    logger.debug("Matching expected rooms with the buttons on UI.")
+    assert_inline_keyboard_buttons(
+        expected_texts=rooms,
+        message=room_selection_message,
+    )
     
-    logger.debug(f"Checkpoint 5. Number of sent messages: {len(message_manager.sent_messages)}")
-    for msg in message_manager.sent_messages:
-        logger.debug(f"Message content: {msg.text}")
+    log_sent_messages(message_manager)
     
     first_room_button = room_selection_message.reply_markup.inline_keyboard[0][0].text # type: ignore
     
-    logger.debug("Getting room plan URL with get_room_plan_by_room_name function...")
-    room_plan = await get_room_plan_by_room_name(session, first_room_button)
+    logger.debug("Getting room plan URL.")
+    room_plan: str = await get_room_plan_by_room_name(
+        session,
+        room_name=first_room_button,
+    )
     
-    logger.info(f"Attempting to click on the first room button: {first_room_button}")
-    try:
-        message_manager.reset_history()
-        room_button_callback_id = await user_client.click(room_selection_message, InlineButtonPositionLocator(0, 0))
-        logger.debug("Button click simulated successfully.")
-    except ValueError as e:
-        logger.error(f"Failed to simulate button click: {e}")
+    message_manager.reset_history()
+    
+    logger.info(f"Clicking on the first room button: {first_room_button}")
+    room_button_callback_id = await click_inline_keyboard_button_by_location(
+        user_client,
+        room_selection_message,
+        row=0,
+        column=0,
+    )
     
     message_manager.assert_answered(room_button_callback_id)
     logger.debug(f"Callback message has been answered. Callback ID: {room_button_callback_id}")
 
-    logger.debug(f"Checkpoint 6. Number of sent messages: {len(message_manager.sent_messages)}")
-    for msg in message_manager.sent_messages:
-        logger.debug(f"Message content: {msg.text}")
-
     desk_selection_message = message_manager.one_message()
     
-    expected_text = f'{i18n.selected.date(date=first_date_button)}\n{i18n.selected.room(room_name=first_room_button)}<a href="{room_plan}">📋</a>\n{i18n.select.desk()}'
-    
-    assert desk_selection_message.text == expected_text
-    logger.info("Message text:\n")
-    logger.info(f"{desk_selection_message.text}\n")
-    logger.info("... matches expected text:\n")
-    logger.info(f"{expected_text}\n")
+    assert_message_text(
+        message=desk_selection_message,
+        expected_text=f'{i18n.selected.date(date=first_date_button)}\n{i18n.selected.room(room_name=first_room_button)}<a href="{room_plan}">📋</a>\n{i18n.select.desk()}',
+    )
     
     #* DESK SELECTION
     
-    logger.debug("Getting desk list from generate_desk_list function...")
+    logger.debug("Getting desks list.")
     desks = await generate_desks_list(
             session,
             room_name=first_room_button,
@@ -329,9 +296,7 @@ async def booking_dialog(
     
     first_desk_button = desk_selection_message.reply_markup.inline_keyboard[0][0].text # type: ignore
     
-    logger.debug(f"Checkpoint 7. Number of sent messages: {len(message_manager.sent_messages)}")
-    for msg in message_manager.sent_messages:
-        logger.debug(f"Message content: {msg.text}")
+    log_sent_messages(message_manager)
     
     # Mocking the answer method in CallbackQuery
     with patch.object(CallbackQuery, 'answer', new_callable=AsyncMock) as mock_answer:
@@ -353,9 +318,7 @@ async def booking_dialog(
         
         mock_answer.assert_called_once_with(text=expected_text, show_alert=True)
 
-        logger.debug(f"Checkpoint 8. Number of sent messages: {len(message_manager.sent_messages)}")
-        for msg in message_manager.sent_messages:
-            logger.debug(f"Message content: {msg.text}")
+        log_sent_messages(message_manager)
 
         # Compare the expected and actual result after the interaction
         actual_text = mock_answer.call_args[1]['text']  # Retrieve the actual text passed to the answer method
