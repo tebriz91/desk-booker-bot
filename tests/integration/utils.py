@@ -1,5 +1,4 @@
-from math import exp
-from typing import Callable, Any, List
+from typing import Callable, Any, List, Optional
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from aiogram.types import Message, CallbackQuery
@@ -8,7 +7,7 @@ from aiogram_dialog.test_tools.keyboard import InlineButtonTextLocator, InlineBu
 
 from app.database.models import Base
 from app.utils.logger import Logger
-logger = Logger(level=10)
+logger = Logger(level=20)
 
 
 async def insert_record(
@@ -84,6 +83,44 @@ def assert_message_text(message: Message, expected_text: str) -> None:
     )
 
 
+def assert_callback_answer(
+    callback_answer: Optional[CallbackQuery],
+    expected_answer: Optional[str],
+    show_alert: Optional[bool],
+) -> None:
+    """
+    Assert that the text of a callback answer is equal to the expected value and optionally check the show_alert flag.
+
+    Args:
+        callback_answer (Optional[CallbackQuery]): The actual answer to check.
+        expected_answer (Optional[str]): The expected answer.
+        show_alert (Optional[bool]): The expected value of the show_alert flag.
+    """
+    if expected_answer is not None:
+        if callback_answer == expected_answer:
+            logger.info(
+                "Callback answer:\n\n"
+                f"{callback_answer}\n\n"
+                "Expected answer:\n\n"
+                f"{expected_answer}\n"
+            )
+        else:
+            logger.error(
+                "Mismatch in callback answer!\n"
+                "Actual answer:\n\n"
+                f"{callback_answer}\n\n"
+                "Expected answer:\n\n"
+                f"{expected_answer}\n"
+            )
+            raise AssertionError("Callback answer does not match expected answer.")
+    
+    if show_alert is not None:
+        if show_alert is True:
+            logger.debug(f"Show alert flag is set to {show_alert}. Alert was displayed.")
+        else:
+            logger.error(f"Show alert flag is set to {show_alert}. Alert was not displayed.")
+
+
 def log_sent_messages(message_manager: MockMessageManager) -> None:
     """
     Log the number of sent messages and their content.
@@ -113,7 +150,7 @@ def log_inline_keyboard_buttons(message: Message) -> None:
             logger.debug(f"Button at ({i},{j}): '{button.text}'")
 
 
-def assert_inline_keyboard_buttons(expected_texts: List[str], message: Message) -> None:
+def assert_inline_keyboard_buttons(expected_texts: List[str] | str, message: Message) -> None:
     """
     Asserts that each expected text is found in the corresponding button in the inline keyboard.
 
@@ -125,6 +162,9 @@ def assert_inline_keyboard_buttons(expected_texts: List[str], message: Message) 
         logger.error("Message does not contain an inline keyboard.")
         assert False, "Message does not contain an inline keyboard."
 
+    if isinstance(expected_texts, str):
+        expected_texts = [expected_texts]
+        
     for expected_text in expected_texts:
         assert any(expected_text in button.text for row in message.reply_markup.inline_keyboard for button in row), f"Button with text '{expected_text}' not found in expected texts."
     logger.debug("All expected buttons found in the inline keyboard.")
@@ -159,3 +199,32 @@ async def click_inline_keyboard_button_by_location(
     except ValueError as e:
         logger.error(f"Failed to simulate button click: {e}")
         raise AssertionError(f"Button with location ({row}, {column}) not found on the inline keyboard.")
+
+
+async def click_inline_keyboard_button_by_text(
+    user_client: BotClient,
+    message: Message,
+    button_text: str,
+) -> str:
+    """
+    Click a button in the inline keyboard of a message and log the details.
+
+    Args:
+        user_client (BotClient): The bot client to simulate the button click.
+        message (Message): The message containing the inline keyboard.
+        button_text (str): The text of the button to click.
+
+    Returns:
+        str: The callback ID of the clicked button.
+
+    Raises:
+        AssertionError: If the button with the specified text is not found.
+    """
+    logger.debug(f"Clicking on the button with text '{button_text}'")
+    try:
+        callback_id: str = await user_client.click(message, InlineButtonTextLocator(button_text))
+        logger.debug("Button click simulated successfully.")
+        return callback_id
+    except ValueError as e:
+        logger.error(f"Failed to simulate button click: {e}")
+        raise AssertionError(f"Button with text '{button_text}' not found on the inline keyboard.")
