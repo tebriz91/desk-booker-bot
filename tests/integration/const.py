@@ -220,3 +220,10 @@ TEST_DESKS_3: Dict[str, List[str]] = {
         "Рекреационный стол", "Стол для напитков", "Стол для закусок", "Книжный столик", "Стол с играми"
     ],
 }
+
+
+TEST_DATA = [
+    (TEST_USERS_1, TEST_ROOMS_1, TEST_DESKS_1),
+    (TEST_USERS_2, TEST_ROOMS_2, TEST_DESKS_2),
+    (TEST_USERS_3, TEST_ROOMS_3, TEST_DESKS_3),
+]
