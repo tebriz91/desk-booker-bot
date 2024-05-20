@@ -1,13 +1,43 @@
-from typing import Callable, Any, List, Optional
+from typing import Callable, Any, Dict, List, Optional, Tuple
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from aiogram.types import Message, CallbackQuery
 from aiogram_dialog.test_tools import MockMessageManager, BotClient
 from aiogram_dialog.test_tools.keyboard import InlineButtonTextLocator, InlineButtonPositionLocator
 
+from tests.integration.config import Config
 from app.database.models import Base
+from app.database.orm_queries import orm_insert_desks_by_room_name, orm_insert_rooms, orm_insert_users
 from app.utils.logger import Logger
 logger = Logger(level=20)
+
+
+async def create_db(engine: AsyncEngine) -> None:
+    """
+    Create all database tables defined in the Base metadata.
+
+    Args:
+        engine (AsyncEngine): The database engine to use for creating tables.
+    """
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
+async def truncate_db_cascade(session: AsyncSession) -> None:
+    """
+    Truncate all tables in the database, cascading to all dependent tables.
+
+    Args:
+        session (AsyncSession): The database session to use for truncation.
+    """
+    if session.in_transaction():
+        await session.rollback()  # Ensure no transactions are open
+
+    async with session.begin():
+        await session.execute(text("SET CONSTRAINTS ALL DEFERRED;"))  # Optional
+
+        for table in reversed(Base.metadata.sorted_tables):
+            await session.execute(text(f"TRUNCATE TABLE {table.name} CASCADE;"))
 
 
 async def insert_record(
@@ -38,33 +68,73 @@ async def insert_record(
         return False
 
 
-async def create_db(engine: AsyncEngine) -> None:
+async def setup_db(
+    engine: AsyncEngine,
+    session: AsyncSession,
+    test_users: List[Tuple[int, str]],
+    test_rooms: List[str],
+    test_desks: Dict[str, List[str]]
+) -> None:
     """
-    Create all database tables defined in the Base metadata.
+    Set up the database by creating tables, truncating tables, and inserting test data.
 
     Args:
         engine (AsyncEngine): The database engine to use for creating tables.
+        session (AsyncSession): The database session to use for inserting data.
+        test_users (List[Tuple[int, str]]): Test users to insert.
+        test_rooms (List[str]): Test rooms to insert.
+        test_desks (Dict[str, List[str]]): Test desks to insert.
     """
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    logger.debug("Creating database tables, if they do not exist.")
+    await create_db(engine)
 
+    logger.debug("Truncating database tables.")
+    await truncate_db_cascade(session)
 
-async def truncate_db_cascade(session: AsyncSession) -> None:
-    """
-    Truncate all tables in the database, cascading to all dependent tables.
+    logger.info(f"Test users: {test_users}")
 
-    Args:
-        session (AsyncSession): The database session to use for truncation.
-    """
-    if session.in_transaction():
-        await session.rollback()  # Ensure no transactions are open
+    logger.debug("Adding test data to the database.")
+    async with session.begin():
+        if not await insert_record(
+            session,
+            orm_insert_users,
+            test_users,
+            "users"):
+            return
 
     async with session.begin():
-        await session.execute(text("SET CONSTRAINTS ALL DEFERRED;"))  # Optional
+        if not await insert_record(
+            session,
+            orm_insert_rooms,
+            test_rooms,
+            "rooms"):
+            return
 
-        for table in reversed(Base.metadata.sorted_tables):
-            await session.execute(text(f"TRUNCATE TABLE {table.name} CASCADE;"))
-            
+    async with session.begin():
+        if not await insert_record(
+            session,
+            orm_insert_desks_by_room_name,
+            test_desks,
+            "desks"):
+            return
+
+
+def log_bot_configuration(config: Config) -> None:
+    """ Log the bot configuration settings."""
+    c = config.bot_operation
+    ca = config.bot_advanced_mode
+    logger.debug(
+        "Bot configuration:\n"
+        f"Num days: {c.num_days}\n"
+        f"Exclude Weekends: {c.exclude_weekends}"
+        f"Timezone: {c.timezone}"
+        f"Country code: {c.country_code}"
+        f"Date format: {c.date_format}"
+        f"Date format short: {c.date_format_short}"
+        f"Advanced Mode: {c.advanced_mode}"
+        f"Standard Access Days: {ca.standard_access_days}"
+    )
+
 
 def assert_message_text(message: Message, expected_text: str) -> None:
     """

@@ -15,21 +15,16 @@ from aiogram_dialog.test_tools import MockMessageManager, BotClient
 from fluentogram import TranslatorRunner # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
-from tests.integration.mocked_bot import MockedBot
-from tests.integration.const import (
-    TEST_USERS_1, TEST_ROOMS_1, TEST_DESKS_1,
-    TEST_USERS_2, TEST_ROOMS_2, TEST_DESKS_2,
-    TEST_USERS_3, TEST_ROOMS_3, TEST_DESKS_3,
-)
+from tests.integration.const import TEST_DATA
 from tests.integration.utils import (
+    log_bot_configuration,
+    setup_db,
+    truncate_db_cascade,
     assert_callback_answer,
     assert_inline_keyboard_buttons,
     click_inline_keyboard_button_by_location,
     click_inline_keyboard_button_by_text,
-    insert_record,
-    create_db,
     log_inline_keyboard_buttons,
-    truncate_db_cascade,
     assert_message_text,
     log_sent_messages,
 )
@@ -46,9 +41,6 @@ from app.services.bookings_list_generator import (
     generate_current_bookings_list_by_room_id,
 )
 from app.database.orm_queries import (
-    orm_insert_users,
-    orm_insert_rooms,
-    orm_insert_desks_by_room_name,
     # orm_delete_booking_by_id,
     orm_select_booking_by_telegram_id_and_date_selectinload,
     orm_select_booking_by_id,
@@ -61,44 +53,38 @@ from app.utils.logger import Logger
 logger = Logger(level=20)
 
 
-test_data_sets = [
-    (TEST_USERS_1, TEST_ROOMS_1, TEST_DESKS_1),
-    (TEST_USERS_2, TEST_ROOMS_2, TEST_DESKS_2),
-    (TEST_USERS_3, TEST_ROOMS_3, TEST_DESKS_3),
-]
-
-
 @pytest.mark.asyncio
-@pytest.mark.parametrize("test_data", test_data_sets)
+@pytest.mark.parametrize("TEST_DATA", TEST_DATA)
 async def test_all_dialogs(
-    test_data,
+    TEST_DATA,
     engine: AsyncEngine,
     i18n: TranslatorRunner,
     user_client: BotClient,
-    bot: MockedBot,
     dp: Dispatcher,
     message_manager: MockMessageManager,
     config: Config,
     session: AsyncSession
-    ):
+    ) -> None:
     """ Integration test for all dialogs parametrized with different data sets. 
     
-    The test runs through the following dialogs in sequence and each run is parametrized with a single data set taken from the test_data_sets list.
+    The test runs through the following dialogs in sequence and each run is parametrized with a single data set taken from the TEST_DATA list.
+    
+    Bot configuration is also parametrized in congig fixture in conftest.py.
     """
     logger.info("Unpacking data set with test users, rooms, and desks.")
-    test_users, test_rooms, test_desks = test_data
+    test_users, test_rooms, test_desks = TEST_DATA
     
     logger.info("Test of booking_dialog started.")
-    await booking_dialog(test_users, test_rooms, test_desks, engine, i18n, user_client, bot, dp, message_manager, config, session)
+    await booking_dialog(test_users, test_rooms, test_desks, engine, i18n, user_client, dp, message_manager, config, session)
     
     logger.info("Test of booking_dialog_random_desk started.")
-    await booking_dialog_random_desk(test_users, i18n, user_client, bot, dp, message_manager, config)
+    await booking_dialog_random_desk(test_users, i18n, user_client, dp, message_manager, config)
     
     logger.info("Test of all_bookings_dialog started.")
-    await all_bookings_dialog(test_users, i18n, user_client, bot, dp, message_manager, config, session)
+    await all_bookings_dialog(test_users, i18n, user_client, dp, message_manager, config, session)
     
     logger.info("Test of cancel_bookings_dialog started.")
-    await cancel_bookings_dialog(test_users, i18n, user_client, bot, dp, message_manager, config, session)
+    await cancel_bookings_dialog(test_users, i18n, user_client, dp, message_manager, config, session)
 
 
 async def booking_dialog(
@@ -108,58 +94,23 @@ async def booking_dialog(
     engine: AsyncEngine,
     i18n: TranslatorRunner,
     user_client: BotClient,
-    bot: MockedBot,
     dp: Dispatcher,
     message_manager: MockMessageManager,
     config: Config,
     session: AsyncSession,
-):
+) -> None:
     c = config.bot_operation
-    ca = config.bot_advanced_mode
-    logger.debug("Bot configuration:")
-    logger.debug(f"Operation Days (num_days): {c.num_days}")
-    logger.debug(f"Exclude Weekends: {c.exclude_weekends}")
-    logger.debug(f"Timezone: {c.timezone}")
-    logger.debug(f"Country code: {c.country_code}")
-    logger.debug(f"Date format: {c.date_format}")
-    logger.debug(f"Date format short: {c.date_format_short}")
-    logger.debug(f"Advanced Mode: {c.advanced_mode}")
-    logger.debug(f"Standard Access Days: {ca.standard_access_days}")
-
+    log_bot_configuration(config)
+    
     #* DATABASE SETUP
     
-    logger.debug("Creating database tables, if they do not exist.")
-    await create_db(engine)
-
-    logger.debug("Truncating database tables.")
-    await truncate_db_cascade(session)
-    
-    logger.info(f"Test users: {test_users}")
-    
-    logger.debug("Adding test data to the database.")
-    async with session.begin():
-        if not await insert_record(
-            session,
-            orm_insert_users,
-            test_users,
-            "users"):
-            return
-        
-    async with session.begin():
-        if not await insert_record(
-            session,
-            orm_insert_rooms,
-            test_rooms,
-            "rooms"):
-            return
-        
-    async with session.begin():
-        if not await insert_record(
-            session,
-            orm_insert_desks_by_room_name,
-            test_desks,
-            "desks"):
-            return
+    await setup_db(
+        engine,
+        session,
+        test_users,
+        test_rooms,
+        test_desks,
+    )
     
     logger.info(f"Setting up test user with ID: {test_users[0][0]} and name: {test_users[0][1]}.")
     telegram_id: int = test_users[0][0]
@@ -359,7 +310,6 @@ async def booking_dialog_random_desk(
     test_users: List[Tuple[int, str]],
     i18n: TranslatorRunner,
     user_client: BotClient,
-    bot: MockedBot,
     dp: Dispatcher,
     message_manager: MockMessageManager,
     config: Config,
@@ -439,7 +389,6 @@ async def all_bookings_dialog(
     test_users: List[Tuple[int, str]],
     i18n: TranslatorRunner,
     user_client: BotClient,
-    bot: MockedBot,
     dp: Dispatcher,
     message_manager: MockMessageManager,
     config: Config,
@@ -598,7 +547,6 @@ async def cancel_bookings_dialog(
     test_users: List[Tuple[int, str]],
     i18n: TranslatorRunner,
     user_client: BotClient,
-    bot: MockedBot,
     dp: Dispatcher,
     message_manager: MockMessageManager,
     config: Config,
