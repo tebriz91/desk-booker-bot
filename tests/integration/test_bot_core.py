@@ -2,12 +2,10 @@ import random
 import sys
 from pathlib import Path
 
-from app.database.models import Booking
-
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from typing import TYPE_CHECKING, Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, List, Tuple, Union
 from datetime import datetime
 import pytest
 from unittest.mock import patch, AsyncMock
@@ -31,6 +29,7 @@ from tests.integration.utils import (
     log_sent_messages,
 )
 from tests.integration.config import Config
+from app.database.models import User, Room, Desk, Booking
 from app.services.user.dates_generator import generate_dates
 from app.services.common.rooms_list_generator import (
     generate_available_rooms_list,
@@ -89,9 +88,9 @@ async def test_all_dialogs(
 
 
 async def booking_dialog(
-    test_users: List[Tuple[int, str]],
-    test_rooms: List[str],
-    test_desks: Dict[str, List[str]],
+    test_users: List[User],
+    test_rooms: List[Room],
+    test_desks: List[Desk],
     engine: AsyncEngine,
     i18n: TranslatorRunner,
     dp: Dispatcher,
@@ -113,8 +112,11 @@ async def booking_dialog(
         test_desks,
     )
     
-    logger.info(f"Setting up test user with ID: {test_users[0][0]} and name: {test_users[0][1]}.")
-    telegram_id: int = test_users[0][0]
+    # Retrieve the first test user
+    user: User = test_users[0]
+    
+    logger.info(f"Setting up test user with ID: {user.telegram_id} and name: {user.telegram_name}.")
+    telegram_id: int = user.telegram_id
     test_user = BotClient(
         dp,
         user_id=telegram_id,
@@ -309,7 +311,7 @@ async def booking_dialog(
 
 
 async def booking_dialog_random_desk(
-    test_users: List[Tuple[int, str]],
+    test_users: List[User],
     i18n: TranslatorRunner,
     dp: Dispatcher,
     message_manager: MockMessageManager,
@@ -319,9 +321,9 @@ async def booking_dialog_random_desk(
     logger.debug(f"Test users: {test_users}")
     # Iterating through the test users starting from the second user and create a BotClient for each user, where user_id=telegram_id, chat_id=telegram_id
     for user in test_users[1:]:
-        logger.debug(f"User: {user[1]} with ID: {user[0]} is being set up.")
-        telegram_id = user[0]
-        telegram_name = user[1]
+        logger.debug(f"User: {user.telegram_name} with ID: {user.telegram_id} is being set up.")
+        telegram_id = user.telegram_id
+        telegram_name = user.telegram_name
         test_user = BotClient(
             dp,
             user_id=telegram_id,
@@ -389,15 +391,15 @@ async def booking_dialog_random_desk(
 
 
 async def all_bookings_dialog(
-    test_users: List[Tuple[int, str]],
+    test_users: List[User],
     i18n: TranslatorRunner,
     dp: Dispatcher,
     message_manager: MockMessageManager,
     config: Config,
     session: AsyncSession,
 ):
-    logger.debug(f"Setting up test user with ID: {test_users[0][0]} and name: {test_users[0][1]}.")
-    telegram_id: int = test_users[0][0]
+    logger.info(f"Setting up test user with ID: {test_users[0].telegram_id} and name: {test_users[0].telegram_name}.")
+    telegram_id: int = test_users[0].telegram_id
     test_user = BotClient(
         dp,
         user_id=telegram_id,
@@ -546,15 +548,15 @@ async def all_bookings_dialog(
 
 
 async def cancel_bookings_dialog(
-    test_users: List[Tuple[int, str]],
+    test_users: List[User],
     i18n: TranslatorRunner,
     dp: Dispatcher,
     message_manager: MockMessageManager,
     config: Config,
     session: AsyncSession,
 ):
-    logger.debug(f"Setting up test user with ID: {test_users[0][0]} and name: {test_users[0][1]}.")
-    telegram_id: int = test_users[0][0]
+    logger.info(f"Setting up test user with ID: {test_users[0].telegram_id} and name: {test_users[0].telegram_name}.")
+    telegram_id: int = test_users[0].telegram_id
     test_user = BotClient(
         dp,
         user_id=telegram_id,
