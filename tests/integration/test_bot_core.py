@@ -54,7 +54,7 @@ from app.utils.logger import Logger
 logger = Logger(level=20)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 @pytest.mark.parametrize("TEST_DATA", TEST_DATA)
 async def test_all_dialogs(
     TEST_DATA,

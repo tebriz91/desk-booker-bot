@@ -111,7 +111,7 @@ def dp(engine,
     return dispatcher
 
 
-@pytest_asyncio.fixture(scope="function")
+@pytest_asyncio.fixture(scope="session")
 async def session(engine):
     logger.debug("Creating database session.")
     async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -143,7 +143,15 @@ def user_client(dp: Dispatcher, bot: MockedBot) -> BotClient:
 
 
 @pytest.fixture(scope="session")
-def event_loop():
+def event_loop_policy():
+    if sys.platform.startswith("win") and sys.version_info[:2] >= (3, 8):
+        return asyncio.WindowsSelectorEventLoopPolicy()
+    else:
+        return asyncio.DefaultEventLoopPolicy()
+
+
+@pytest.fixture(scope="session")
+def event_loop(event_loop_policy):
     """Fixture providing an asyncio event loop for test sessions.
 
     This fixture creates and yields an asyncio event loop suitable for running
@@ -153,8 +161,8 @@ def event_loop():
     :return: asyncio.AbstractEventLoop: An asyncio event loop for running asynchronous
     tests.
     """
-    if sys.platform.startswith("win") and sys.version_info[:2] >= (3, 8):
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    policy = event_loop_policy
+    asyncio.set_event_loop_policy(policy)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     yield loop
