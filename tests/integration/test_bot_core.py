@@ -2,6 +2,8 @@ import random
 import sys
 from pathlib import Path
 
+from app.database.models import Booking
+
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -59,7 +61,6 @@ async def test_all_dialogs(
     TEST_DATA,
     engine: AsyncEngine,
     i18n: TranslatorRunner,
-    user_client: BotClient,
     dp: Dispatcher,
     message_manager: MockMessageManager,
     config: Config,
@@ -75,16 +76,16 @@ async def test_all_dialogs(
     test_users, test_rooms, test_desks = TEST_DATA
     
     logger.info("Test of booking_dialog started.")
-    await booking_dialog(test_users, test_rooms, test_desks, engine, i18n, user_client, dp, message_manager, config, session)
+    await booking_dialog(test_users, test_rooms, test_desks, engine, i18n, dp, message_manager, config, session)
     
     logger.info("Test of booking_dialog_random_desk started.")
-    await booking_dialog_random_desk(test_users, i18n, user_client, dp, message_manager, config)
+    await booking_dialog_random_desk(test_users, i18n, dp, message_manager, config)
     
     logger.info("Test of all_bookings_dialog started.")
-    await all_bookings_dialog(test_users, i18n, user_client, dp, message_manager, config, session)
+    await all_bookings_dialog(test_users, i18n, dp, message_manager, config, session)
     
     logger.info("Test of cancel_bookings_dialog started.")
-    await cancel_bookings_dialog(test_users, i18n, user_client, dp, message_manager, config, session)
+    await cancel_bookings_dialog(test_users, i18n, dp, message_manager, config, session)
 
 
 async def booking_dialog(
@@ -93,13 +94,13 @@ async def booking_dialog(
     test_desks: Dict[str, List[str]],
     engine: AsyncEngine,
     i18n: TranslatorRunner,
-    user_client: BotClient,
     dp: Dispatcher,
     message_manager: MockMessageManager,
     config: Config,
     session: AsyncSession,
 ) -> None:
     c = config.bot_operation
+    ca = config.bot_advanced_mode
     log_bot_configuration(config)
     
     #* DATABASE SETUP
@@ -114,15 +115,15 @@ async def booking_dialog(
     
     logger.info(f"Setting up test user with ID: {test_users[0][0]} and name: {test_users[0][1]}.")
     telegram_id: int = test_users[0][0]
-    user_client = BotClient(
+    test_user = BotClient(
         dp,
         user_id=telegram_id,
         chat_id=telegram_id)
     
-    message_manager.reset_history() # Reset the message manager history. This is necessary to avoid interference from previous tests.
+    message_manager.reset_history() # Reset the message manager history to avoid interference from previous tests.
     
     logger.info("Sending '/book' command.")
-    await user_client.send(text="/book")
+    await test_user.send(text="/book")
     
     #* DATE SELECTION
     
@@ -136,16 +137,17 @@ async def booking_dialog(
     
     if len(message_manager.sent_messages) == 1:
         date_selection_message = message_manager.sent_messages[0]
-        expected_message = i18n.select.date()
-        assert_message_text(date_selection_message, expected_message)
+        assert_message_text(
+            message=date_selection_message,
+            expected_text=i18n.select.date())
     
     logger.debug("Generating dates.")
     dates: List[str] = await generate_dates(
-        c.num_days,
-        c.exclude_weekends,
-        c.timezone,
-        c.country_code,
-        c.date_format,
+        num_days=c.num_days,
+        exclude_weekends=c.exclude_weekends,
+        timezone=c.timezone,
+        country_code=c.country_code,
+        date_format=c.date_format,
     )
     
     assert len(dates) == c.num_days
@@ -164,13 +166,13 @@ async def booking_dialog(
     
     logger.info(f"Clicking on the first date button: {first_date_button}")
     date_button_callback_id = await click_inline_keyboard_button_by_location(
-        user_client,
-        date_selection_message,
+        test_user=test_user,
+        message=date_selection_message,
         row=0,
         column=0,
     )
     
-    message_manager.assert_answered(date_button_callback_id)
+    message_manager.assert_answered(callback_id=date_button_callback_id)
     logger.debug(f"Callback message has been answered. Callback ID: {date_button_callback_id}")
 
     room_selection_message = message_manager.one_message()
@@ -205,13 +207,13 @@ async def booking_dialog(
     
     logger.info(f"Clicking on the first room button: {first_room_button}")
     room_button_callback_id = await click_inline_keyboard_button_by_location(
-        user_client,
-        room_selection_message,
+        test_user=test_user,
+        message=room_selection_message,
         row=0,
         column=0,
     )
     
-    message_manager.assert_answered(room_button_callback_id)
+    message_manager.assert_answered(callback_id=room_button_callback_id)
     logger.debug(f"Callback message has been answered. Callback ID: {room_button_callback_id}")
 
     desk_selection_message = message_manager.one_message()
@@ -228,10 +230,10 @@ async def booking_dialog(
             session,
             room_name=first_room_button,
             date=first_date_button,
-            date_format=str(config.bot_operation.date_format),
+            date_format=str(c.date_format),
             telegram_id=telegram_id,
-            advanced_mode=config.bot_operation.advanced_mode,
-            standard_access_days=config.bot_advanced_mode.standard_access_days)
+            advanced_mode=c.advanced_mode,
+            standard_access_days=ca.standard_access_days)
     
     log_inline_keyboard_buttons(desk_selection_message)
     
@@ -254,14 +256,14 @@ async def booking_dialog(
         
         logger.info(f"Clicking on the first desk button: {first_desk_button}")
         
-        desk_button_callback_id = await click_inline_keyboard_button_by_location(
-            user_client,
-            desk_selection_message,
+        desk_button_callback_id: str = await click_inline_keyboard_button_by_location(
+            test_user=test_user,
+            message=desk_selection_message,
             row=0,
             column=0,
         )
         
-        message_manager.assert_answered(desk_button_callback_id)
+        message_manager.assert_answered(callback_id=desk_button_callback_id)
         logger.debug(f"Callback message has been answered. Callback ID: {desk_button_callback_id}")
         
         mock_answer.assert_called_once_with(text=expected_answer, show_alert=True)
@@ -278,9 +280,9 @@ async def booking_dialog(
     #* CHECKING DATABASE RECORD
 
     logger.debug("Checking the database for a booking record.")
-    booking_date = datetime.strptime(first_date_button, str(config.bot_operation.date_format))
+    booking_date: datetime = datetime.strptime(first_date_button, str(config.bot_operation.date_format))
     try:
-        booking = await orm_select_booking_by_telegram_id_and_date_selectinload(
+        booking: Booking | None = await orm_select_booking_by_telegram_id_and_date_selectinload(
         session,
         telegram_id=telegram_id,
         booking_date=booking_date,
@@ -309,43 +311,44 @@ async def booking_dialog(
 async def booking_dialog_random_desk(
     test_users: List[Tuple[int, str]],
     i18n: TranslatorRunner,
-    user_client: BotClient,
     dp: Dispatcher,
     message_manager: MockMessageManager,
     config: Config,
 ):
     logger.debug("Setting up test users:")
     logger.debug(f"Test users: {test_users}")
-    # Iterating through the test users starting from the second user and create a BotClient for each user, where user_id=telegram_id and chat_id=telegram_id
+    # Iterating through the test users starting from the second user and create a BotClient for each user, where user_id=telegram_id, chat_id=telegram_id
     for user in test_users[1:]:
         logger.debug(f"User: {user[1]} with ID: {user[0]} is being set up.")
+        telegram_id = user[0]
+        telegram_name = user[1]
         test_user = BotClient(
             dp,
-            user_id=user[0],
-            chat_id=user[0])
+            user_id=telegram_id,
+            chat_id=telegram_id)
         
         message_manager.reset_history()
         
-        logger.info(f"User: {user[1]} is sending '/book' command.")
+        logger.info(f"User: {telegram_name} is sending '/book' command.")
         await test_user.send(text="/book")
         
         date_selection_message = message_manager.one_message()
         
-        # Get location of the random date button
+        # Get location of date button with random row an column=0
         row: int = random.randint(0, int(config.bot_operation.num_days) - 1) # type: ignore
         column: int = 0
         
         message_manager.reset_history()
         
-        logger.info(f"Clicking on random date button located at ({row},{column}).")
+        logger.info(f"Clicking on date button located at random row and column=0 ({row},{column}).")
         rndm_date_btn_callback_id = await click_inline_keyboard_button_by_location(
-            user_client=test_user,
+            test_user=test_user,
             message=date_selection_message,
             row=row,
             column=column,
         )
         
-        message_manager.assert_answered(rndm_date_btn_callback_id)
+        message_manager.assert_answered(callback_id=rndm_date_btn_callback_id)
         logger.debug(f"Callback message has been answered. Callback ID: {rndm_date_btn_callback_id}")
         
         room_selection_message = message_manager.one_message()
@@ -358,12 +361,12 @@ async def booking_dialog_random_desk(
             
             logger.info("Clicking on random desk button.")
             rndm_desk_btn_callback_id = await click_inline_keyboard_button_by_text(
-                user_client=test_user,
+                test_user=test_user,
                 message=room_selection_message,
                 button_text=rndm_desk_btn,
             )
         
-            message_manager.assert_answered(rndm_desk_btn_callback_id)
+            message_manager.assert_answered(callback_id=rndm_desk_btn_callback_id)
             logger.debug(f"Callback message has been answered. Callback ID: {rndm_desk_btn_callback_id}")
             
             mock_answer.assert_called_once()
@@ -388,7 +391,6 @@ async def booking_dialog_random_desk(
 async def all_bookings_dialog(
     test_users: List[Tuple[int, str]],
     i18n: TranslatorRunner,
-    user_client: BotClient,
     dp: Dispatcher,
     message_manager: MockMessageManager,
     config: Config,
@@ -396,7 +398,7 @@ async def all_bookings_dialog(
 ):
     logger.debug(f"Setting up test user with ID: {test_users[0][0]} and name: {test_users[0][1]}.")
     telegram_id: int = test_users[0][0]
-    user_client = BotClient(
+    test_user = BotClient(
         dp,
         user_id=telegram_id,
         chat_id=telegram_id)
@@ -404,14 +406,14 @@ async def all_bookings_dialog(
     message_manager.reset_history()
     
     logger.info("Sending '/all_bookings' command.")
-    await user_client.send(text="/all_bookings")
+    await test_user.send(text="/all_bookings")
     
     #* ROOM SELECTION 1
     
     logger.debug("Getting rooms.")
     rooms: List[Tuple[int, str]] = await generate_available_rooms_as_list_of_tuples(session)
     
-    # Transform the list of tuples into a list of room names(str)
+    # Transform list of tuples into list of room names(str)
     room_names: List[str] = [room[1] for room in rooms]
     
     room_selection_message = message_manager.one_message()
@@ -436,13 +438,13 @@ async def all_bookings_dialog(
     
     logger.info(f"Clicking on the first room button: {first_room_button}")
     room_button_callback_id = await click_inline_keyboard_button_by_location(
-        user_client,
-        room_selection_message,
+        test_user=test_user,
+        message=room_selection_message,
         row=0,
         column=0,
     )
     
-    message_manager.assert_answered(room_button_callback_id)
+    message_manager.assert_answered(callback_id=room_button_callback_id)
     logger.debug(f"Callback message has been answered. Callback ID: {room_button_callback_id}")
     
     #* BOOKINGS LIST 1
@@ -476,7 +478,7 @@ async def all_bookings_dialog(
     
     logger.info("Clicking on Back button.")
     exit_button_callback_id = await click_inline_keyboard_button_by_text(
-        user_client=user_client,
+        test_user=test_user,
         message=bookings_list_message,
         button_text=i18n.button.back(),
     )
@@ -492,13 +494,13 @@ async def all_bookings_dialog(
     
     logger.info(f"Clicking on the second room button: {second_room_button}")
     room_button_callback_id = await click_inline_keyboard_button_by_location(
-        user_client,
-        room_selection_message,
+        test_user=test_user,
+        message=room_selection_message,
         row=1,
         column=0,
     )
     
-    message_manager.assert_answered(room_button_callback_id)
+    message_manager.assert_answered(callback_id=room_button_callback_id)
     logger.debug(f"Callback message has been answered. Callback ID: {room_button_callback_id}")
     
     #* BOOKINGS LIST 2
@@ -532,12 +534,12 @@ async def all_bookings_dialog(
     
     logger.info("Clicking on Exit button.")
     exit_button_callback_id = await click_inline_keyboard_button_by_text(
-        user_client=user_client,
+        test_user=test_user,
         message=bookings_list_message,
         button_text=i18n.button.exit(),
     )
     
-    message_manager.assert_answered(exit_button_callback_id)
+    message_manager.assert_answered(callback_id=exit_button_callback_id)
     logger.debug(f"Callback message has been answered. Callback ID: {exit_button_callback_id}")
     
     pass
@@ -546,7 +548,6 @@ async def all_bookings_dialog(
 async def cancel_bookings_dialog(
     test_users: List[Tuple[int, str]],
     i18n: TranslatorRunner,
-    user_client: BotClient,
     dp: Dispatcher,
     message_manager: MockMessageManager,
     config: Config,
@@ -554,7 +555,7 @@ async def cancel_bookings_dialog(
 ):
     logger.debug(f"Setting up test user with ID: {test_users[0][0]} and name: {test_users[0][1]}.")
     telegram_id: int = test_users[0][0]
-    user_client = BotClient(
+    test_user = BotClient(
         dp,
         user_id=telegram_id,
         chat_id=telegram_id)
@@ -562,7 +563,7 @@ async def cancel_bookings_dialog(
     message_manager.reset_history()
     
     logger.info("Sending '/cancel' command.")
-    await user_client.send(text="/cancel")
+    await test_user.send(text="/cancel")
     
     if not message_manager.sent_messages:
         logger.error(f"No messages were captured, expected at least one. Messages: {message_manager.sent_messages}.")
@@ -616,13 +617,13 @@ async def cancel_bookings_dialog(
         logger.info(f"Clicking on the first booking button: {first_booking_button}")
         
         booking_button_callback_id = await click_inline_keyboard_button_by_location(
-            user_client,
-            booking_selection_message,
+            test_user=test_user,
+            message=booking_selection_message,
             row=0,
             column=0,
         )
             
-        message_manager.assert_answered(booking_button_callback_id)
+        message_manager.assert_answered(callback_id=booking_button_callback_id)
         logger.debug(f"Callback message has been answered. Callback ID: {booking_button_callback_id}")
         
         mock_answer.assert_called_once_with(text=expected_answer)
@@ -639,7 +640,7 @@ async def cancel_bookings_dialog(
 
     logger.debug("Checking the database for a booking record.")
     try:
-        booking_obj = await orm_select_booking_by_id(
+        booking_obj: Booking | None = await orm_select_booking_by_id(
         session,
         booking_id=first_booking_id,
         )

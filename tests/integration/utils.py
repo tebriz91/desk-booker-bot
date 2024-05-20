@@ -241,7 +241,7 @@ def assert_inline_keyboard_buttons(expected_texts: List[str] | str, message: Mes
 
 
 async def click_inline_keyboard_button_by_location(
-    user_client: BotClient,
+    test_user: BotClient,
     message: Message,
     row: int,
     column: int,
@@ -250,7 +250,7 @@ async def click_inline_keyboard_button_by_location(
     Click a button in the inline keyboard of a message and log the details.
 
     Args:
-        user_client (BotClient): The bot client to simulate the button click.
+        test_user (BotClient): The bot client to simulate the button click.
         message (Message): The message containing the inline keyboard.
         row (int): The row index of the button.
         col (int): The column index of the button.
@@ -263,7 +263,7 @@ async def click_inline_keyboard_button_by_location(
     """
     logger.debug(f"Clicking on the button at location ({row}, {column})")
     try:
-        callback_id: str = await user_client.click(message, InlineButtonPositionLocator(row, column))
+        callback_id: str = await test_user.click(message, InlineButtonPositionLocator(row, column))
         logger.debug("Button click simulated successfully.")
         return callback_id
     except ValueError as e:
@@ -272,7 +272,7 @@ async def click_inline_keyboard_button_by_location(
 
 
 async def click_inline_keyboard_button_by_text(
-    user_client: BotClient,
+    test_user: BotClient,
     message: Message,
     button_text: str,
 ) -> str:
@@ -280,7 +280,7 @@ async def click_inline_keyboard_button_by_text(
     Click a button in the inline keyboard of a message and log the details.
 
     Args:
-        user_client (BotClient): The bot client to simulate the button click.
+        test_user (BotClient): The bot client to simulate the button click.
         message (Message): The message containing the inline keyboard.
         button_text (str): The text of the button to click.
 
@@ -292,7 +292,7 @@ async def click_inline_keyboard_button_by_text(
     """
     logger.debug(f"Clicking on the button with text '{button_text}'")
     try:
-        callback_id: str = await user_client.click(message, InlineButtonTextLocator(button_text))
+        callback_id: str = await test_user.click(message, InlineButtonTextLocator(button_text))
         logger.debug("Button click simulated successfully.")
         return callback_id
     except ValueError as e:
