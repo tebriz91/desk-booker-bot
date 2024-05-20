@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy import Integer, String, and_, func, literal, not_, or_, select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -49,14 +49,13 @@ async def orm_insert_user(
         raise Exception
 
 
-async def orm_insert_users(session: AsyncSession, users: list[tuple[int, str]]) -> None:
-    try:
-        new_users = [User(telegram_id=telegram_id, telegram_name=telegram_name) for telegram_id, telegram_name in users]
-        session.add_all(new_users)
-        await session.commit()
-    except SQLAlchemyError:
-        await session.rollback()
-        raise SQLAlchemyError("Failed to insert users into the database.")
+async def orm_insert_users(session: AsyncSession, users: List[User]) -> None:
+    async with session.begin():
+        try:
+            session.add_all(users)
+        except SQLAlchemyError:
+            await session.rollback()
+            raise SQLAlchemyError("Failed to insert users into the database.")
 
 
 async def orm_select_users(session: AsyncSession):
@@ -348,14 +347,13 @@ async def orm_insert_room(session: AsyncSession, room_name: str):
         raise Exception
 
 
-async def orm_insert_rooms(session: AsyncSession, rooms: list[str]) -> None:
-    try:
-        new_rooms = [Room(name=room_name) for room_name in rooms]
-        session.add_all(new_rooms)
-        await session.commit()
-    except Exception as e:
-        await session.rollback()
-        raise Exception("Failed to insert rooms into the database.")
+async def orm_insert_rooms(session: AsyncSession, rooms: List[Room]) -> None:
+    async with session.begin():
+        try:
+            session.add_all(rooms)
+        except SQLAlchemyError:
+            await session.rollback()
+            raise SQLAlchemyError("Failed to insert rooms into the database.")
 
 
 async def orm_select_rooms(session: AsyncSession):
@@ -436,18 +434,13 @@ async def orm_insert_desk_with_room_id(session: AsyncSession, room_id: int, desk
         raise Exception
 
 
-async def orm_insert_desks_by_room_name(session: AsyncSession, desks: dict[str, list[str]]) -> None:
-    try:
-        for room_name, desk_names in desks.items():
-            room_id = await orm_select_room_id_by_name(session, room_name)
-            if room_id is None:
-                continue  # Skip to the next room if no valid room ID was found
-            new_desks = [Desk(room_id=room_id, name=desk_name) for desk_name in desk_names]
-            session.add_all(new_desks)
-        await session.commit()
-    except Exception as e:
-        await session.rollback()
-        raise
+async def orm_insert_desks(session: AsyncSession, desks: List[Desk]) -> None:
+    async with session.begin():
+        try:
+            session.add_all(desks)
+        except SQLAlchemyError:
+            await session.rollback()
+            raise SQLAlchemyError("Failed to insert desks into the database.")
 
 
 async def orm_select_desk_id_by_name(session: AsyncSession, desk_name: str):
