@@ -114,8 +114,10 @@ def dp(engine,
 @pytest_asyncio.fixture(scope="function")
 async def session(engine):
     logger.debug("Creating database session.")
-    async with AsyncSession(engine) as s:
+    async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    async with async_session() as s:
         yield s
+        await s.rollback()
 
 
 @pytest.fixture(scope="session")
@@ -125,6 +127,7 @@ def message_manager():
     yield manager
     logger.debug("Resetting message manager.")
     manager.reset_history()
+
 
 # Commented it out because manually set it up in the test functions
 # @pytest.fixture(autouse=True) # autouse=True means that this fixture will be automatically used by all test functions
