@@ -6,8 +6,12 @@ from aiogram_dialog.test_tools import MockMessageManager, BotClient
 from aiogram_dialog.test_tools.keyboard import InlineButtonTextLocator, InlineButtonPositionLocator
 
 from tests.integration.config import Config
-from app.database.models import Base
-from app.database.orm_queries import orm_insert_desks_by_room_name, orm_insert_rooms, orm_insert_users
+from app.database.models import Base, User, Room, Desk
+from app.database.orm_queries import (
+    orm_insert_users,
+    orm_insert_rooms,
+    orm_insert_desks,
+)
 from app.utils.logger import Logger
 logger = Logger(level=20)
 
@@ -40,40 +44,12 @@ async def truncate_db_cascade(session: AsyncSession) -> None:
             await session.execute(text(f"TRUNCATE TABLE {table.name} CASCADE;"))
 
 
-async def insert_record(
-    session: AsyncSession, 
-    insert_function: Callable[[AsyncSession, Any], Any], 
-    data: Any, 
-    entity_name: str
-) -> bool:
-    """
-    Generic insert function to handle adding entities to the database.
-    This version does not commit or rollback, as these actions will be managed externally.
-    
-    Args:
-        session (AsyncSession): The database session to use.
-        insert_function (Callable): The function to use for inserting data.
-        data (Any): The data to insert.
-        entity_name (str): The name of the entity being inserted, for logging purposes.
-
-    Returns:
-        bool: True if insertion was successful, False otherwise.
-    """
-    try:
-        await insert_function(session, data)
-        logger.info(f"{entity_name.capitalize()} have been added to the database.")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to insert {entity_name}: {e}")
-        return False
-
-
 async def setup_db(
     engine: AsyncEngine,
     session: AsyncSession,
-    test_users: List[Tuple[int, str]],
-    test_rooms: List[str],
-    test_desks: Dict[str, List[str]]
+    test_users: List[User] | None = None,
+    test_rooms: List[Room] | None = None,
+    test_desks: List[Desk] | None = None,
 ) -> None:
     """
     Set up the database by creating tables, truncating tables, and inserting test data.
@@ -81,9 +57,9 @@ async def setup_db(
     Args:
         engine (AsyncEngine): The database engine to use for creating tables.
         session (AsyncSession): The database session to use for inserting data.
-        test_users (List[Tuple[int, str]]): Test users to insert.
-        test_rooms (List[str]): Test rooms to insert.
-        test_desks (Dict[str, List[str]]): Test desks to insert.
+        test_users (Optional[List[User]]): Test users to insert.
+        test_rooms (Optional[List[Room]]): Test rooms to insert.
+        test_desks (Optional[List[Desk]]): Test desks to insert.
     """
     logger.debug("Creating database tables, if they do not exist.")
     await create_db(engine)
@@ -91,32 +67,19 @@ async def setup_db(
     logger.debug("Truncating database tables.")
     await truncate_db_cascade(session)
 
-    logger.info(f"Test users: {test_users}")
+    logger.info("Inserting test data into the database.")
+    
+    if test_users:
+        await orm_insert_users(session, test_users)
+        logger.debug("Test users have been added to the database.")
+    
+    if test_rooms:
+        await orm_insert_rooms(session, test_rooms)
+        logger.debug("Test rooms have been added to the database.")
 
-    logger.debug("Adding test data to the database.")
-    async with session.begin():
-        if not await insert_record(
-            session,
-            orm_insert_users,
-            test_users,
-            "users"):
-            return
-
-    async with session.begin():
-        if not await insert_record(
-            session,
-            orm_insert_rooms,
-            test_rooms,
-            "rooms"):
-            return
-
-    async with session.begin():
-        if not await insert_record(
-            session,
-            orm_insert_desks_by_room_name,
-            test_desks,
-            "desks"):
-            return
+    if test_desks:
+        await orm_insert_desks(session, test_desks)
+        logger.debug("Test desks have been added to the database.")
 
 
 def log_bot_configuration(config: Config) -> None:
