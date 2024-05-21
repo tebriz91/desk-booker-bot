@@ -1,4 +1,4 @@
-from typing import Callable, Any, Dict, List, Optional, Tuple
+from typing import List, Optional
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from aiogram.types import Message, CallbackQuery
@@ -159,7 +159,7 @@ def log_sent_messages(message_manager: MockMessageManager) -> None:
     Log the number of sent messages and their content.
 
     Args:
-        message_manager (Any): The message manager containing sent messages.
+        message_manager (MockMessageManager): The message manager containing sent messages.
     """
     logger.debug(f"Number of sent messages: {len(message_manager.sent_messages)}")
     for msg in message_manager.sent_messages:
