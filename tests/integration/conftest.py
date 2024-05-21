@@ -129,42 +129,19 @@ def message_manager():
     manager.reset_history()
 
 
-# Commented it out because manually set it up in the test functions
-# @pytest.fixture(autouse=True) # autouse=True means that this fixture will be automatically used by all test functions
-# def reset_message_manager(message_manager: MockMessageManager):
-#     yield
-#     message_manager.reset_history()
-
-
 @pytest.fixture(scope="session")
 def user_client(dp: Dispatcher, bot: MockedBot) -> BotClient:
     logger.debug("Creating user client for testing.")
     return BotClient(dp, bot=bot)
 
 
-@pytest.fixture(scope="session")
-def event_loop_policy():
-    if sys.platform.startswith("win") and sys.version_info[:2] >= (3, 8):
-        return asyncio.WindowsSelectorEventLoopPolicy()
-    else:
-        return asyncio.DefaultEventLoopPolicy()
-
-
-@pytest.fixture(scope="session")
-def event_loop(event_loop_policy):
-    """Fixture providing an asyncio event loop for test sessions.
-
-    This fixture creates and yields an asyncio event loop suitable for running
-    asynchronous tests. It also ensures that the event loop policy is set correctly for
-    Windows systems using Python 3.8 or higher.
-
-    :return: asyncio.AbstractEventLoop: An asyncio event loop for running asynchronous
-    tests.
-    """
-    policy = event_loop_policy
-    asyncio.set_event_loop_policy(policy)
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    yield loop
-    loop.close()
-    asyncio.set_event_loop(None)
+# @pytest.fixture
+# def event_loop():
+#     """Create an instance of the default event loop for each test case.
+#     This is needed because pytest-asyncio does not create a new event loop for the entire test session.
+#     """
+#     loop = asyncio.new_event_loop()
+#     asyncio.set_event_loop(loop)
+#     yield loop
+#     loop.close()
+#     asyncio.set_event_loop(None)
