@@ -15,7 +15,6 @@ from aiogram.fsm.storage.redis import RedisStorage, Redis, DefaultKeyBuilder
 from aiogram.fsm.storage.memory import SimpleEventIsolation
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from fluentogram import TranslatorHub # type: ignore
 from app.middlewares.i18n import TranslatorRunnerMiddleware
 from app.utils.i18n import Translator
 
@@ -119,10 +118,9 @@ async def main():
     await bot.delete_webhook(drop_pending_updates=True) # Removes any existing webhooks before starting polling for updates
     await set_bot_description(bot)
     await set_main_menu(bot) # Setup the bot's main menu
-    translator_hub: TranslatorHub = Translator() # type: ignore
     await dp.start_polling(
         bot,
-        _translator_hub=translator_hub,
+        _translator_hub=Translator(),
         allowed_updates=dp.resolve_used_update_types(),
     )
 
