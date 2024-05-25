@@ -107,8 +107,8 @@ class BotAdvancedModeConfig:
 # Redis configuration
 @dataclass(frozen=True, slots=True)
 class RedisConfig:
-    host: Optional[str] = field(default=None)
-    port: Optional[int] = field(default=None)
+    host: str = field(default="localhost")
+    port: int = field(default=6379)
 
     @property
     def dict(self) -> Optional[dict]:
