@@ -79,6 +79,15 @@ class BotConfig:
     admins: List[int]
 
 
+@dataclass(frozen=True, slots=True)
+class SQLAdminConfig:
+    login: str
+    password: str
+    secret_key: str
+    host: str = field(default="localhost")
+    port: int = field(default=8080)
+
+
 # Bot operation configuration
 @dataclass(frozen=True, slots=True)
 class BotOperationConfig:
@@ -123,6 +132,7 @@ class RedisConfig:
 class Config:
     db: DBConfig
     bot: BotConfig
+    sqladmin: SQLAdminConfig
     bot_operation: BotOperationConfig
     bot_advanced_mode: BotAdvancedModeConfig
     redis: RedisConfig
@@ -156,6 +166,11 @@ def load_config() -> Config:
         bot=BotConfig(
             token=get_env("BOT_TOKEN"),
             admins=get_env("BOT_ADMINS", "json"),
+        ),
+        sqladmin=SQLAdminConfig(
+            login=get_env("SQLADMIN_LOGIN"),
+            password=get_env("SQLADMIN_PASSWORD"),
+            secret_key=get_env("SQLADMIN_SECRET_KEY"),
         ),
         bot_operation=BotOperationConfig(
             num_days=get_env("NUM_DAYS", "int"),
