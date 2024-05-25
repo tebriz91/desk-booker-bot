@@ -4,19 +4,34 @@ from sqlalchemy import text
 from app.database.models import Base
 
 
-def get_engine(db_url: str, echo: bool = False) -> AsyncEngine:
+def get_engine(
+    db_url: str,
+    echo: bool = False,
+    echo_pool: bool = False,
+    pool_size: int = 50,
+    max_overflow: int = 10,
+    ) -> AsyncEngine:
     """Initialize async engine."""
-    engine: AsyncEngine = create_async_engine(db_url, echo=echo)
+    engine: AsyncEngine = create_async_engine(
+        db_url,
+        echo=echo,
+        echo_pool=echo_pool,
+        pool_size=pool_size,
+        max_overflow=max_overflow,
+    )
     return engine
 
 
-def get_session_maker(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
-    """Initialize session maker."""
-    session_maker: async_sessionmaker[AsyncSession] = async_sessionmaker(
+def get_session_pool(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+    """Initialize session pool (factory)."""
+    session_pool: async_sessionmaker[AsyncSession] = async_sessionmaker(
         bind=engine,
+        autoflush=False,
+        autocommit=False,
         expire_on_commit=False,
-        class_=AsyncSession)
-    return session_maker
+        class_=AsyncSession
+    )
+    return session_pool
 
 
 async def create_db(engine: AsyncEngine) -> None:

@@ -28,7 +28,7 @@ from app.scenes.setup import register_scenes
 from app.middlewares.user_middleware import UserMiddleware
 # from app.middlewares.config_middleware import ConfigMiddleware
 from app.middlewares.db_middleware import DataBaseSession
-from app.database.engine import get_engine, get_session_maker
+from app.database.engine import get_engine, get_session_pool
 from app.routers import router
 
 
@@ -77,18 +77,18 @@ def setup_dispatcher(bot, storage) -> Dispatcher:
 
 def setup_database() -> async_sessionmaker[AsyncSession]:
     engine = get_engine(db_url=config.db.url, echo=False)
-    session_maker = get_session_maker(engine)
-    return session_maker
+    session_pool = get_session_pool(engine)
+    return session_pool
 
 
-def setup_middlewares(dp, session_maker) -> None:
+def setup_middlewares(dp, session_pool) -> None:
     """Applies middlewares to the Dispatcher for pre-processing messages and updates."""
     dp.message.outer_middleware(
-        UserMiddleware(session_pool=session_maker))
+        UserMiddleware(session_pool=session_pool))
     dp.callback_query.outer_middleware(
-        UserMiddleware(session_pool=session_maker))
+        UserMiddleware(session_pool=session_pool))
     dp.update.middleware(
-        DataBaseSession(session_pool=session_maker))
+        DataBaseSession(session_pool=session_pool))
     dp.update.middleware(
         TranslatorRunnerMiddleware(translator=Translator()))
     # dp.update.middleware(
@@ -108,11 +108,11 @@ async def on_shutdown(bot):
 
 
 async def main():
-    """The main coroutine setups: bot, dispatcher, database, middlewares and starts polling for updates."""
+    """The main coroutine setups bot, dispatcher, database, middlewares and starts polling for updates."""
     bot, storage = setup_bot()
     dp = setup_dispatcher(bot, storage)
-    session_maker = setup_database()
-    setup_middlewares(dp, session_maker)
+    session_pool = setup_database()
+    setup_middlewares(dp, session_pool)
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
     await bot.delete_webhook(drop_pending_updates=True) # Removes any existing webhooks before starting polling for updates
