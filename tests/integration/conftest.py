@@ -3,7 +3,6 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-import asyncio
 import pytest
 import pytest_asyncio
 from typing import Any, Dict, Optional
