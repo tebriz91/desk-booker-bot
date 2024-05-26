@@ -28,6 +28,9 @@ WORKDIR /app
 # Copy only pyproject.toml and poetry.lock to cache dependencies
 COPY poetry.lock pyproject.toml ./
 
+# Copy api folder from to the root directory
+COPY api ./api
+
 # Install dependencies from pyproject.toml and poetry.lock
 RUN poetry install --no-interaction --no-ansi
 
