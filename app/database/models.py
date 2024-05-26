@@ -42,7 +42,7 @@ class User(Base):
 class UserRoleAssignment(Base):
     __tablename__ = 'user_role_assignments'
 
-    telegram_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('users.telegram_id', ondelete='CASCADE'), primary_key=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('users.telegram_id', ondelete='CASCADE'), primary_key=True, autoincrement=False)
     team_id: Mapped[int] = mapped_column(ForeignKey('teams.id', ondelete='CASCADE'))
     role: Mapped[UserRole] = mapped_column(Enum(UserRole, name='userrole'), default=UserRole.Member)
 
@@ -83,7 +83,7 @@ class TeamTree(Base):
 class Waitlist(Base):
     __tablename__ = 'waitlist'
 
-    telegram_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
     telegram_name: Mapped[str] = mapped_column(String(32), unique=True)
     first_name: Mapped[str | None] = mapped_column(String(32))
     last_name: Mapped[str | None] = mapped_column(String(32))
