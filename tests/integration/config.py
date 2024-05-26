@@ -1,3 +1,6 @@
+"""
+This is a configuration module for testing. It copies the configuration module from the main application and adjusts it for testing purposes. The main difference is in the load_config function, which allows to override configuration values during testing so we can test different scenarios without changing environment variables.
+"""
 import json
 import os
 from dataclasses import dataclass, field, asdict
@@ -47,7 +50,7 @@ def get_env(value: str, cast_to_type: Optional[str] = None) -> Any:
 
 
 # Database configuration
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class DBConfig:
     uri: str
     name: str
@@ -73,23 +76,14 @@ class DBConfig:
 
 
 # Bot authentication configuration
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class BotConfig:
     token: str
     admins: List[int]
 
 
-@dataclass(frozen=True, slots=True)
-class SQLAdminConfig:
-    login: str
-    password: str
-    secret_key: str
-    host: str = field(default="localhost")
-    port: int = field(default=8080)
-
-
 # Bot operation configuration
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class BotOperationConfig:
     num_days: Optional[int] = field(default=5)
     exclude_weekends: Optional[bool] = field(default=True)
@@ -105,7 +99,7 @@ class BotOperationConfig:
  
 
 # Bot advanced mode configuration
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class BotAdvancedModeConfig:
     standard_access_days: Optional[int] = field(default=1)
 
@@ -114,10 +108,10 @@ class BotAdvancedModeConfig:
 
     
 # Redis configuration
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class RedisConfig:
-    host: str = field(default="localhost")
-    port: int = field(default=6379)
+    host: Optional[str] = field(default=None)
+    port: Optional[int] = field(default=None)
 
     @property
     def dict(self) -> Optional[dict]:
@@ -128,11 +122,10 @@ class RedisConfig:
 
 
 # Main configuration aggregator
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class Config:
     db: DBConfig
     bot: BotConfig
-    sqladmin: SQLAdminConfig
     bot_operation: BotOperationConfig
     bot_advanced_mode: BotAdvancedModeConfig
     redis: RedisConfig
@@ -151,9 +144,9 @@ class Config:
         return os.path.join(base_path, *paths)
 
 
-# Function to load configuration from environment variables
-def load_config() -> Config:
-    return Config(
+def load_config(overrides: Optional[dict] = None) -> Config:
+    # Default values loaded from environment
+    config = Config(
         db=DBConfig(
             uri=get_env("DB_URI"),
             name=get_env("DB_NAME"),
@@ -166,11 +159,6 @@ def load_config() -> Config:
         bot=BotConfig(
             token=get_env("BOT_TOKEN"),
             admins=get_env("BOT_ADMINS", "json"),
-        ),
-        sqladmin=SQLAdminConfig(
-            login=get_env("SQLADMIN_LOGIN"),
-            password=get_env("SQLADMIN_PASSWORD"),
-            secret_key=get_env("SQLADMIN_SECRET_KEY"),
         ),
         bot_operation=BotOperationConfig(
             num_days=get_env("NUM_DAYS", "int"),
@@ -189,3 +177,11 @@ def load_config() -> Config:
             port=get_env("REDIS_PORT", "int"),
         ),
     )
+    # Apply overrides if provided
+    if overrides:
+        for section, values in overrides.items():
+            section_config = getattr(config, section)
+            updated_values = {**section_config.to_dict(), **values}
+            setattr(config, section, type(section_config)(**updated_values))
+    
+    return config
