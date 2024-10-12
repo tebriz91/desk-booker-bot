@@ -1,37 +1,28 @@
-[tool.poetry]
+[project]
 name = "desk-booker-bot"
 version = "0.1.0"
-description = ""
-authors = ["tebriz91 <tebriz.tagiyev@gmail.com>"]
+description = "Add your description here"
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.11"
-sqlalchemy = "^2.0.27"
-python-dotenv = "^1.0.1"
-aiosqlite = "^0.19.0"
-pytz = "^2024.1"
-holidays = "^0.43"
-aiogram = "^3.4.1"
-asyncpg = "^0.29.0"
-redis = "^5.0.3"
-aioredis = "^2.0.1"
-aiogram-dialog = "^2.1.0"
-environs = "^11.0.0"
-fluentogram = "^1.1.6"
-alembic = "^1.13.1"
-sqladmin = {extras = ["full"], version = "^0.17.0"}
-fastapi = "^0.111.0"
-
-[tool.poetry.group.dev.dependencies]
-ruff = "==0.0.240"
-pyright = "==1.1.291"
-black = "==23.1.0"
-
-[tool.poetry.group.test.dependencies]
-pytest = "^8.2.0"
-pytest-asyncio = "^0.23.6"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires-python = ">=3.12"
+dependencies = [
+    "aiogram-dialog==2.1.0",
+    "aiogram==3.4.1",
+    "aioredis==2.0.1",
+    "aiosqlite==0.19.0",
+    "alembic==1.13.1",
+    "asyncpg==0.29.0",
+    "black==23.1.0",
+    "environs==11.0.0",
+    "fastapi==0.111.0",
+    "fluentogram==1.1.6",
+    "holidays==0.43",
+    "pyright==1.1.291",
+    "pytest-asyncio==0.23.6",
+    "pytest==8.2.0",
+    "python-dotenv==1.0.1",
+    "pytz==2024.1",
+    "redis==5.0.3",
+    "ruff==0.0.240",
+    "sqladmin[full]==0.17.0",
+    "sqlalchemy==2.0.27",
+]

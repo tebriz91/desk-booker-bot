@@ -1,5 +1,5 @@
 # Base Python image
-FROM python:3.11.5-slim-bullseye as base
+FROM python:3.12-slim-bullseye
 
 # Environment variables for Python
 ENV PYTHONFAULTHANDLER=1 \
@@ -9,33 +9,30 @@ ENV PYTHONFAULTHANDLER=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_DEFAULT_TIMEOUT=100
 
-# Poetry environment variables for version, no interaction, virtual envs creation, and cache directory
-ENV POETRY_VERSION=1.8.2 \
-    POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_CREATE=false \
-    POETRY_CACHE_DIR='/var/cache/pypoetry'
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    gcc \
+    build-essential \
+    clang
 
-# Install Poetry using the official installer script
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/* \
-    && curl -sSL https://install.python-poetry.org | python3 -
+# Copy the project into the image
+ADD . /app
 
-# Add Poetry to PATH
-ENV PATH="/root/.local/bin:$PATH"
+# Create a virtual environment
+RUN python -m venv /app/.venv
 
-# Set the working directory in the Docker container
+# Activate the virtual environment and install dependencies
 WORKDIR /app
+RUN . /app/.venv/bin/activate && pip install --upgrade pip setuptools wheel
 
-# Copy only pyproject.toml and poetry.lock to cache dependencies
-COPY poetry.lock pyproject.toml ./
-
-# Copy api folder from to the root directory
-COPY api ./api
-
-# Install dependencies from pyproject.toml and poetry.lock excluding dev and test dependencies
-RUN poetry install --no-interaction --no-ansi --without dev,test
+# Install dependencies from requirements.txt
+COPY requirements.txt .
+RUN . /app/.venv/bin/activate && pip install -r requirements.txt
 
 # Copy the rest of the project
 COPY . .
 
-# Command to run the application, adjust as needed
-CMD ["poetry", "run", "python", "app/bot.py"]
+# Command to run the application
+CMD ["/app/.venv/bin/python", "app/bot.py"]

@@ -171,6 +171,11 @@ pytest-cov-html:
 	@echo Running tests with coverage and generating HTML report...
 	@docker exec -it ${app} pytest --cov=app --cov-report html || echo Failed to run tests with coverage and generate HTML report"
 
+# Running 'make test' command from root/tests/integration
+pytest-integration:
+	@echo Running integration tests...
+	@cd tests/integration && make test || echo Failed to run integration tests"
+
 #* Linting commands
 lint:
 	@echo Running linter...
@@ -206,18 +211,18 @@ alembic-history:
 	@echo Listing all Alembic revisions...
 	@docker exec -it ${app} alembic history --verbose || echo Failed to list Alembic revisions"
 
-#* Poetry commands
-poetry-install:
+#* UV commands
+uv-install:
 	@echo Installing dependencies...
-	@docker exec -it ${app} poetry install || echo Failed to install dependencies"
+	@docker exec -it ${app} uv install || echo Failed to install dependencies"
 
-poetry-update:
+uv-update:
 	@echo Updating dependencies...
-	@docker exec -it ${app} poetry update || echo Failed to update dependencies"
+	@docker exec -it ${app} uv update || echo Failed to update dependencies"
 
-poetry-show-deps:
+uv-show-deps:
 	@echo Listing all dependencies...
-	@docker exec -it ${app} poetry show --tree || echo Failed to list dependencies"
+	@docker exec -it ${app} uv show --tree || echo Failed to list dependencies"
 
 #* Help command (colorized text)
 help:
@@ -271,6 +276,7 @@ help:
 	@echo     - make test
 	@echo     - make test-coverage
 	@echo     - make test-cov-html
+	@echo     - make test-integration
 	@echo   *****************************
 	@echo   Linting commands:
 	@echo     - make lint
@@ -286,7 +292,7 @@ help:
 	@echo     - make alembic-downgrade
 	@echo     - make alembic-history
 	@echo   *****************************
-	@echo   Poetry commands:
-	@echo     - make poetry-install
-	@echo     - make poetry-update
-	@echo     - make poetry-show-deps
+	@echo   UV commands:
+	@echo     - make uv-install
+	@echo     - make uv-update
+	@echo     - make uv-show-deps

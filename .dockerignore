@@ -1,6 +1,10 @@
 .git*
 .github/
 .vscode
+.mypy_cache
+.pytest_cache
+.venv
+.VSCode*
 .*ignore
 *.db
 .env*

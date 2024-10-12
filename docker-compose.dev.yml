@@ -39,7 +39,7 @@ services:
   
   app:
     container_name: desk-booker-bot
-    image: tebriz91/desk-booker-bot:latest
+    image: dbb
     restart: always
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
@@ -50,6 +50,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    command: ["/app/.venv/bin/python", "app/bot.py"]
 
   pgadmin:
     container_name: pgadmin
