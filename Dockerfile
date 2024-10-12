@@ -1,5 +1,5 @@
 # Base Python image
-FROM python:3.11.5-slim-bullseye as base
+FROM python:3.12-slim-bullseye
 
 # Environment variables for Python
 ENV PYTHONFAULTHANDLER=1 \
@@ -9,20 +9,30 @@ ENV PYTHONFAULTHANDLER=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_DEFAULT_TIMEOUT=100
 
-# Install UV using pip
-RUN pip install uv
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    gcc \
+    build-essential \
+    clang
 
-# Set the working directory in the Docker container
+# Copy the project into the image
+ADD . /app
+
+# Create a virtual environment
+RUN python -m venv /app/.venv
+
+# Activate the virtual environment and install dependencies
 WORKDIR /app
+RUN . /app/.venv/bin/activate && pip install --upgrade pip setuptools wheel
 
-# Copy only pyproject.toml to cache dependencies
-COPY pyproject.toml ./
-
-# Install dependencies from pyproject.toml
-RUN uv install
+# Install dependencies from requirements.txt
+COPY requirements.txt .
+RUN . /app/.venv/bin/activate && pip install -r requirements.txt
 
 # Copy the rest of the project
 COPY . .
 
 # Command to run the application
-CMD ["uv", "run", "python", "app/bot.py"]
+CMD ["/app/.venv/bin/python", "app/bot.py"]

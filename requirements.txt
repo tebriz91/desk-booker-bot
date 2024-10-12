@@ -3,7 +3,7 @@ python-dotenv==1.0.1
 aiosqlite==0.19.0
 pytz==2024.1
 holidays==0.43
-aiogram==3.4.1
+aiogram==3.13
 asyncpg==0.29.0
 redis==5.0.3
 aioredis==2.0.1

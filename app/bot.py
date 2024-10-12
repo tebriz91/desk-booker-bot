@@ -16,13 +16,17 @@ from aiogram.fsm.storage.redis import (
 )
 from aiogram_dialog import setup_dialogs
 from redis.asyncio.client import Redis
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import (
+    AsyncSession, async_sessionmaker, AsyncEngine,
+)
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from app.config_data.config import Config, load_config  # noqa: E402
-from app.database.engine import get_engine, get_session_pool  # noqa: E402
+from app.database.engine import (  # noqa: E402
+    get_engine, get_session_pool, create_db,
+)
 from app.dialogs import register_dialogs  # noqa: E402
 from app.keyboards.set_menu import set_main_menu  # noqa: E402
 
@@ -83,8 +87,7 @@ def setup_dispatcher(bot, storage) -> Dispatcher:
     return dp
 
 
-def setup_database() -> async_sessionmaker[AsyncSession]:
-    engine = get_engine(db_url=config.db.url, echo=False)
+def setup_database(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
     session_pool = get_session_pool(engine)
     return session_pool
 
@@ -123,9 +126,11 @@ async def main():
     """
     bot, storage = setup_bot()
     dp = setup_dispatcher(bot, storage)
-    session_pool = setup_database()
+    engine = get_engine(db_url=config.db.url, echo=False)
+    session_pool = setup_database(engine)
     setup_middlewares(dp, session_pool)
     dp.startup.register(on_startup)
+    await create_db(engine)
     dp.shutdown.register(on_shutdown)
     await bot.delete_webhook(
         drop_pending_updates=True

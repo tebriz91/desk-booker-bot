@@ -276,6 +276,7 @@ help:
 	@echo     - make test
 	@echo     - make test-coverage
 	@echo     - make test-cov-html
+	@echo     - make test-integration
 	@echo   *****************************
 	@echo   Linting commands:
 	@echo     - make lint
