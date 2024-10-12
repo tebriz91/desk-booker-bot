@@ -14,14 +14,6 @@ shell = /bin/bash
 # File paths
 file = /tests/test_queries.sql
 
-# Install dependencies from requirements.txt
-install:
-	@echo "Installing dependencies"
-	@uv init --python-preference managed
-	@uv venv
-	@uv add -r requirements.txt
-	@cmd /C "if exist .gitignore (echo .gitignore exists, overwriting && curl -o .gitignore https://raw.githubusercontent.com/github/gitignore/33243d9491911332228307c915ff95707791a91f/Python.gitignore) else (curl -o .gitignore https://raw.githubusercontent.com/github/gitignore/33243d9491911332228307c915ff95707791a91f/Python.gitignore)"
-
 #* Docker compose commands
 start-dev:
 	@echo Starting the development environment...
@@ -178,6 +170,11 @@ pytest-coverage:
 pytest-cov-html:
 	@echo Running tests with coverage and generating HTML report...
 	@docker exec -it ${app} pytest --cov=app --cov-report html || echo Failed to run tests with coverage and generate HTML report"
+
+# Running 'make test' command from root/tests/integration
+pytest-integration:
+	@echo Running integration tests...
+	@cd tests/integration && make test || echo Failed to run integration tests"
 
 #* Linting commands
 lint:
