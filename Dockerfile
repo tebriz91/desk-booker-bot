@@ -9,33 +9,20 @@ ENV PYTHONFAULTHANDLER=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_DEFAULT_TIMEOUT=100
 
-# Poetry environment variables for version, no interaction, virtual envs creation, and cache directory
-ENV POETRY_VERSION=1.8.2 \
-    POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_CREATE=false \
-    POETRY_CACHE_DIR='/var/cache/pypoetry'
-
-# Install Poetry using the official installer script
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/* \
-    && curl -sSL https://install.python-poetry.org | python3 -
-
-# Add Poetry to PATH
-ENV PATH="/root/.local/bin:$PATH"
+# Install UV using pip
+RUN pip install uv
 
 # Set the working directory in the Docker container
 WORKDIR /app
 
-# Copy only pyproject.toml and poetry.lock to cache dependencies
-COPY poetry.lock pyproject.toml ./
+# Copy only pyproject.toml to cache dependencies
+COPY pyproject.toml ./
 
-# Copy api folder from to the root directory
-COPY api ./api
-
-# Install dependencies from pyproject.toml and poetry.lock excluding dev and test dependencies
-RUN poetry install --no-interaction --no-ansi --without dev,test
+# Install dependencies from pyproject.toml
+RUN uv install
 
 # Copy the rest of the project
 COPY . .
 
-# Command to run the application, adjust as needed
-CMD ["poetry", "run", "python", "app/bot.py"]
+# Command to run the application
+CMD ["uv", "run", "python", "app/bot.py"]

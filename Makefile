@@ -14,6 +14,14 @@ shell = /bin/bash
 # File paths
 file = /tests/test_queries.sql
 
+# Install dependencies from requirements.txt
+install:
+	@echo "Installing dependencies"
+	@uv init --python-preference managed
+	@uv venv
+	@uv add -r requirements.txt
+	@cmd /C "if exist .gitignore (echo .gitignore exists, overwriting && curl -o .gitignore https://raw.githubusercontent.com/github/gitignore/33243d9491911332228307c915ff95707791a91f/Python.gitignore) else (curl -o .gitignore https://raw.githubusercontent.com/github/gitignore/33243d9491911332228307c915ff95707791a91f/Python.gitignore)"
+
 #* Docker compose commands
 start-dev:
 	@echo Starting the development environment...
@@ -206,18 +214,18 @@ alembic-history:
 	@echo Listing all Alembic revisions...
 	@docker exec -it ${app} alembic history --verbose || echo Failed to list Alembic revisions"
 
-#* Poetry commands
-poetry-install:
+#* UV commands
+uv-install:
 	@echo Installing dependencies...
-	@docker exec -it ${app} poetry install || echo Failed to install dependencies"
+	@docker exec -it ${app} uv install || echo Failed to install dependencies"
 
-poetry-update:
+uv-update:
 	@echo Updating dependencies...
-	@docker exec -it ${app} poetry update || echo Failed to update dependencies"
+	@docker exec -it ${app} uv update || echo Failed to update dependencies"
 
-poetry-show-deps:
+uv-show-deps:
 	@echo Listing all dependencies...
-	@docker exec -it ${app} poetry show --tree || echo Failed to list dependencies"
+	@docker exec -it ${app} uv show --tree || echo Failed to list dependencies"
 
 #* Help command (colorized text)
 help:
@@ -286,7 +294,7 @@ help:
 	@echo     - make alembic-downgrade
 	@echo     - make alembic-history
 	@echo   *****************************
-	@echo   Poetry commands:
-	@echo     - make poetry-install
-	@echo     - make poetry-update
-	@echo     - make poetry-show-deps
+	@echo   UV commands:
+	@echo     - make uv-install
+	@echo     - make uv-update
+	@echo     - make uv-show-deps

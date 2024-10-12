@@ -9,7 +9,7 @@ import logging
 from datetime import datetime
 
 from aiogram import Bot, Dispatcher
-from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage, Redis, DefaultKeyBuilder
 from aiogram.fsm.storage.memory import SimpleEventIsolation
@@ -49,11 +49,9 @@ def setup_bot() -> Tuple[Bot, RedisStorage]:
     storage = RedisStorage(redis=redis, key_builder=key_builder)
     bot = Bot(
         token=config.bot.token,
-        default=DefaultBotProperties(
-            parse_mode=ParseMode.HTML,
-            link_preview_is_disabled=False,
-            link_preview_prefer_large_media=True,
-            link_preview_show_above_text=False)) # Show link previews below text
+        parse_mode=ParseMode.HTML,
+        session=AiohttpSession()
+    )
     return bot, storage
 
 
@@ -63,7 +61,6 @@ def setup_dispatcher(bot, storage) -> Dispatcher:
     Includes routers and registers scenes.
     """    
     dp = Dispatcher(
-        bot=bot,
         storage=storage,
         events_isolation=SimpleEventIsolation(),
     )

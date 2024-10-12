@@ -7,7 +7,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from sqladmin import Admin
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -32,7 +32,7 @@ config = load_config()
 
 engine = get_engine(db_url=config.db.url, echo=False)
 
-session_pool = get_session_pool(engine)
+session_pool = async_sessionmaker(engine, expire_on_commit=False)
 
 app = FastAPI()
 
